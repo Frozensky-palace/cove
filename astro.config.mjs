@@ -11,6 +11,9 @@ export default defineConfig({
   // trailingSlash 与 Workers Static Assets 的 HTML handling 需保持一致，
   // 在 Phase 7 部署时用 /posts/example 与 /posts/example/ 实测验证。
   integrations: [vue()],
+  // 统一本地端口：dev 与 preview 均为 4321（Astro 默认值，此处显式固化）
+  server: { port: 4321 },
+  preview: { port: 4321 },
   vite: {
     plugins: [tailwindcss()],
   },
