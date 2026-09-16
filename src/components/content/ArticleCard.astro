@@ -1,0 +1,113 @@
+---
+/**
+ * 文章卡片（指南 9.2 / 9.3）：支持有/无封面变体；
+ * 无封面不渲染占位图（指南 9.3 验收）。
+ * emphasis 变体用于首页精选（强视觉），否则为普通卡片。
+ */
+import { Image } from 'astro:assets';
+import PostMeta from '@/components/content/PostMeta.astro';
+import TagList from '@/components/content/TagList.astro';
+import { postUrl } from '@/lib/urls';
+import type { Post } from '@/lib/content';
+
+interface Props {
+  post: Post;
+  /** 首页精选强视觉变体 */
+  emphasis?: boolean;
+}
+
+const { post, emphasis = false } = Astro.props;
+const hasCover = Boolean(post.data.cover);
+---
+
+<article class:list={['article-card', { 'article-card-emphasis': emphasis }]}>
+  {
+    hasCover && post.data.cover && (
+      <a
+        class="card-cover"
+        href={postUrl(post.id)}
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <Image
+          src={post.data.cover}
+          alt={post.data.coverAlt ?? ''}
+          widths={emphasis ? [640, 960, 1280] : [400, 640]}
+          sizes={emphasis ? '(min-width: 640px) 620px, 100vw' : '320px'}
+          loading="eager"
+          {...(emphasis ? { fetchpriority: 'high' as const } : {})}
+        />
+      </a>
+    )
+  }
+  <div class="card-body">
+    <h3 class="card-title">
+      <a href={postUrl(post.id)}>{post.data.title}</a>
+    </h3>
+    <PostMeta post={post} showUpdated={false} />
+    <p class="card-description">{post.data.description}</p>
+    <TagList tags={post.data.tags} max={3} />
+  </div>
+</article>
+
+<style>
+  .article-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-overlay);
+    background-color: var(--surface);
+  }
+
+  .card-cover {
+    display: block;
+    border-radius: var(--radius-control);
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    background-color: var(--surface-muted);
+  }
+
+  .card-cover img,
+  .card-cover :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .card-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .card-title a {
+    color: var(--text);
+    text-decoration-line: none;
+  }
+
+  .card-title a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .card-description {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.75;
+  }
+
+  /* 精选重点变体：封面更大、标题升级 */
+  .article-card-emphasis .card-title {
+    font-size: 1.375rem;
+  }
+</style>

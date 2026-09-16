@@ -1,0 +1,117 @@
+---
+/**
+ * 归档页（指南 7.2）：按年份倒序的完整文章列表；
+ * 普通链接与锚点导航，无 JS 可用。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import { categoryLabel } from '@/data/taxonomy';
+import { groupPostsByYear, formatDate } from '@/lib/content';
+import { postUrl } from '@/lib/urls';
+
+const groups = await groupPostsByYear();
+const total = groups.reduce((sum, group) => sum + group.posts.length, 0);
+---
+
+<ContentLayout
+  title="归档"
+  description={`按年份归档的全部文章，共 ${total} 篇。`}
+  path="/archive/"
+  heading="归档"
+  intro={`共 ${total} 篇文章，按发布年份倒序排列。`}
+>
+  {
+    groups.length > 0 ? (
+      <div class="archive">
+        {groups.map(({ year, posts }) => (
+          <section class="year-group" aria-labelledby={`year-${year}`}>
+            <h2 class="year-title" id={`year-${year}`}>
+              {year}
+              <span class="year-count">（{posts.length}）</span>
+            </h2>
+            <ul class="year-list">
+              {posts.map((post) => (
+                <li>
+                  <a class="archive-item" href={postUrl(post.id)}>
+                    <time datetime={post.data.publishedAt}>{formatDate(post.data.publishedAt)}</time>
+                    <span class="archive-title">{post.data.title}</span>
+                    <span class="archive-category">{categoryLabel(post.data.category)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    ) : (
+      <p class="archive-empty">还没有已发布的文章。</p>
+    )
+  }
+</ContentLayout>
+
+<style>
+  .archive {
+    max-width: 46rem;
+  }
+
+  .year-group {
+    margin-bottom: 2.5rem;
+  }
+
+  .year-title {
+    margin: 0 0 0.875rem;
+    font-size: 1.375rem;
+    font-weight: 700;
+  }
+
+  .year-count {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    font-weight: 400;
+  }
+
+  .year-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .archive-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.875rem;
+    padding-block: 0.625rem;
+    border-bottom: 1px solid var(--border);
+    text-decoration-line: none;
+    transition: color 120ms ease;
+  }
+
+  .archive-item time {
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  .archive-title {
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .archive-item:hover .archive-title {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .archive-category {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .archive-empty {
+    color: var(--text-muted);
+  }
+</style>

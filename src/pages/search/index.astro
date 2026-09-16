@@ -1,0 +1,18 @@
+---
+/**
+ * 搜索页（指南 9.7）：可直接访问的完整搜索页；
+ * 结果由 Pagefind 静态索引在浏览器端渲染，页面骨架为静态 HTML。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import SearchPanel from '@/components/islands/SearchPanel.vue';
+---
+
+<ContentLayout
+  title="搜索"
+  description="搜索 Cove 的文章、笔记与项目。"
+  path="/search/"
+  heading="搜索"
+  intro="输入关键词，在全站文章、笔记与项目中查找。快捷键 Ctrl/Command + K 可从任意页面唤起页头搜索。"
+>
+  <SearchPanel client:load />
+</ContentLayout>

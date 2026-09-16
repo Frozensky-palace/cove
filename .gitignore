@@ -21,8 +21,14 @@ yarn-error.log*
 .astro/dev.json
 .astro/settings.json
 .astro/content-module.mjs
+.astro/content-modules.mjs
+.astro/content-assets.mjs
+.astro/data-store.json
 .astro/collections/
 .tmp/
+
+# Claude Code 本地配置
+.claude/settings.local.json
 
 # 编辑器与系统
 .DS_Store

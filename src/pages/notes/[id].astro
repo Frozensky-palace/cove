@@ -1,0 +1,117 @@
+---
+/**
+ * 笔记详情页（指南 9.5）：可分享的永久链接；
+ * 无标题笔记以日期与正文开头命名。
+ */
+import { render } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import TagList from '@/components/content/TagList.astro';
+import {
+  formatDate,
+  getPublishedNotes,
+  isPreviewOnly,
+  showPreviewContent,
+  type Note,
+} from '@/lib/content';
+import { noteUrl } from '@/lib/urls';
+
+export async function getStaticPaths() {
+  const notes = await getPublishedNotes();
+  return notes.map((note) => ({ params: { id: note.id }, props: { note } }));
+}
+
+interface Props {
+  note: Note;
+}
+
+const { note } = Astro.props;
+const { Content } = await render(note);
+const title = note.data.title ?? `${formatDate(note.data.publishedAt)} 的笔记`;
+const description =
+  (note.body ?? '').replace(/[#*`>\-[\]]/g, '').trim().slice(0, 100) || '一条 Cove 笔记。';
+const previewOnly = showPreviewContent && isPreviewOnly(note);
+---
+
+<BaseLayout title={title} description={description} path={noteUrl(note.id)} noindex={previewOnly}>
+  {
+    previewOnly && (
+      <div class="preview-banner" role="note">
+        预览内容：这条笔记是{note.data.draft ? '草稿' : '计划发布内容'}，未进入生产输出。
+      </div>
+    )
+  }
+  <div class="cove-container note-page">
+    <article class="note-article" data-pagefind-body data-pagefind-filter="类型:笔记">
+      <header class="note-header">
+        <h1 class="note-title" data-pagefind-meta="title">{title}</h1>
+        <p class="note-meta">
+          <time
+            datetime={note.data.publishedAt}
+            data-pagefind-meta="date">{formatDate(note.data.publishedAt)}</time
+          >
+          {
+            note.data.updatedAt && (
+              <span>
+                · 更新于 <time datetime={note.data.updatedAt}>{formatDate(note.data.updatedAt)}</time>
+              </span>
+            )
+          }
+        </p>
+      </header>
+      <div class="prose">
+        <Content />
+      </div>
+      {
+        note.data.tags.length > 0 && (
+          <footer class="note-footer" data-pagefind-ignore>
+            <TagList tags={note.data.tags} />
+          </footer>
+        )
+      }
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .preview-banner {
+    padding: 0.625rem 1.5rem;
+    background-color: var(--shell-pink-soft);
+    color: var(--text);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .note-page {
+    padding-block: 2.5rem 4rem;
+  }
+
+  .note-article {
+    max-width: 42rem;
+  }
+
+  .note-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .note-title {
+    margin: 0;
+    font-size: clamp(1.375rem, 4vw, 1.75rem);
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .note-meta {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .note-footer {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+</style>

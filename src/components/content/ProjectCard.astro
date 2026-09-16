@@ -1,0 +1,160 @@
+---
+/**
+ * 项目卡片（指南 9.6）：名称、简述、状态、年份、技术关键词、可选封面。
+ * 不使用指标堆叠。
+ */
+import { Image } from 'astro:assets';
+import { projectUrl } from '@/lib/urls';
+import type { Project } from '@/lib/content';
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+
+const statusLabel: Record<Project['data']['status'], string> = {
+  active: '进行中',
+  completed: '已完成',
+  archived: '已归档',
+};
+
+const year = project.data.startedAt?.slice(0, 4) ?? '';
+---
+
+<article class="project-card">
+  <div class="project-main">
+    <div class="project-heading">
+      <h3 class="project-title">
+        <a href={projectUrl(project.id)}>{project.data.title}</a>
+      </h3>
+      <span class:list={['project-status', `status-${project.data.status}`]}>
+        {statusLabel[project.data.status]}
+      </span>
+    </div>
+    <p class="project-summary">{project.data.summary}</p>
+    <div class="project-meta">
+      {year && <span class="project-year">{year}</span>}
+      {
+        project.data.stack.length > 0 && (
+          <span class="project-stack">{project.data.stack.join(' · ')}</span>
+        )
+      }
+    </div>
+  </div>
+  {
+    project.data.cover && (
+      <a class="project-cover" href={projectUrl(project.id)} tabindex="-1" aria-hidden="true">
+        <Image
+          src={project.data.cover}
+          alt={project.data.title}
+          widths={[320, 480]}
+          sizes="220px"
+        />
+      </a>
+    )
+  }
+</article>
+
+<style>
+  .project-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.5rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-overlay);
+    background-color: var(--surface);
+    transition: border-color 120ms ease;
+  }
+
+  .project-card:hover {
+    border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
+  }
+
+  .project-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .project-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .project-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
+  .project-title a {
+    color: var(--text);
+    text-decoration-line: none;
+  }
+
+  .project-title a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .project-status {
+    padding-inline: 0.625rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* 状态除颜色外另有文字，不单靠颜色表达（指南 15） */
+  .status-active {
+    border-color: var(--cove-blue);
+    color: var(--cove-blue-strong);
+  }
+
+  .status-completed {
+    border-color: var(--shell-pink);
+    color: var(--shell-pink);
+  }
+
+  .project-summary {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.75;
+  }
+
+  .project-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .project-cover {
+    flex-shrink: 0;
+    width: 220px;
+    border-radius: var(--radius-control);
+    overflow: hidden;
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .project-cover {
+      display: block;
+    }
+  }
+
+  .project-cover :global(img) {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+</style>

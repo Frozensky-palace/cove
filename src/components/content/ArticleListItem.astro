@@ -1,0 +1,62 @@
+---
+/**
+ * 文章列表行（指南 9.3）：标题、摘要、日期、主分类、阅读时长、少量标签；
+ * 无封面不显示占位图。
+ */
+import PostMeta from '@/components/content/PostMeta.astro';
+import TagList from '@/components/content/TagList.astro';
+import { postUrl } from '@/lib/urls';
+import type { Post } from '@/lib/content';
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+---
+
+<article class="article-item">
+  <h3 class="item-title">
+    <a href={postUrl(post.id)}>{post.data.title}</a>
+  </h3>
+  <PostMeta post={post} showUpdated={false} />
+  <p class="item-description">{post.data.description}</p>
+  <TagList tags={post.data.tags} max={3} />
+</article>
+
+<style>
+  .article-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-block: 1.5rem;
+  }
+
+  .article-item + .article-item {
+    border-top: 1px solid var(--border);
+  }
+
+  .item-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .item-title a {
+    color: var(--text);
+    text-decoration-line: none;
+  }
+
+  .item-title a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .item-description {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.75;
+  }
+</style>

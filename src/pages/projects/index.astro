@@ -1,0 +1,51 @@
+---
+/**
+ * 项目列表页（指南 9.6）：项目索引与状态；不使用指标堆叠。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import ProjectCard from '@/components/content/ProjectCard.astro';
+import EmptyState from '@/components/content/EmptyState.astro';
+import Button from '@/components/base/Button.astro';
+import { getPublishedProjects } from '@/lib/content';
+
+const projects = await getPublishedProjects();
+---
+
+<ContentLayout
+  title="项目"
+  description="有过程、有反思的项目记录：正在做的与已经完成的。"
+  path="/projects/"
+  heading="项目"
+  intro="不只放成果，也写清楚过程中的取舍与反思。"
+>
+  {
+    projects.length > 0 ? (
+      <div class="project-list">
+        {projects.map((project) => (
+          <ProjectCard project={project} />
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        title="还没有项目"
+        description="项目记录正在整理中，可以先浏览文章与笔记。"
+      >
+        <Button href="/posts/" variant="secondary" slot="actions">
+          浏览文章
+        </Button>
+        <Button href="/notes/" variant="ghost" slot="actions">
+          看看笔记
+        </Button>
+      </EmptyState>
+    )
+  }
+</ContentLayout>
+
+<style>
+  .project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 46rem;
+  }
+</style>

@@ -1,0 +1,48 @@
+---
+/**
+ * 笔记列表页（指南 9.5）：按时间排列的短笔记，视觉重量低于文章。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import NoteListItem from '@/components/content/NoteListItem.astro';
+import EmptyState from '@/components/content/EmptyState.astro';
+import Button from '@/components/base/Button.astro';
+import { getPublishedNotes } from '@/lib/content';
+
+const notes = await getPublishedNotes();
+---
+
+<ContentLayout
+  title="笔记"
+  description="随手记录的短想法与观察：更轻、更即时，允许不成熟。"
+  path="/notes/"
+  heading="笔记"
+  intro="随手记录的短内容，按时间倒序排列，每条都有独立链接。"
+>
+  {
+    notes.length > 0 ? (
+      <div class="note-list">
+        {notes.map((note) => (
+          <NoteListItem note={note} />
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        title="还没有笔记"
+        description="这里会是更轻、更即时的记录。可以先去看看文章或项目。"
+      >
+        <Button href="/posts/" variant="secondary" slot="actions">
+          浏览文章
+        </Button>
+        <Button href="/projects/" variant="ghost" slot="actions">
+          看看项目
+        </Button>
+      </EmptyState>
+    )
+  }
+</ContentLayout>
+
+<style>
+  .note-list {
+    max-width: 42rem;
+  }
+</style>

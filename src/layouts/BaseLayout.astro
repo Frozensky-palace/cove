@@ -22,7 +22,8 @@ const meta = buildMetadata({ title, description, path, noindex });
 ---
 
 <!doctype html>
-<html lang={lang}>
+<!-- no-js：JS 可用时由下方引导脚本移除；用于窄屏导航的渐进增强回退 -->
+<html lang={lang} class="no-js">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -61,6 +62,7 @@ const meta = buildMetadata({ title, description, path, noindex });
           mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
         var root = document.documentElement;
+        root.classList.remove('no-js');
         root.classList.toggle('dark', mode === 'dark');
         root.dataset.theme = mode;
         root.style.colorScheme = mode;

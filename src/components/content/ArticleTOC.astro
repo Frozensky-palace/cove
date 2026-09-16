@@ -1,0 +1,184 @@
+---
+/**
+ * 文章目录（指南 9.4 / 10）：
+ * - 桌面（≥1200px）：右侧粘性栏，IntersectionObserver 高亮当前章节；
+ * - 移动端：正文前的 <details> 折叠（指南 8.7）。
+ * heading 结构来自 astro:content render() 的 headings（深度 2–4）。
+ */
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+const toc = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 4);
+const hasToc = toc.length >= 3;
+---
+
+{
+  hasToc && (
+    <>
+      {/* 移动端折叠目录 */}
+      <details class="toc-mobile">
+        <summary>目录</summary>
+        <nav aria-label="文章目录">
+          <ul>
+            {toc.map((heading) => (
+              <li class:list={[`toc-depth-${heading.depth}`]}>
+                <a href={`#${heading.slug}`}>{heading.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </details>
+
+      {/* 桌面粘性目录 */}
+      <aside class="toc-aside" aria-label="文章目录" data-toc>
+        <p class="toc-title">目录</p>
+        <nav>
+          <ul>
+            {toc.map((heading) => (
+              <li class:list={[`toc-depth-${heading.depth}`]}>
+                <a href={`#${heading.slug}`} data-toc-link>
+                  {heading.text}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+    </>
+  )
+}
+
+<style>
+  .toc-mobile {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background-color: var(--surface);
+    font-size: 0.9375rem;
+  }
+
+  .toc-mobile summary {
+    padding: 0.75rem 1.25rem;
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .toc-mobile nav {
+    padding: 0.25rem 1.25rem 1rem;
+  }
+
+  .toc-aside {
+    display: none;
+  }
+
+  .toc-title {
+    margin: 0 0 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  a {
+    display: inline-block;
+    padding-block: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    text-decoration-line: none;
+    transition: color 120ms ease;
+  }
+
+  a:hover {
+    color: var(--text);
+  }
+
+  a[aria-current='true'] {
+    color: var(--cove-blue-strong);
+    font-weight: 600;
+  }
+
+  .toc-depth-3 {
+    padding-inline-start: 1rem;
+  }
+
+  .toc-depth-4 {
+    padding-inline-start: 2rem;
+  }
+
+  @media (min-width: 1200px) {
+    .toc-mobile {
+      display: none;
+    }
+
+    .toc-aside {
+      display: block;
+      position: sticky;
+      top: 96px;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+      border-inline-start: 1px solid var(--border);
+      padding-inline-start: 1.5rem;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * 当前章节高亮：IntersectionObserver 观察标题进入视口顶部区域。
+   * 纯渐进增强，无 JS 时目录仍是可用链接。
+   */
+  const toc = document.querySelector<HTMLElement>('[data-toc]');
+  if (toc) {
+    const links = new Map<string, HTMLAnchorElement>();
+    for (const link of toc.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')) {
+      const id = link.hash.slice(1);
+      const target = document.getElementById(id);
+      if (target) links.set(id, link);
+    }
+
+    let activeId = '';
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const id = entry.target.id;
+          if (id === activeId) continue;
+          activeId = id;
+          for (const [linkId, link] of links) {
+            if (linkId === id) link.setAttribute('aria-current', 'true');
+            else link.removeAttribute('aria-current');
+          }
+        }
+      },
+      { rootMargin: '-80px 0px -70% 0px' },
+    );
+
+    for (const id of links.keys()) {
+      const target = document.getElementById(id);
+      if (target) observer.observe(target);
+    }
+  }
+</script>

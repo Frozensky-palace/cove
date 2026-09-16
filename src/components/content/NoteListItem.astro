@@ -1,0 +1,85 @@
+---
+/**
+ * 笔记列表项（指南 9.5）：视觉重量低于文章；
+ * 无标题笔记用日期 + 正文开头代替标题。
+ */
+import TagList from '@/components/content/TagList.astro';
+import { noteUrl } from '@/lib/urls';
+import { formatDate, type Note } from '@/lib/content';
+
+interface Props {
+  note: Note;
+}
+
+const { note } = Astro.props;
+const excerpt = (note.body ?? '').replace(/[#*`>\-[\]]/g, '').trim().slice(0, 80);
+const displayTitle = note.data.title ?? `${formatDate(note.data.publishedAt)} 的笔记`;
+---
+
+<article class="note-item">
+  <div class="note-heading">
+    <h3 class="note-title">
+      <a href={noteUrl(note.id)}>{displayTitle}</a>
+    </h3>
+    <time class="note-date" datetime={note.data.publishedAt}>
+      {formatDate(note.data.publishedAt)}
+    </time>
+  </div>
+  {
+    note.data.title && (
+      <p class="note-excerpt">{excerpt}</p>
+    )
+  }
+  {note.data.tags.length > 0 && <TagList tags={note.data.tags} max={3} />}
+</article>
+
+<style>
+  .note-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-block: 1.25rem;
+  }
+
+  .note-item + .note-item {
+    border-top: 1px dashed var(--border);
+  }
+
+  .note-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+
+  .note-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .note-title a {
+    color: var(--text);
+    text-decoration-line: none;
+  }
+
+  .note-title a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .note-date {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  .note-excerpt {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.75;
+  }
+</style>

@@ -1,0 +1,98 @@
+---
+/**
+ * 构建期分页导航（指南 9.3）：普通链接，无 JS 可用。
+ * 与 Astro paginate() 的 page 结构配套（Page<T>）。
+ */
+import type { Page } from 'astro';
+import type { Post } from '@/lib/content';
+
+interface Props {
+  page: Page<Post>;
+}
+
+const { page } = Astro.props;
+const { prev, next } = page.url;
+// Astro 7：totalPages 更名为 lastPage；url.first 仅在当前页非第 1 页时存在，
+// 故用 current 兜底，保证任何页码下第 1 页链接都可用。
+const firstUrl = page.url.first ?? page.url.current;
+const pages = Array.from({ length: page.lastPage }, (_, i) => i + 1);
+---
+
+{
+  page.lastPage > 1 && (
+    <nav class="pagination" aria-label="文章分页">
+      {prev ? (
+        <a class="page-link" href={prev} rel="prev">
+          上一页
+        </a>
+      ) : (
+        <span class="page-link page-disabled" aria-disabled="true">
+          上一页
+        </span>
+      )}
+
+      {pages.map((number) =>
+        number === page.currentPage ? (
+          <span class="page-link page-current" aria-current="page">
+            {number}
+          </span>
+        ) : (
+          <a class="page-link" href={number === 1 ? firstUrl : `${firstUrl}${number}/`}>
+            {number}
+          </a>
+        ),
+      )}
+
+      {next ? (
+        <a class="page-link" href={next} rel="next">
+          下一页
+        </a>
+      ) : (
+        <span class="page-link page-disabled" aria-disabled="true">
+          下一页
+        </span>
+      )}
+    </nav>
+  )
+}
+
+<style>
+  .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    margin-top: 3rem;
+  }
+
+  .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    text-decoration-line: none;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+
+  a.page-link:hover {
+    color: var(--cove-blue-strong);
+    border-color: var(--cove-blue);
+  }
+
+  .page-current {
+    border-color: var(--cove-blue-strong);
+    color: var(--cove-blue-strong);
+    font-weight: 600;
+  }
+
+  .page-disabled {
+    opacity: 0.45;
+  }
+</style>

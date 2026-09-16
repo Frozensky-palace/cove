@@ -1,0 +1,56 @@
+---
+/**
+ * 标签链接列表：URL slug 由 lib/urls.ts 统一规范化（指南 11.1）。
+ */
+import { tagUrl } from '@/lib/urls';
+
+interface Props {
+  tags: string[];
+  /** 最多显示数量，超出省略（列表卡片场景） */
+  max?: number;
+}
+
+const { tags, max } = Astro.props;
+const visible = max ? tags.slice(0, max) : tags;
+const rest = tags.length - visible.length;
+---
+
+<ul class="tag-list" aria-label="标签">
+  {
+    visible.map((tag) => (
+      <li>
+        <a href={tagUrl(tag)}>#{tag}</a>
+      </li>
+    ))
+  }
+  {rest > 0 && <li class="tag-more">+{rest}</li>}
+</ul>
+
+<style>
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .tag-list a {
+    color: var(--text-muted);
+    text-decoration-line: none;
+    transition: color 120ms ease;
+  }
+
+  .tag-list a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .tag-more {
+    color: var(--text-muted);
+  }
+</style>

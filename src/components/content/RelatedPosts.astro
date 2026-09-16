@@ -1,0 +1,44 @@
+---
+/**
+ * 相关文章（指南 9.4 / 13.3）：最多 4 篇，确定性构建期算法结果由调用方传入。
+ */
+import ArticleListItem from '@/components/content/ArticleListItem.astro';
+import type { Post } from '@/lib/content';
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+---
+
+{
+  posts.length > 0 && (
+    <section class="related-posts" aria-label="相关文章">
+      <h2 class="related-title">相关文章</h2>
+      <div class="related-list">
+        {posts.map((post) => (
+          <ArticleListItem post={post} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .related-posts {
+    margin-top: 3.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  :global(.related-list .article-item) {
+    padding-block: 1rem;
+  }
+</style>

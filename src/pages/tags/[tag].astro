@@ -1,0 +1,135 @@
+---
+/**
+ * 标签聚合页（指南 7.2）：横向主题聚合，文章 + 笔记共用标签；
+ * 相关标签提供横向跳转（普通链接，无 JS 可用）。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import ArticleListItem from '@/components/content/ArticleListItem.astro';
+import NoteListItem from '@/components/content/NoteListItem.astro';
+import EmptyState from '@/components/content/EmptyState.astro';
+import Button from '@/components/base/Button.astro';
+import { tagUrl } from '@/lib/urls';
+import {
+  collectTagStats,
+  getPublishedNotes,
+  getPostsByTag,
+} from '@/lib/content';
+
+export async function getStaticPaths() {
+  const stats = await collectTagStats();
+  return stats.map(({ slug }) => ({ params: { tag: slug } }));
+}
+
+const { tag } = Astro.params;
+const stats = await collectTagStats();
+const current = stats.find((entry) => entry.slug === tag);
+
+const posts = await getPostsByTag(current?.label ?? '');
+const notes = (await getPublishedNotes()).filter((note) =>
+  (note.data.tags ?? []).includes(current?.label ?? '\u0000'),
+);
+const relatedTags = stats.filter((entry) => entry.slug !== tag).slice(0, 8);
+
+const title = `#${current?.label ?? tag} · 标签`;
+---
+
+<ContentLayout
+  title={title}
+  description={`标签「${current?.label}」下的 ${posts.length} 篇文章与 ${notes.length} 条笔记。`}
+  path={tagUrl(tag ?? '')}
+  heading={`#${current?.label ?? tag}`}
+  intro={`共 ${posts.length} 篇文章、${notes.length} 条笔记使用这个标签。`}
+>
+  {
+    relatedTags.length > 0 && (
+      <nav class="related-tags" aria-label="其他标签">
+        <ul>
+          {relatedTags.map(({ slug, label, count }) => (
+            <li>
+              <a href={tagUrl(slug)}>
+                #{label}
+                <span class="tag-count">（{count}）</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )
+  }
+
+  {
+    posts.length + notes.length > 0 ? (
+      <div class="tag-content">
+        {posts.length > 0 && (
+          <section class="tag-posts" aria-label="文章">
+            {posts.length > 0 && <h2 class="group-title">文章（{posts.length}）</h2>}
+            {posts.map((post) => (
+              <ArticleListItem post={post} />
+            ))}
+          </section>
+        )}
+        {notes.length > 0 && (
+          <section class="tag-notes" aria-label="笔记">
+            <h2 class="group-title">笔记（{notes.length}）</h2>
+            {notes.map((note) => (
+              <NoteListItem note={note} />
+            ))}
+          </section>
+        )}
+      </div>
+    ) : (
+      <EmptyState title="这个标签下还没有内容" description="可以回到文章列表浏览全部内容。">
+        <Button href="/posts/" variant="secondary" slot="actions">
+          全部文章
+        </Button>
+      </EmptyState>
+    )
+  }
+</ContentLayout>
+
+<style>
+  .related-tags {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .related-tags ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .related-tags a {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    text-decoration-line: none;
+  }
+
+  .related-tags a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .tag-count {
+    font-size: 0.8125rem;
+  }
+
+  .tag-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    max-width: 46rem;
+  }
+
+  .group-title {
+    margin: 0 0 1rem;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+</style>

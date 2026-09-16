@@ -1,0 +1,290 @@
+---
+/**
+ * 文章详情布局（指南 9.4）：
+ * 分类面包屑 → 标题/描述 → 元信息 → 可选封面 → 正文 + 桌面粘性目录 →
+ * 标签/转载说明 → 上一篇/下一篇 → 相关文章。
+ * 阅读进度为顶部 2px 细线；代码复制为原生脚本渐进增强；
+ * 正文容器标注 data-pagefind-body（Phase 4 搜索索引）。
+ */
+import { render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ArticleTOC from '@/components/content/ArticleTOC.astro';
+import PostMeta from '@/components/content/PostMeta.astro';
+import TagList from '@/components/content/TagList.astro';
+import PrevNextNav from '@/components/content/PrevNextNav.astro';
+import RelatedPosts from '@/components/content/RelatedPosts.astro';
+import {
+  getAdjacentPosts,
+  getRelatedPosts,
+  isPreviewOnly,
+  showPreviewContent,
+  type Post,
+} from '@/lib/content';
+import { categoryLabel } from '@/data/taxonomy';
+import { categoryUrl, postUrl } from '@/lib/urls';
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const { prev, next } = await getAdjacentPosts(post);
+const related = await getRelatedPosts(post);
+const previewOnly = showPreviewContent && isPreviewOnly(post);
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  path={postUrl(post.id)}
+  noindex={previewOnly}
+>
+  {previewOnly && (
+    <div class="preview-banner" role="note">
+      预览内容：这篇文章是{post.data.draft ? '草稿' : '计划发布内容'}，未进入生产输出。
+    </div>
+  )}
+
+  <div class="cove-container article-page">
+    <article class="article" data-pagefind-body data-pagefind-filter="类型:文章">
+      <header class="article-header">
+        <nav class="article-breadcrumb" aria-label="面包屑">
+          <a href="/posts/">文章</a>
+          <span aria-hidden="true">/</span>
+          <a href={categoryUrl(post.data.category)}>
+            {categoryLabel(post.data.category)}
+          </a>
+        </nav>
+
+        <h1 class="article-title" data-pagefind-meta="title">{post.data.title}</h1>
+        <p class="article-description">{post.data.description}</p>
+        <PostMeta post={post} pagefind />
+
+        {
+          post.data.cover && (
+            <div class="article-cover">
+              <Image
+                src={post.data.cover}
+                alt={post.data.coverAlt ?? ''}
+                widths={[640, 960, 1280]}
+                sizes="(min-width: 780px) 740px, 100vw"
+                loading="eager"
+                fetchpriority="high"
+              />
+            </div>
+          )
+        }
+      </header>
+
+      <div class="article-columns">
+        <div class="article-main">
+          <ArticleTOC headings={headings} />
+          <div class="prose">
+            <Content />
+          </div>
+
+          <footer class="article-footer" data-pagefind-ignore>
+            <TagList tags={post.data.tags} />
+            {
+              post.data.canonicalURL && (
+                <p class="canonical-note">
+                  本文首发于
+                  <a href={post.data.canonicalURL} rel="canonical">
+                    {post.data.canonicalURL}
+                  </a>
+                  ，转载已获授权。
+                </p>
+              )
+            }
+          </footer>
+        </div>
+      </div>
+
+      <div class="article-nav-area" data-pagefind-ignore>
+        <PrevNextNav prev={prev} next={next} />
+        <RelatedPosts posts={related} />
+      </div>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .preview-banner {
+    padding: 0.625rem 1.5rem;
+    background-color: var(--shell-pink-soft);
+    color: var(--text);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .article-page {
+    padding-block: 2rem 4rem;
+  }
+
+  .article-header {
+    max-width: 46rem;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .article-breadcrumb {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .article-breadcrumb a {
+    color: var(--text-muted);
+    text-decoration-line: none;
+  }
+
+  .article-breadcrumb a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .article-title {
+    margin: 0;
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+  }
+
+  .article-description {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    line-height: 1.8;
+  }
+
+  .article-cover {
+    margin-top: 0.5rem;
+    border-radius: var(--radius-overlay);
+    overflow: hidden;
+  }
+
+  .article-cover :global(img) {
+    width: 100%;
+    height: auto;
+  }
+
+  /* 双栏：正文 + 目录（≥1200px，指南 8.7） */
+  .article-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 2.5rem;
+  }
+
+  @media (min-width: 1200px) {
+    .article-columns {
+      grid-template-columns: minmax(0, 1fr) 240px;
+      gap: 3rem;
+      justify-content: center;
+      max-width: 60rem;
+    }
+  }
+
+  .article-main {
+    min-width: 0;
+  }
+
+  .article-footer {
+    max-width: 720px;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  .canonical-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  .canonical-note a {
+    color: var(--cove-blue-strong);
+    text-underline-offset: 0.25em;
+  }
+
+  .article-nav-area {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+</style>
+
+<script>
+  /**
+   * 阅读进度：顶部 2px 细线（指南 9.4），scroll 驱动，reduced-motion 下同样即时。
+   */
+  const article = document.querySelector('article[data-pagefind-body]');
+  const bar = document.createElement('div');
+  bar.className = 'reading-progress';
+  bar.setAttribute('aria-hidden', 'true');
+  document.body.prepend(bar);
+
+  function updateProgress() {
+    if (!article) return;
+    const rect = article.getBoundingClientRect();
+    const total = rect.height - window.innerHeight;
+    if (total <= 0) {
+      bar.style.transform = 'scaleX(1)';
+      return;
+    }
+    const progress = Math.min(1, Math.max(0, -rect.top / total));
+    bar.style.transform = `scaleX(${progress})`;
+  }
+
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  /**
+   * 代码复制按钮（指南 9.4 / 10 CodeCopyButton）：原生脚本渐进增强，
+   * 无 JS 时代码块仍完整可读，用户可手动选择复制。
+   */
+  for (const pre of document.querySelectorAll<HTMLPreElement>('pre.astro-code')) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'code-copy';
+    button.textContent = '复制';
+    button.addEventListener('click', async () => {
+      const code = pre.querySelector('code')?.innerText ?? '';
+      try {
+        await navigator.clipboard.writeText(code);
+        button.textContent = '已复制';
+      } catch {
+        button.textContent = '复制失败';
+      }
+      setTimeout(() => {
+        button.textContent = '复制';
+      }, 1600);
+    });
+    pre.append(button);
+  }
+</script>
+
+<style is:global>
+  .reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 60;
+    width: 100%;
+    height: 2px;
+    background-color: var(--cove-blue-strong);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    pointer-events: none;
+  }
+</style>

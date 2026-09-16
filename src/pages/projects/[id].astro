@@ -1,0 +1,216 @@
+---
+/**
+ * 项目详情页（指南 9.6）：问题、角色、方法、过程与反思、链接、相关文章。
+ * 正文结构由 Markdown 正文承担，结构化头部信息来自 frontmatter。
+ */
+import { render } from 'astro:content';
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import ArticleListItem from '@/components/content/ArticleListItem.astro';
+import {
+  formatDate,
+  getPublishedProjects,
+  resolveProjectRelatedPosts,
+  isPreviewOnly,
+  showPreviewContent,
+  type Project,
+} from '@/lib/content';
+import { projectUrl } from '@/lib/urls';
+
+export async function getStaticPaths() {
+  const projects = await getPublishedProjects();
+  return projects.map((project) => ({ params: { id: project.id }, props: { project } }));
+}
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const related = await resolveProjectRelatedPosts(project);
+const previewOnly = showPreviewContent && isPreviewOnly(project);
+
+const statusLabel: Record<Project['data']['status'], string> = {
+  active: '进行中',
+  completed: '已完成',
+  archived: '已归档',
+};
+
+const linkLabel: Record<string, string> = {
+  demo: '在线演示',
+  source: '源码',
+  paper: '论文',
+  download: '下载',
+  other: '链接',
+};
+---
+
+<ContentLayout
+  title={project.data.title}
+  description={project.data.summary}
+  path={projectUrl(project.id)}
+  noindex={previewOnly}
+>
+  {
+    previewOnly && (
+      <div class="preview-banner" role="note">
+        预览内容：这个项目是{project.data.draft ? '草稿' : '计划发布内容'}，未进入生产输出。
+      </div>
+    )
+  }
+  <article
+    class="project-article"
+    data-pagefind-body
+    data-pagefind-filter="类型:项目"
+    data-pagefind-meta={`title:${project.data.title}`}
+  >
+    <div class="project-facts" data-pagefind-ignore>
+      <span class:list={['project-status', `status-${project.data.status}`]}>
+        {statusLabel[project.data.status]}
+      </span>
+      {
+        project.data.startedAt && (
+          <span class="fact">
+            {project.data.completedAt
+              ? `${project.data.startedAt.slice(0, 7)} — ${formatDate(project.data.completedAt)}`
+              : `始于 ${formatDate(project.data.startedAt)}`}
+          </span>
+        )
+      }
+      {
+        project.data.stack.length > 0 && (
+          <span class="fact fact-stack">{project.data.stack.join(' · ')}</span>
+        )
+      }
+    </div>
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    {
+      project.data.links.length > 0 && (
+        <div class="project-links" data-pagefind-ignore>
+          <h2 class="links-title">链接</h2>
+          <ul>
+            {project.data.links.map((link) => (
+              <li>
+                <a href={link.url} target="_blank" rel="noopener noreferrer">
+                  {link.label}
+                  <span class="link-type">{linkLabel[link.type] ?? '链接'}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+
+    {
+      related.length > 0 && (
+        <section class="project-related" aria-label="相关文章" data-pagefind-ignore>
+          <h2 class="links-title">相关文章</h2>
+          <div class="related-list">
+            {related.map((post) => (
+              <ArticleListItem post={post} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </article>
+</ContentLayout>
+
+<style>
+  .preview-banner {
+    margin-bottom: 1.5rem;
+    padding: 0.625rem 1.5rem;
+    border-radius: var(--radius-control);
+    background-color: var(--shell-pink-soft);
+    color: var(--text);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .project-article {
+    max-width: 46rem;
+  }
+
+  .project-facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.625rem 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .project-status {
+    padding-inline: 0.625rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .status-active {
+    border-color: var(--cove-blue);
+    color: var(--cove-blue-strong);
+  }
+
+  .status-completed {
+    border-color: var(--shell-pink);
+    color: var(--shell-pink);
+  }
+
+  .fact {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .fact-stack {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .links-title {
+    margin: 2.5rem 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .project-links ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .project-links a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding-inline: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    color: var(--cove-blue-strong);
+    text-decoration-line: none;
+    transition: border-color 120ms ease;
+  }
+
+  .project-links a:hover {
+    border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
+  }
+
+  .link-type {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+  }
+
+  .project-related {
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+  }
+</style>

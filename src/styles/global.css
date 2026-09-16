@@ -1,10 +1,11 @@
 /**
  * Cove 全局样式。
- * 设计令牌见 ./tokens.css；正文排版样式（prose.css）在 Phase 3 引入。
+ * 设计令牌见 ./tokens.css；正文排版见 ./prose.css（指南 8.3 / 9.4）。
  */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import './tokens.css';
+@import './prose.css';
 
 /* 深色模式由 <html>.dark 类驱动（IMPL-004 / IMPL-011），与 prefers-color-scheme 解耦，
    仅支持“浅色 / 深色”两态切换；首次访问的初始值由引导脚本按系统偏好确定。 */

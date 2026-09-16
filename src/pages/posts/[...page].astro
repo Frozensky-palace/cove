@@ -1,0 +1,97 @@
+---
+/**
+ * 文章列表页（指南 9.3）：构建期分页（paginate），每页 10 篇；
+ * 筛选导航为普通链接，无 JS 可用。
+ */
+import type { GetStaticPaths } from 'astro';
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import ArticleListItem from '@/components/content/ArticleListItem.astro';
+import Pagination from '@/components/content/Pagination.astro';
+import EmptyState from '@/components/content/EmptyState.astro';
+import Button from '@/components/base/Button.astro';
+import { categoryLabel } from '@/data/taxonomy';
+import { categoryUrl } from '@/lib/urls';
+import { getCategoryStats, getPublishedPosts } from '@/lib/content';
+
+export async function getStaticPaths({ paginate }: Parameters<GetStaticPaths>[0]) {
+  const posts = await getPublishedPosts();
+  return paginate(posts, { pageSize: 10 });
+}
+
+const { page } = Astro.props;
+const categoryStats = await getCategoryStats();
+---
+
+<ContentLayout
+  title={page.currentPage > 1 ? `文章 · 第 ${page.currentPage} 页` : '文章'}
+  description="按时间倒序排列的全部文章：工程实践、Web 开发、工具与思考。"
+  path={page.url.current}
+  heading="文章"
+  intro="完整成篇的内容，按发布时间倒序排列。"
+>
+  <nav class="filter-nav" aria-label="内容发现">
+    {categoryStats.map(({ key, count }) => (
+      <a href={categoryUrl(key)}>
+        {categoryLabel(key)}
+        <span class="filter-count">（{count}）</span>
+      </a>
+    ))}
+    <a href="/archive/">归档</a>
+  </nav>
+
+  {
+    page.data.length > 0 ? (
+      <div class="post-list">
+        {page.data.map((post) => (
+          <ArticleListItem post={post} />
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        title="还没有文章"
+        description="文章正在路上。可以先看看笔记与项目，或回到首页了解 Cove。"
+      >
+        <Button href="/notes/" variant="secondary" slot="actions">
+          浏览笔记
+        </Button>
+        <Button href="/" variant="ghost" slot="actions">
+          返回首页
+        </Button>
+      </EmptyState>
+    )
+  }
+
+  <Pagination page={page} />
+</ContentLayout>
+
+<style>
+  .filter-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.125rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-nav a {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    text-decoration-line: none;
+    transition: color 150ms ease;
+  }
+
+  .filter-nav a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .filter-count {
+    font-size: 0.8125rem;
+  }
+
+  .post-list {
+    max-width: 46rem;
+  }
+</style>

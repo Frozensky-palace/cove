@@ -1,0 +1,17 @@
+---
+/**
+ * 文章详情页：数据由 ArticleLayout 内部组织（指南 9.4）。
+ * 草稿/计划发布内容仅在开发环境生成路由。
+ */
+import ArticleLayout from '@/layouts/ArticleLayout.astro';
+import { getPublishedPosts } from '@/lib/content';
+
+export async function getStaticPaths() {
+  const posts = await getPublishedPosts();
+  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+---
+
+<ArticleLayout post={post} />

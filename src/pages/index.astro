@@ -1,11 +1,38 @@
 ---
 /**
- * 首页空壳（Phase 1 交付物）。
- * 真实首页区块（精选、最新文章、最近笔记、代表项目）在 Phase 3 实现（指南 9.2）。
+ * 首页（指南 9.2）：作者是谁、写什么、从哪里开始读。
+ * 结构：Hero（360–440px）→ 精选文章（1 重点 + 2 条目）→ 最新文章 →
+ * 最近笔记 → 代表项目。区块无内容时整体隐藏，全部为空时给空状态。
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Button from '@/components/base/Button.astro';
+import HomeSection from '@/components/home/HomeSection.astro';
+import ArticleCard from '@/components/content/ArticleCard.astro';
+import ArticleListItem from '@/components/content/ArticleListItem.astro';
+import NoteListItem from '@/components/content/NoteListItem.astro';
+import ProjectCard from '@/components/content/ProjectCard.astro';
+import EmptyState from '@/components/content/EmptyState.astro';
 import { siteConfig } from '@/data/site';
+import {
+  getFeaturedPosts,
+  getPublishedPosts,
+  getPublishedNotes,
+  getPublishedProjects,
+} from '@/lib/content';
+
+const featured = await getFeaturedPosts(3);
+const featuredMain = featured[0];
+const featuredRest = featured.slice(1, 3);
+
+// 最新文章排除已在精选区出现的条目，避免首页重复
+const featuredIds = new Set(featured.map((post) => post.id));
+const latestPosts = (await getPublishedPosts()).filter((post) => !featuredIds.has(post.id)).slice(0, 5);
+
+const recentNotes = (await getPublishedNotes()).slice(0, 3);
+const featuredProjects = (await getPublishedProjects()).slice(0, 2);
+
+const hasContent =
+  featured.length > 0 || latestPosts.length > 0 || recentNotes.length > 0 || featuredProjects.length > 0;
 ---
 
 <BaseLayout title={siteConfig.name} description={siteConfig.tagline} path="/">
@@ -21,12 +48,70 @@ import { siteConfig } from '@/data/site';
     </div>
   </section>
 
-  <section class="cove-container building-note" aria-label="建设状态说明">
-    <p>
-      站点骨架建设中：文章、笔记、项目与搜索等内容区块将随后续阶段上线。
-      当前可查看 <a href="/dev/">组件与设计令牌展示页</a>。
-    </p>
-  </section>
+  <div class="cove-container">
+    {
+      hasContent ? (
+        <>
+          {featured.length > 0 && (
+            <HomeSection title="精选文章" moreHref="/posts/">
+              <div class="featured-grid">
+                {featuredMain && <ArticleCard post={featuredMain} emphasis />}
+                {featuredRest.length > 0 && (
+                  <div class="featured-side">
+                    {featuredRest.map((post) => (
+                      <ArticleCard post={post} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </HomeSection>
+          )}
+
+          {latestPosts.length > 0 && (
+            <HomeSection title="最新文章" moreHref="/posts/">
+              <div class="latest-list">
+                {latestPosts.map((post) => (
+                  <ArticleListItem post={post} />
+                ))}
+              </div>
+            </HomeSection>
+          )}
+
+          {recentNotes.length > 0 && (
+            <HomeSection title="最近笔记" moreHref="/notes/">
+              <div class="notes-list">
+                {recentNotes.map((note) => (
+                  <NoteListItem note={note} />
+                ))}
+              </div>
+            </HomeSection>
+          )}
+
+          {featuredProjects.length > 0 && (
+            <HomeSection title="代表项目" moreHref="/projects/">
+              <div class="projects-list">
+                {featuredProjects.map((project) => (
+                  <ProjectCard project={project} />
+                ))}
+              </div>
+            </HomeSection>
+          )}
+        </>
+      ) : (
+        <EmptyState
+          title="内容还在海湾里酝酿"
+          description="文章、笔记与项目正在整理中，先看看设计系统展示页，或稍后再来。"
+        >
+          <Button href="/dev/" variant="secondary" slot="actions">
+            设计系统展示
+          </Button>
+          <Button href="/posts/" variant="ghost" slot="actions">
+            浏览文章
+          </Button>
+        </EmptyState>
+      )
+    }
+  </div>
 </BaseLayout>
 
 <style>
@@ -69,23 +154,35 @@ import { siteConfig } from '@/data/site';
     margin-top: 2rem;
   }
 
-  .building-note {
-    margin-top: 1.5rem;
+  /* 精选：重点卡片 + 两个紧凑条目；窄屏纵向堆叠 */
+  .featured-grid {
+    display: grid;
+    gap: 1rem;
   }
 
-  .building-note p {
-    margin: 0;
-    padding: 0.875rem 1.25rem;
-    border: 1px dashed var(--border);
-    border-radius: var(--radius-control);
-    color: var(--text-muted);
-    font-size: 14px;
-    line-height: 1.8;
+  .featured-side {
+    display: grid;
+    gap: 1rem;
   }
 
-  .building-note a {
-    color: var(--cove-blue-strong);
-    text-decoration-line: underline;
-    text-underline-offset: 0.3em;
+  @media (min-width: 960px) {
+    .featured-grid {
+      grid-template-columns: 1.55fr 1fr;
+      align-items: start;
+    }
+  }
+
+  .latest-list {
+    max-width: 46rem;
+  }
+
+  .notes-list {
+    max-width: 46rem;
+  }
+
+  .projects-list {
+    display: grid;
+    gap: 1rem;
+    max-width: 46rem;
   }
 </style>

@@ -1,0 +1,71 @@
+---
+/**
+ * 首页区块容器（指南 9.2）：区块标题 + 可选「查看全部」入口 + 内容槽。
+ * 标题固定 h2（首页 h1 在 hero），保证标题层级连续。
+ */
+interface Props {
+  title: string;
+  /** 「查看全部」目标路径；缺省时不渲染入口 */
+  moreHref?: string;
+  moreLabel?: string;
+  /** 无障碍区块标签，缺省用 title */
+  label?: string;
+}
+
+const { title, moreHref, moreLabel = '查看全部', label } = Astro.props;
+---
+
+<section class="home-section" aria-label={label ?? title}>
+  <div class="section-head">
+    <h2 class="section-title">{title}</h2>
+    {
+      moreHref && (
+        <a class="section-more" href={moreHref}>
+          {moreLabel}
+          <span aria-hidden="true">→</span>
+        </a>
+      )
+    }
+  </div>
+  <slot />
+</section>
+
+<style>
+  .home-section {
+    margin-top: 3.5rem;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .section-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    text-decoration-line: none;
+    white-space: nowrap;
+    transition: color 150ms ease;
+  }
+
+  .section-more:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+</style>
