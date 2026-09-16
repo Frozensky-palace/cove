@@ -12,9 +12,10 @@ export default defineConfig({
   // 在 Phase 7 部署时用 /posts/example 与 /posts/example/ 实测验证。
   integrations: [vue()],
   // 统一本地端口：dev 与 preview 均为 4321（Astro 默认值，此处显式固化）
+  // 注：astro preview 委托 Vite preview 服务器，其端口在 vite.preview 中配置
   server: { port: 4321 },
-  preview: { port: 4321 },
   vite: {
     plugins: [tailwindcss()],
+    preview: { port: 4321 },
   },
 });
