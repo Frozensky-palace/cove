@@ -1,7 +1,7 @@
 ---
 /**
  * 全局页头（指南 9.1）：标志、一级导航、搜索入口与主题按钮。
- * 桌面高度 64px，吸顶 + 实色背景；当前页以细线与文字色表达。
+ * 桌面高度 68px（指南区间 64–72px），吸顶 + 实色背景；当前页以细线与文字色表达。
  * 窄屏（≤899px）：原生链接隐藏，MobileNav（Vue Sheet，client:media）接管；
  * JS 不可用时（html.no-js）回退为可换行的原生链接列表（渐进增强，IMPL-009）。
  */
@@ -53,11 +53,15 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     <div class="header-actions">
       {/* 搜索对话框（IMPL-008 落地）：client:idle 水合，Ctrl/Cmd+K 与 / 唤起 */}
       <SearchDialog client:idle />
-      {/* JS 不可用时的降级入口：直达 /search/ 完整页 */}
-      <a class="search-entry search-fallback" href="/search/" aria-label="搜索（前往搜索页）">
-        <SearchIcon size={18} />
-        <span aria-hidden="true">搜索</span>
-      </a>
+      {/* JS 不可用时的降级入口：直达 /search/ 完整页。
+          放入 noscript 而非 CSS 切换：无 JS 时浏览器渲染，有 JS 时根本不进渲染树，
+          不依赖任何样式竞争（IMPL-019）。 */}
+      <noscript>
+        <a class="search-entry search-fallback" href="/search/" aria-label="搜索（前往搜索页）">
+          <SearchIcon size={18} />
+          <span aria-hidden="true">搜索</span>
+        </a>
+      </noscript>
       <ThemeToggle />
       <MobileNav
         client:media="(max-width: 899px)"
@@ -83,8 +87,8 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem 1rem;
-    min-height: 64px;
-    padding-block: 0.25rem;
+    min-height: 68px;
+    padding-block: 0.5rem;
   }
 
   .brand {
@@ -98,7 +102,7 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.75rem;
     list-style: none;
     margin: 0;
     padding: 0;
@@ -108,7 +112,7 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-    padding-inline: 0.75rem;
+    padding-inline: 1rem;
     border-radius: var(--radius-control);
     color: var(--text-muted);
     font-size: 15px;
@@ -135,7 +139,7 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
   }
 
   .search-entry {
@@ -169,17 +173,10 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
 </style>
 
 <style is:global>
-  /* JS 不可用：隐藏岛屿触发器（点击无响应），保留可换行的原生链接导航与搜索页直达链接 */
+  /* JS 不可用：隐藏岛屿触发器（点击无响应），保留可换行的原生链接导航；
+      搜索回退链接已改由 noscript 提供（IMPL-019），无需样式切换 */
   html.no-js .mobile-nav-trigger,
   html.no-js .search-trigger {
     display: none !important;
-  }
-
-  .search-fallback {
-    display: none;
-  }
-
-  html.no-js .search-fallback {
-    display: inline-flex;
   }
 </style>

@@ -39,10 +39,20 @@ const displayTitle = note.data.title ?? `${formatDate(note.data.publishedAt)} �
     flex-direction: column;
     gap: 0.5rem;
     padding-block: 1.25rem;
+    /* 负外边距 + 内边距对称扩展：悬停底色出血而不改变排版位置 */
+    padding-inline: 0.625rem;
+    margin-inline: -0.625rem;
+    border-radius: var(--radius-control);
+    transition: background-color 150ms ease;
   }
 
   .note-item + .note-item {
     border-top: 1px dashed var(--border);
+  }
+
+  /* 悬停：品牌色淡底（指南 8.6：仅颜色变化，无位移） */
+  .note-item:hover {
+    background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
   }
 
   .note-heading {

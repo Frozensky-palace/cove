@@ -68,4 +68,13 @@ const { title, moreHref, moreLabel = '查看全部', label } = Astro.props;
     text-decoration-line: underline;
     text-underline-offset: 0.3em;
   }
+
+  /* 箭头随悬停轻推 2px（指南 8.6 位移上限） */
+  .section-more span {
+    transition: transform 150ms ease;
+  }
+
+  .section-more:hover span {
+    transform: translateX(2px);
+  }
 </style>

@@ -66,10 +66,14 @@ const year = project.data.startedAt?.slice(0, 4) ?? '';
     border: 1px solid var(--border);
     border-radius: var(--radius-overlay);
     background-color: var(--surface);
-    transition: border-color 120ms ease;
+    transition:
+      transform 180ms ease,
+      border-color 120ms ease;
   }
 
+  /* 悬停：2px 上浮 + 品牌色描边（指南 8.6） */
   .project-card:hover {
+    transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
   }
 

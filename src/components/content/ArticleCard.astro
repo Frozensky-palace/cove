@@ -59,6 +59,15 @@ const hasCover = Boolean(post.data.cover);
     border: 1px solid var(--border);
     border-radius: var(--radius-overlay);
     background-color: var(--surface);
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease;
+  }
+
+  /* 悬停：2px 上浮 + 品牌色描边（指南 8.6 悬停反馈白名单：位移 ≤2px、颜色） */
+  .article-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
   }
 
   .card-cover {

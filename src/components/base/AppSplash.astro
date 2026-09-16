@@ -66,7 +66,9 @@
 </script>
 
 <!-- 退出：astro:page-load 优先，2500ms 兜底（防事件异常卡死加载页）。
-     已展示过的会话直接跳过（ClientRouter 换页会重执行本内联脚本）。 -->
+     已展示过的会话直接跳过（ClientRouter 换页会重执行本内联脚本）。
+     最小展示 600ms + 双 rAF：astro:page-load 在本地静态页可能先于首绘触发，
+     不设下限会导致加载页从未被看见即开始淡出。 -->
 <script is:inline>
   (function () {
     var alreadyShown = false;
@@ -77,11 +79,14 @@
     }
     if (alreadyShown) return;
 
+    var start = Date.now();
+    var MIN_SHOW_MS = 600;
+
     var done = false;
     function dismiss() {
       if (done) return;
       done = true;
-      document.removeEventListener('astro:page-load', dismiss);
+      document.removeEventListener('astro:page-load', maybeDismiss);
       document.documentElement.classList.remove('splash-on');
       try {
         sessionStorage.setItem('cove:splash-shown', '1');
@@ -96,7 +101,21 @@
         }, 240);
       }
     }
-    document.addEventListener('astro:page-load', dismiss);
-    setTimeout(dismiss, 2500);
+
+    /* 双 rAF：等到至少一帧真实绘制完成后再淡出 */
+    function paintThenDismiss() {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(dismiss);
+      });
+    }
+
+    function maybeDismiss() {
+      var wait = MIN_SHOW_MS - (Date.now() - start);
+      if (wait > 0) setTimeout(paintThenDismiss, wait);
+      else paintThenDismiss();
+    }
+
+    document.addEventListener('astro:page-load', maybeDismiss);
+    setTimeout(maybeDismiss, 2500);
   })();
 </script>

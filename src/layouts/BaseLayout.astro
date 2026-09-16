@@ -106,45 +106,67 @@ const structuredData = [personJsonLd(), ...jsonLd];
       ))
     }
 
-    <!-- 主题引导：在首次绘制前恢复主题，避免闪烁（指南 4.2 / 10，IMPL-011）。
+    <!-- 主题引导与首绘前关键规则（指南 4.2 / 10，IMPL-011/018/019）。
          必须保持 is:inline 且自包含，不依赖任何外部资源。
-         两态（浅色/深色）：无存值时以系统偏好作一次性初始值，不作为可切换模式暴露。 -->
+         两态（浅色/深色）：无存值时以系统偏好作一次性初始值，不作为可切换模式暴露。
+         ClientRouter（IMPL-017）换页会把 <html> 属性覆盖回服务端渲染态
+         （class="no-js"、无 dark/data-theme）——导致深色被重置为浅色。
+         故在 astro:after-swap（换页完成、绘制前同步触发）重放全部状态。
+         搜索回退链接不在此处处理：已改由 noscript 提供（IMPL-019），
+         不参与任何样式竞争。 -->
     <script is:inline>
       (function () {
-        var mode = 'light';
-        try {
-          var stored = localStorage.getItem('cove:theme');
-          mode =
-            stored === 'light' || stored === 'dark'
-              ? stored
-              : window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light';
-        } catch (e) {
-          /* 隐私模式等场景下回退到系统偏好 */
-          mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        function resolveMode() {
+          try {
+            var stored = localStorage.getItem('cove:theme');
+            if (stored === 'light' || stored === 'dark') return stored;
+          } catch (e) {
+            /* 隐私模式等场景：回退到系统偏好 */
+          }
+          return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
-        var root = document.documentElement;
-        root.classList.remove('no-js');
-        root.classList.toggle('dark', mode === 'dark');
-        root.dataset.theme = mode;
-        root.style.colorScheme = mode;
-        /* 首绘前同步注入图标状态规则（与 global.css 中未分层规则保持一致），
-           覆盖 dev 模式下 CSS 异步注入前的空窗，避免同时闪现两个图标。
-           带 id 复用：ClientRouter 换页会重执行本内联脚本（IMPL-017），
-           不加防护会导致镜像 style 标签逐次累积。 */
-        var MIRROR_ID = 'cove-theme-icon-rules';
-        var style = document.getElementById(MIRROR_ID);
-        if (!style) {
-          style = document.createElement('style');
-          style.id = MIRROR_ID;
-          document.head.appendChild(style);
+
+        /* 镜像规则：覆盖 dev 模式下 Vite 异步注入 CSS 前的空窗。
+           与 global.css / SiteHeader / AppSplash 中的正式规则保持一致，
+           加载页遮罩颜色按当前主题以字面量内联（tokens.css 亦可能未注入）。 */
+        function criticalRules(mode) {
+          var splashBg = mode === 'dark' ? '#111a20' : '#f8fbfc';
+          return (
+            'html:not([data-theme=dark]) .theme-icon-light{display:flex}' +
+            'html:not([data-theme=dark]) .theme-icon-dark{display:none}' +
+            'html[data-theme=dark] .theme-icon-light{display:none}' +
+            'html[data-theme=dark] .theme-icon-dark{display:flex}' +
+            'html.no-js .search-trigger{display:none!important}' +
+            'html.splash-on .app-splash{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background-color:' +
+            splashBg +
+            '}'
+          );
         }
-        style.textContent =
-          'html:not([data-theme=dark]) .theme-icon-light{display:flex}' +
-          'html:not([data-theme=dark]) .theme-icon-dark{display:none}' +
-          'html[data-theme=dark] .theme-icon-light{display:none}' +
-          'html[data-theme=dark] .theme-icon-dark{display:flex}';
+
+        function applyTheme() {
+          var mode = resolveMode();
+          var root = document.documentElement;
+          root.classList.remove('no-js');
+          root.classList.toggle('dark', mode === 'dark');
+          root.dataset.theme = mode;
+          root.style.colorScheme = mode;
+          var MIRROR_ID = 'cove-critical-rules';
+          var style = document.getElementById(MIRROR_ID);
+          if (!style) {
+            style = document.createElement('style');
+            style.id = MIRROR_ID;
+            document.head.appendChild(style);
+          }
+          style.textContent = criticalRules(mode);
+        }
+
+        applyTheme();
+
+        /* 换页后重放：监听器挂 document（跨换页存活），window 标记防重复注册 */
+        if (!window.__coveThemeBound) {
+          window.__coveThemeBound = true;
+          document.addEventListener('astro:after-swap', applyTheme);
+        }
       })();
     </script>
   </head>
