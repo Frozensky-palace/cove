@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Cove 默认社交分享图源（scripts/generate-og.mjs 渲染为 PNG）。
+       颜色取自 tokens.css 浅色令牌；不使用中文文本（环境字体差异）。 -->
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3f789f" />
+      <stop offset="1" stop-color="#dea0af" />
+    </linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6799bd" stop-opacity="0.35" />
+      <stop offset="1" stop-color="#dea0af" stop-opacity="0.35" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#f8fbfc" />
+
+  <!-- 右下角双层海浪 -->
+  <path d="M0 630 L0 520 C 200 460, 380 560, 600 520 C 820 480, 1000 570, 1200 510 L1200 630 Z" fill="url(#wave)" />
+  <path d="M0 630 L0 575 C 220 525, 420 610, 640 570 C 860 530, 1030 615, 1200 565 L1200 630 Z" fill="url(#brand)" opacity="0.18" />
+
+  <!-- 左上品牌区 -->
+  <rect x="96" y="150" width="64" height="8" rx="4" fill="url(#brand)" />
+  <text x="96" y="290" font-family="Georgia, 'Times New Roman', serif" font-size="132" font-weight="700" fill="#243746" letter-spacing="2">Cove</text>
+  <text x="100" y="356" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#687b87" letter-spacing="1">Writing · Notes · Projects</text>
+
+  <!-- 右上点缀贝壳圆点 -->
+  <circle cx="1074" cy="132" r="60" fill="#dea0af" opacity="0.25" />
+  <circle cx="1120" cy="196" r="22" fill="#6799bd" opacity="0.4" />
+  <circle cx="1032" cy="210" r="12" fill="#3f789f" opacity="0.3" />
+</svg>

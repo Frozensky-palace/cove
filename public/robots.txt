@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-# TODO(Phase 4)：Sitemap 生成后启用，并替换为正式域名
-# Sitemap: https://cove.example.com/sitemap-index.xml

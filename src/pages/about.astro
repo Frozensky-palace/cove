@@ -1,0 +1,90 @@
+---
+/**
+ * 关于页（指南 9.8）：介绍作者、Cove 的含义、长期主题、联系方式和 RSS。
+ * 内容应真实具体，避免能力图标墙和百分比进度条。
+ * 站点信息一律取自 siteConfig（IMPL-005：占位值待 Phase 0 确认项替换）。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import { siteConfig } from '@/data/site';
+import RssIcon from '@/components/base/icons/RssIcon.astro';
+---
+
+<ContentLayout
+  title="关于"
+  heading={`你好，我是 ${siteConfig.author.name}`}
+  intro="这里是我的小海湾：写长文、记短想、做项目，也留下过程与反思。"
+  description={`关于 ${siteConfig.name} 与 ${siteConfig.author.name}：写作、笔记与项目的长期主题，以及联系方式与订阅方式。`}
+  path="/about/"
+>
+  <div class="about prose">
+    <h2>Cove 是什么</h2>
+    <p>
+      Cove 的本意是「小海湾」。我希望这个站点像一片安静的小海湾：潮水来去，
+      沉淀下来的都是值得留住的文字与作品。这里没有热点的喧嚣，只有三样东西——
+      完整论述的<strong>文章</strong>、随手记录的<strong>笔记</strong>，
+      以及有过程、有反思的<strong>项目</strong>。
+    </p>
+
+    <h2>长期主题</h2>
+    <p>我关注的方向会随时间慢慢生长，目前主要包括：</p>
+    <ul>
+      <li>前端工程与类型系统：把复杂问题拆成可维护的结构；</li>
+      <li>静态站点与内容工程：以 Git 为源、构建即发布的工作流；</li>
+      <li>技术写作与知识整理：让笔记真正被自己再次读到。</li>
+    </ul>
+
+    <h2>这个站点如何运转</h2>
+    <p>
+      Cove 由 <a href="https://astro.build/">Astro</a> 静态构建，内容以 Markdown
+      存放在 Git 仓库中，部署在 Cloudflare 上。没有追踪脚本，没有行为广告；
+      搜索在浏览器本地完成。你可以在
+      <a href="/archive/">归档</a> 里按年份回看全部内容。
+    </p>
+
+    <h2>联系与订阅</h2>
+    <p>欢迎通过以下方式找到我，或订阅 RSS 及时获取新文章。</p>
+    <ul class="about-links">
+      <li>
+        <a href="/rss.xml">
+          <RssIcon />
+          RSS 订阅
+        </a>
+      </li>
+      {
+        siteConfig.social.map((link) => (
+          <li>
+            <a href={link.href} rel="me noopener">
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</ContentLayout>
+
+<style>
+  .about {
+    max-width: 720px;
+  }
+
+  .about-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+  }
+
+  .about-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--cove-blue-strong);
+  }
+
+  .about-links a :global(svg) {
+    width: 1em;
+    height: 1em;
+  }
+</style>

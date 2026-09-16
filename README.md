@@ -40,17 +40,16 @@ pnpm dev                 # 本地开发预览 http://localhost:4321
 | `pnpm dev` | 启动本地开发服务器 |
 | `pnpm check` | 类型与内容检查（`astro check`） |
 | `pnpm build:site` | 生产构建（输出 `dist/`） |
-| `pnpm build` | 检查 + 生产构建 |
+| `pnpm build:search` | 单独运行 Pagefind 索引（已包含在 `build` 链中） |
+| `pnpm build` | 检查 + 生产构建 + Pagefind 索引 |
 | `pnpm preview` | 本地预览生产构建 |
-
-> Pagefind 搜索索引（`build:search`）将在 Phase 4 接入后加入 `build` 链，见 `docs/decision-log.md` IMPL-006。
 
 ## 项目结构
 
 ```text
 cove/
 ├── docs/                    # 开发指南、提案、决策记录、内容清单
-├── public/                  # 静态资源（favicon、robots 等）
+├── public/                  # 静态资源（favicon、og-default.png、site.webmanifest 等）
 ├── src/
 │   ├── assets/              # 品牌、插画、文章与项目媒体
 │   ├── components/
@@ -63,9 +62,10 @@ cove/
 │   ├── content/             # posts / notes / projects（Content Collections）
 │   ├── data/site.ts         # 站点名称、作者、社交链接等
 │   ├── layouts/             # BaseLayout、ContentLayout、ArticleLayout
-│   ├── lib/                 # content、seo、urls、utils
+│   ├── lib/                 # content、seo、search、urls 等
 │   ├── pages/               # 路由页面
 │   └── styles/              # tokens.css、global.css、prose.css
+├── scripts/                 # 工具脚本（og-default.svg 及其 PNG 生成）
 ├── astro.config.mjs
 └── package.json
 ```
@@ -96,10 +96,10 @@ cove/
 
 - [x] Phase 0：项目基线与设计准备
 - [x] Phase 1：工程骨架与设计令牌
-- [ ] Phase 2：内容系统
-- [ ] Phase 3：首页与核心阅读体验
-- [ ] Phase 4：内容发现与搜索
-- [ ] Phase 5：SEO、分享与可访问性
+- [x] Phase 2：内容系统
+- [x] Phase 3：首页与核心阅读体验
+- [x] Phase 4：内容发现与搜索
+- [x] Phase 5：SEO、分享与可访问性（Lighthouse 与 200% 缩放等运行时验收待 `pnpm preview` 实测）
 - [ ] Phase 6：CMS 与外部集成
 - [ ] Phase 7：部署、质量门禁与上线
 - [ ] Phase 8：上线观察与后续迭代

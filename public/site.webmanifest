@@ -1,0 +1,19 @@
+{
+  "name": "Cove",
+  "short_name": "Cove",
+  "description": "小海湾里的文字、项目与技术分享",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fbfc",
+  "theme_color": "#3f789f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

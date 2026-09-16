@@ -54,5 +54,5 @@ export const siteConfig = {
   ] satisfies NavItem[],
 
   /** TODO(Phase 0)：社交链接确认后补充 */
-  social: [] satisfies SocialLink[],
+  social: [] as SocialLink[],
 } as const;

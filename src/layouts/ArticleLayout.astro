@@ -18,11 +18,13 @@ import {
   getAdjacentPosts,
   getRelatedPosts,
   isPreviewOnly,
+  shanghaiDate,
   showPreviewContent,
   type Post,
 } from '@/lib/content';
 import { categoryLabel } from '@/data/taxonomy';
 import { categoryUrl, postUrl } from '@/lib/urls';
+import { articleBreadcrumb, blogPostingJsonLd, DEFAULT_OG_IMAGE, resolveSiteURL } from '@/lib/seo';
 
 interface Props {
   post: Post;
@@ -33,6 +35,19 @@ const { Content, headings } = await render(post);
 const { prev, next } = await getAdjacentPosts(post);
 const related = await getRelatedPosts(post);
 const previewOnly = showPreviewContent && isPreviewOnly(post);
+
+/* 社交分享图：封面为位图时用封面（SVG 封面多数平台不识别，回退默认图） */
+const cover = post.data.cover;
+const ogImageProps =
+  cover && cover.format !== 'svg'
+    ? { imagePath: cover.src, imageWidth: cover.width, imageHeight: cover.height }
+    : {};
+const ogImageURL = resolveSiteURL(ogImageProps.imagePath ?? DEFAULT_OG_IMAGE.path);
+const ogMetadata = {
+  ...ogImageProps,
+  ogType: 'article' as const,
+  publishedTime: shanghaiDate(post.data.publishedAt).toISOString(),
+};
 ---
 
 <BaseLayout
@@ -40,6 +55,8 @@ const previewOnly = showPreviewContent && isPreviewOnly(post);
   description={post.data.description}
   path={postUrl(post.id)}
   noindex={previewOnly}
+  {...ogMetadata}
+  jsonLd={[blogPostingJsonLd(post, ogImageURL), articleBreadcrumb(post)]}
 >
   {previewOnly && (
     <div class="preview-banner" role="note">
