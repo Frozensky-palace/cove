@@ -242,53 +242,72 @@ const ogMetadata = {
 
 <script>
   /**
-   * 阅读进度：顶部 2px 细线（指南 9.4），scroll 驱动，reduced-motion 下同样即时。
+   * ClientRouter 环境（IMPL-017）：初始化挂在 astro:page-load 上，
+   * 首次加载与每次换页后触发；先移除旧进度条保证幂等。
    */
-  const article = document.querySelector('article[data-pagefind-body]');
-  const bar = document.createElement('div');
-  bar.className = 'reading-progress';
-  bar.setAttribute('aria-hidden', 'true');
-  document.body.prepend(bar);
+  let progressCleanup: AbortController | null = null;
 
-  function updateProgress() {
-    if (!article) return;
-    const rect = article.getBoundingClientRect();
-    const total = rect.height - window.innerHeight;
-    if (total <= 0) {
-      bar.style.transform = 'scaleX(1)';
-      return;
-    }
-    const progress = Math.min(1, Math.max(0, -rect.top / total));
-    bar.style.transform = `scaleX(${progress})`;
-  }
+  function initArticleEnhancements(): void {
+    /* 中止上一页遗留的 scroll/resize 监听（window 跨换页存活） */
+    progressCleanup?.abort();
+    progressCleanup = null;
+    document.querySelector('.reading-progress')?.remove();
+    const articleQuery = document.querySelector<HTMLElement>('article[data-pagefind-body]');
+    if (!articleQuery) return;
+    /* 守卫后别名：astro check 对闭包内的收窄不可靠，别名固定非空类型 */
+    const article: HTMLElement = articleQuery;
 
-  window.addEventListener('scroll', updateProgress, { passive: true });
-  window.addEventListener('resize', updateProgress);
-  updateProgress();
+    /** 阅读进度：顶部 2px 细线（指南 9.4），scroll 驱动，reduced-motion 下同样即时。 */
+    const bar = document.createElement('div');
+    bar.className = 'reading-progress';
+    bar.setAttribute('aria-hidden', 'true');
+    document.body.prepend(bar);
 
-  /**
-   * 代码复制按钮（指南 9.4 / 10 CodeCopyButton）：原生脚本渐进增强，
-   * 无 JS 时代码块仍完整可读，用户可手动选择复制。
-   */
-  for (const pre of document.querySelectorAll<HTMLPreElement>('pre.astro-code')) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'code-copy';
-    button.textContent = '复制';
-    button.addEventListener('click', async () => {
-      const code = pre.querySelector('code')?.innerText ?? '';
-      try {
-        await navigator.clipboard.writeText(code);
-        button.textContent = '已复制';
-      } catch {
-        button.textContent = '复制失败';
+    function updateProgress() {
+      const rect = article.getBoundingClientRect();
+      const total = rect.height - window.innerHeight;
+      if (total <= 0) {
+        bar.style.transform = 'scaleX(1)';
+        return;
       }
-      setTimeout(() => {
-        button.textContent = '复制';
-      }, 1600);
+      const progress = Math.min(1, Math.max(0, -rect.top / total));
+      bar.style.transform = `scaleX(${progress})`;
+    }
+
+    progressCleanup = new AbortController();
+    window.addEventListener('scroll', updateProgress, {
+      passive: true,
+      signal: progressCleanup.signal,
     });
-    pre.append(button);
+    window.addEventListener('resize', updateProgress, { signal: progressCleanup.signal });
+    updateProgress();
+
+    /**
+     * 代码复制按钮（指南 9.4 / 10 CodeCopyButton）：原生脚本渐进增强，
+     * 无 JS 时代码块仍完整可读，用户可手动选择复制。
+     */
+    for (const pre of document.querySelectorAll<HTMLPreElement>('pre.astro-code')) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'code-copy';
+      button.textContent = '复制';
+      button.addEventListener('click', async () => {
+        const code = pre.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+          button.textContent = '已复制';
+        } catch {
+          button.textContent = '复制失败';
+        }
+        setTimeout(() => {
+          button.textContent = '复制';
+        }, 1600);
+      });
+      pre.append(button);
+    }
   }
+
+  document.addEventListener('astro:page-load', initArticleEnhancements);
 </script>
 
 <style is:global>

@@ -149,9 +149,13 @@ const hasToc = toc.length >= 3;
   /**
    * 当前章节高亮：IntersectionObserver 观察标题进入视口顶部区域。
    * 纯渐进增强，无 JS 时目录仍是可用链接。
+   * ClientRouter 环境（IMPL-017）：初始化挂在 astro:page-load 上，
+   * 该事件在首次加载与每次换页后都会触发，且监听器跨换页存活。
    */
-  const toc = document.querySelector<HTMLElement>('[data-toc]');
-  if (toc) {
+  function initTOC(): void {
+    const toc = document.querySelector<HTMLElement>('[data-toc]');
+    if (!toc) return;
+
     const links = new Map<string, HTMLAnchorElement>();
     for (const link of toc.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')) {
       const id = link.hash.slice(1);
@@ -181,4 +185,6 @@ const hasToc = toc.length >= 3;
       if (target) observer.observe(target);
     }
   }
+
+  document.addEventListener('astro:page-load', initTOC);
 </script>

@@ -1,0 +1,102 @@
+---
+/**
+ * 首次进入品牌加载页（IMPL-017）：
+ * - 会话内仅首次进入显示（sessionStorage `cove:splash-shown`）
+ * - 显示逻辑由紧随标记的内联脚本在解析期同步执行，先于首绘、无闪现；
+   无 JS 时 html 不携带 splash-on，加载页永不出现（渐进增强）
+ * - astro:page-load 或 2500ms 兜底后淡出移除；ClientRouter 环境下
+   首次加载同样触发 astro:page-load
+ * - 视觉复用 Logo 品牌语言（渐变标志 + 波浪）；reduced-motion 下
+   波浪动画由 global.css 全局规则关闭，静态呈现后正常退出
+ */
+---
+
+<div class="app-splash" aria-hidden="true">
+  <div class="app-splash-inner">
+    <svg class="app-splash-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="cove-splash-gradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#6799bd"></stop>
+          <stop offset="1" stop-color="#dea0af"></stop>
+        </linearGradient>
+      </defs>
+      <rect width="24" height="24" rx="6" fill="url(#cove-splash-gradient)"></rect>
+      <path
+        d="M5 13.2c2.33-2.4 4.67-2.4 7 0s4.67 2.4 7 0"
+        stroke="#f8fbfc"
+        stroke-width="1.75"
+        stroke-linecap="round"
+      ></path>
+      <path
+        d="M7 16.8c1.83-1.8 3.67-1.8 5.5 0s3.67 1.8 5.5 0"
+        stroke="#f7e8ec"
+        stroke-opacity="0.75"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      ></path>
+    </svg>
+    <p class="app-splash-name">Cove</p>
+    <div class="app-splash-wave">
+      <svg viewBox="0 0 360 24" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          d="M0 12 Q15 2 30 12 T60 12 T90 12 T120 12 T150 12 T180 12 T210 12 T240 12 T270 12 T300 12 T330 12 T360 12"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        ></path>
+      </svg>
+    </div>
+    <p class="app-splash-tagline">小海湾里的文字、项目与技术分享</p>
+  </div>
+</div>
+
+<!-- 解析期同步决定是否显示：先于首绘，避免内容闪现后再盖加载页 -->
+<script is:inline>
+  (function () {
+    var show = false;
+    try {
+      show = !sessionStorage.getItem('cove:splash-shown');
+    } catch (e) {
+      /* 隐私模式等场景：宁可少见，不重复打扰 */
+      show = false;
+    }
+    if (show) document.documentElement.classList.add('splash-on');
+  })();
+</script>
+
+<!-- 退出：astro:page-load 优先，2500ms 兜底（防事件异常卡死加载页）。
+     已展示过的会话直接跳过（ClientRouter 换页会重执行本内联脚本）。 -->
+<script is:inline>
+  (function () {
+    var alreadyShown = false;
+    try {
+      alreadyShown = sessionStorage.getItem('cove:splash-shown') === '1';
+    } catch (e) {
+      alreadyShown = true;
+    }
+    if (alreadyShown) return;
+
+    var done = false;
+    function dismiss() {
+      if (done) return;
+      done = true;
+      document.removeEventListener('astro:page-load', dismiss);
+      document.documentElement.classList.remove('splash-on');
+      try {
+        sessionStorage.setItem('cove:splash-shown', '1');
+      } catch (e) {
+        /* 存储不可用时仅影响本页内去重，可接受 */
+      }
+      var splash = document.querySelector('.app-splash');
+      if (splash) {
+        splash.classList.add('app-splash-out');
+        setTimeout(function () {
+          splash.remove();
+        }, 240);
+      }
+    }
+    document.addEventListener('astro:page-load', dismiss);
+    setTimeout(dismiss, 2500);
+  })();
+</script>

@@ -47,6 +47,8 @@ import MoonIcon from '@/components/base/icons/MoonIcon.astro';
 </style>
 
 <script>
+  /* ClientRouter 环境（IMPL-017）：监听器挂在 document 上做事件委托，
+     跨换页存活，换页后的新按钮自动被同一处理器覆盖，无需重复绑定。 */
   type ThemeMode = 'light' | 'dark';
 
   function normalizeMode(value: string | undefined): ThemeMode {
@@ -60,16 +62,17 @@ import MoonIcon from '@/components/base/icons/MoonIcon.astro';
     root.style.colorScheme = mode;
   }
 
-  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')) {
-    button.addEventListener('click', () => {
-      const current = normalizeMode(document.documentElement.dataset.theme);
-      const next: ThemeMode = current === 'dark' ? 'light' : 'dark';
-      try {
-        localStorage.setItem('cove:theme', next);
-      } catch {
-        /* 存储不可用时仅影响记忆，不影响当次切换 */
-      }
-      applyTheme(next);
-    });
-  }
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element | null;
+    const button = target?.closest('[data-theme-toggle]');
+    if (!button) return;
+    const current = normalizeMode(document.documentElement.dataset.theme);
+    const next: ThemeMode = current === 'dark' ? 'light' : 'dark';
+    try {
+      localStorage.setItem('cove:theme', next);
+    } catch {
+      /* 存储不可用时仅影响记忆，不影响当次切换 */
+    }
+    applyTheme(next);
+  });
 </script>

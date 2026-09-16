@@ -1,7 +1,10 @@
 ---
 import '@/styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import SiteHeader from '@/components/navigation/SiteHeader.astro';
 import SiteFooter from '@/components/navigation/SiteFooter.astro';
+import AppSplash from '@/components/base/AppSplash.astro';
+import RouteProgress from '@/components/base/RouteProgress.astro';
 import { buildMetadata, personJsonLd } from '@/lib/seo';
 import { siteConfig } from '@/data/site';
 
@@ -73,6 +76,10 @@ const structuredData = [personJsonLd(), ...jsonLd];
     <meta name="generator" content={Astro.generator} />
     {meta.noindex && <meta name="robots" content="noindex, nofollow" />}
 
+    {/* 站内导航：View Transitions 路由（IMPL-017）——旧页保留至新页就绪，
+        消除整页白屏间隔；加载反馈由 AppSplash / RouteProgress 承担 */}
+    <ClientRouter />
+
     <meta property="og:type" content={meta.ogType} />
     <meta property="og:site_name" content={siteConfig.name} />
     <meta property="og:locale" content="zh_CN" />
@@ -123,23 +130,32 @@ const structuredData = [personJsonLd(), ...jsonLd];
         root.dataset.theme = mode;
         root.style.colorScheme = mode;
         /* 首绘前同步注入图标状态规则（与 global.css 中未分层规则保持一致），
-           覆盖 dev 模式下 CSS 异步注入前的空窗，避免同时闪现两个图标。 */
-        var style = document.createElement('style');
+           覆盖 dev 模式下 CSS 异步注入前的空窗，避免同时闪现两个图标。
+           带 id 复用：ClientRouter 换页会重执行本内联脚本（IMPL-017），
+           不加防护会导致镜像 style 标签逐次累积。 */
+        var MIRROR_ID = 'cove-theme-icon-rules';
+        var style = document.getElementById(MIRROR_ID);
+        if (!style) {
+          style = document.createElement('style');
+          style.id = MIRROR_ID;
+          document.head.appendChild(style);
+        }
         style.textContent =
           'html:not([data-theme=dark]) .theme-icon-light{display:flex}' +
           'html:not([data-theme=dark]) .theme-icon-dark{display:none}' +
           'html[data-theme=dark] .theme-icon-light{display:none}' +
           'html[data-theme=dark] .theme-icon-dark{display:flex}';
-        document.head.appendChild(style);
       })();
     </script>
   </head>
   <body>
+    <AppSplash />
     <a class="skip-link" href="#main-content">跳到主要内容</a>
     <SiteHeader />
     <main id="main-content" tabindex="-1">
       <slot />
     </main>
     <SiteFooter />
+    <RouteProgress />
   </body>
 </html>

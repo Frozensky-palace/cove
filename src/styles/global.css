@@ -146,3 +146,117 @@ html[data-theme='dark'] .theme-icon-light {
 html[data-theme='dark'] .theme-icon-dark {
   display: flex;
 }
+
+/*
+ * 全局加载状态（IMPL-017）。
+ * 刻意放在所有 @layer 之外：
+ * - #route-progress 由脚本在运行时创建，scoped/分层选择器不可靠；
+ * - 与主题图标规则同理，未分层可抵御组件样式干扰。
+ * 动效约束（指南 8.6）：波浪与进度动画均为功能性加载指示，
+ * 时长 120–220ms 档位；reduced-motion 下由上方全局规则关闭，
+ * 加载页退化为静态品牌画面后正常退出。
+ */
+
+/* 首次进入品牌加载页：默认隐藏，html.splash-on 时显示 */
+.app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: none;
+  place-items: center;
+  background-color: var(--background);
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+html.splash-on .app-splash {
+  display: grid;
+}
+
+.app-splash-out {
+  opacity: 0;
+}
+
+.app-splash-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.app-splash-mark {
+  width: 56px;
+  height: 56px;
+}
+
+.app-splash-name {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.app-splash-wave {
+  width: 168px;
+  height: 24px;
+  overflow: hidden;
+  color: var(--cove-blue);
+}
+
+.app-splash-wave svg {
+  display: block;
+  width: 200%;
+  height: 100%;
+  animation: splash-wave 1.8s linear infinite;
+}
+
+.app-splash-tagline {
+  margin: 0;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+@keyframes splash-wave {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* 站内导航顶部进度条：与文章页阅读进度同一视觉语言（2px 实色细线） */
+#route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 70;
+  width: 100%;
+  height: 2px;
+  background-color: var(--cove-blue-strong);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  pointer-events: none;
+}
+
+#route-progress.is-on {
+  animation: route-crawl 6s ease-out forwards;
+}
+
+#route-progress.is-on.is-done {
+  animation: none;
+  transform: scaleX(1);
+  opacity: 0;
+  transition: transform 160ms ease, opacity 240ms ease 80ms;
+}
+
+@keyframes route-crawl {
+  from {
+    transform: scaleX(0.3);
+  }
+  to {
+    transform: scaleX(0.85);
+  }
+}

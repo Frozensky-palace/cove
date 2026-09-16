@@ -1,0 +1,67 @@
+---
+/**
+ * 站内导航顶部进度条（IMPL-017）：
+ * - astro:before-preparation 触发，120ms 阈值后才显示（快速导航不闪条）
+ * - astro:after-swap 时旧 body 已被替换，进度条需在新 body 重建并播放
+   「补满 → 淡出」收尾；astro:page-load 兜底收尾（幂等）
+ * - ClientRouter 会重执行内联脚本，window 标记去重防止重复绑定
+ * - 元素由脚本动态创建，样式在 global.css（scoped 选择器无法命中）
+ */
+---
+
+<script is:inline>
+  (function () {
+    if (window.__coveRouteProgress) return;
+    window.__coveRouteProgress = true;
+
+    var bar = null;
+    var timer = null;
+    var shown = false;
+
+    function ensureBar() {
+      if (!bar || !bar.isConnected) {
+        bar = document.createElement('div');
+        bar.id = 'route-progress';
+        bar.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(bar);
+      }
+      return bar;
+    }
+
+    function reset() {
+      clearTimeout(timer);
+      timer = null;
+      shown = false;
+    }
+
+    document.addEventListener('astro:before-preparation', function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        shown = true;
+        var b = ensureBar();
+        b.classList.remove('is-done');
+        /* 强制回流，重启动画 */
+        void b.offsetWidth;
+        b.classList.add('is-on');
+      }, 120);
+    });
+
+    function finish() {
+      if (!shown) {
+        clearTimeout(timer);
+        timer = null;
+        return;
+      }
+      reset();
+      bar = null; /* 旧引用随 swap 失效，强制在新 body 重建 */
+      var b = ensureBar();
+      b.classList.add('is-on', 'is-done');
+      setTimeout(function () {
+        if (b.isConnected) b.classList.remove('is-on', 'is-done');
+      }, 360);
+    }
+
+    document.addEventListener('astro:after-swap', finish);
+    document.addEventListener('astro:page-load', finish);
+  })();
+</script>
