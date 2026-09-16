@@ -42,24 +42,37 @@ const meta = buildMetadata({ title, description, path, noindex });
     <meta property="og:url" content={meta.canonical} />
     <meta name="twitter:card" content="summary" />
 
-    <!-- 主题引导：在首次绘制前恢复主题，避免闪烁（指南 4.2 / 10，IMPL-004）。
-         必须保持 is:inline 且自包含，不依赖任何外部资源。 -->
+    <!-- 主题引导：在首次绘制前恢复主题，避免闪烁（指南 4.2 / 10，IMPL-011）。
+         必须保持 is:inline 且自包含，不依赖任何外部资源。
+         两态（浅色/深色）：无存值时以系统偏好作一次性初始值，不作为可切换模式暴露。 -->
     <script is:inline>
       (function () {
-        var mode = 'system';
+        var mode = 'light';
         try {
           var stored = localStorage.getItem('cove:theme');
-          if (stored === 'light' || stored === 'dark' || stored === 'system') mode = stored;
+          mode =
+            stored === 'light' || stored === 'dark'
+              ? stored
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
         } catch (e) {
-          /* 隐私模式等场景下回退到跟随系统 */
+          /* 隐私模式等场景下回退到系统偏好 */
+          mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
-        var dark =
-          mode === 'dark' ||
-          (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         var root = document.documentElement;
-        root.classList.toggle('dark', dark);
+        root.classList.toggle('dark', mode === 'dark');
         root.dataset.theme = mode;
-        root.style.colorScheme = dark ? 'dark' : 'light';
+        root.style.colorScheme = mode;
+        /* 首绘前同步注入图标状态规则（与 global.css 中未分层规则保持一致），
+           覆盖 dev 模式下 CSS 异步注入前的空窗，避免同时闪现两个图标。 */
+        var style = document.createElement('style');
+        style.textContent =
+          'html:not([data-theme=dark]) .theme-icon-light{display:flex}' +
+          'html:not([data-theme=dark]) .theme-icon-dark{display:none}' +
+          'html[data-theme=dark] .theme-icon-light{display:none}' +
+          'html[data-theme=dark] .theme-icon-dark{display:flex}';
+        document.head.appendChild(style);
       })();
     </script>
   </head>

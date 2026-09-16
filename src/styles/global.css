@@ -6,8 +6,8 @@
 @import 'tw-animate-css';
 @import './tokens.css';
 
-/* 深色模式由 <html>.dark 类驱动（IMPL-004），与 prefers-color-scheme 解耦，
-   以支持“浅色 / 深色 / 跟随系统”三态。 */
+/* 深色模式由 <html>.dark 类驱动（IMPL-004 / IMPL-011），与 prefers-color-scheme 解耦，
+   仅支持“浅色 / 深色”两态切换；首次访问的初始值由引导脚本按系统偏好确定。 */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* 将 CSS variables 映射为 Tailwind 颜色工具类：
@@ -118,4 +118,30 @@
   .skip-link:focus-visible {
     transform: none;
   }
+
+  /* data-theme 为 light 或未设置（无 JS）：默认浅色图标可见（见文件末尾未分层规则） */
+}
+
+/*
+ * 主题按钮图标状态（IMPL-011，两态）。
+ * 刻意放在所有 @layer 之外（未分层）：
+ * - 分层规则必然让位于未分层规则，移出层后可抵御组件库/HMR 残留样式对 display 的干扰；
+ * - 不使用 hidden 属性控制状态：Tailwind preflight 的 [hidden]{display:none!important}
+ *   是重要声明，任何非 important 的 display:flex 都无法覆盖，图标将无法显示。
+ * 首次绘制前的空窗（dev 模式 CSS 异步注入）由 BaseLayout 引导脚本注入的镜像规则兜底。
+ */
+html:not([data-theme='dark']) .theme-icon-light {
+  display: flex;
+}
+
+html:not([data-theme='dark']) .theme-icon-dark {
+  display: none;
+}
+
+html[data-theme='dark'] .theme-icon-light {
+  display: none;
+}
+
+html[data-theme='dark'] .theme-icon-dark {
+  display: flex;
 }
