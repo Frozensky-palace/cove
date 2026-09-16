@@ -72,6 +72,26 @@ cove/
 
 完整结构与各阶段任务见开发指南第 6、19 节。
 
+## 根目录配置速查表
+
+> 新增根目录配置文件时同步更新此表（约定记录于 `CLAUDE.md`）。
+> 这些文件的位置均为工具强制约定，不可移入子文件夹统一管理。
+
+| 文件 | 职责 | 所属工具 / 位置约束 |
+| --- | --- | --- |
+| `package.json` | 依赖声明与脚本命令 | pnpm，必须在根目录 |
+| `pnpm-lock.yaml` | 依赖锁文件，冻结安装（必须提交） | pnpm，必须在根目录 |
+| `tsconfig.json` | TypeScript strict 配置与 `@/*` 路径别名 | TypeScript / `astro check`，按根目录查找 |
+| `astro.config.mjs` | Astro 站点配置：`site`、统一端口 4321、Vue 与 Tailwind 集成 | Astro CLI 自动发现，仅认根目录 |
+| `components.json` | shadcn-vue 初始化配置（样式与别名） | shadcn-vue CLI，只认根目录 |
+| `.gitignore` | Git 忽略规则（构建产物、依赖、环境变量等） | Git，仓库根目录生效 |
+| `.editorconfig` | 编辑器基础格式约定（UTF-8、LF、2 空格缩进） | EditorConfig，从文件向上查找 |
+| `.vscode/extensions.json` | 推荐安装的 VS Code 扩展 | VS Code |
+| `CLAUDE.md` | AI 协作工作流约定 | Claude Code，每次会话自动读取 |
+| `.pages.yml`（Phase 6） | Pages CMS 内容与媒体编辑配置 | Pages CMS，强制仓库根目录 |
+| `wrangler.jsonc`（Phase 7） | Workers Static Assets 部署配置 | Wrangler，按根目录约定查找 |
+| `.github/workflows/`（Phase 7） | CI/CD 质量门禁工作流 | GitHub Actions，路径固定 |
+
 ## 阶段进度
 
 - [x] Phase 0：项目基线与设计准备
