@@ -1,0 +1,165 @@
+---
+/**
+ * 全局页头（指南 9.1）：标志、一级导航、搜索入口与主题按钮。
+ * 桌面高度 64px，吸顶 + 实色背景；当前页以细线与文字色表达。
+ * 移动导航（Vue Sheet）属 Phase 3 交付，当前以可换行的原生链接列表渐进实现（IMPL-009）。
+ */
+import Logo from '@/components/base/Logo.astro';
+import ThemeToggle from '@/components/base/ThemeToggle.astro';
+import SearchIcon from '@/components/base/icons/SearchIcon.astro';
+import { siteConfig } from '@/data/site';
+
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
+
+function isActive(href: string): boolean {
+  const target = href.replace(/\/+$/, '') || '/';
+  if (target === '/') return currentPath === '/';
+  return currentPath === target || currentPath.startsWith(`${target}/`);
+}
+---
+
+<header class="site-header">
+  <div class="cove-container header-inner">
+    <a class="brand" href="/" aria-label="Cove，返回首页">
+      <Logo size={24} />
+    </a>
+
+    <nav class="main-nav" aria-label="主导航">
+      <ul>
+        {
+          siteConfig.nav.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class="nav-link"
+                aria-current={isActive(item.href) ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      {/* IMPL-008：Phase 4 替换为 Vue SearchDialog（Ctrl/Cmd+K） */}
+      <a class="search-entry" href="/search/" aria-label="搜索（快捷键 Ctrl 或 Command 加 K）">
+        <SearchIcon size={18} />
+        <kbd class="search-kbd" aria-hidden="true">Ctrl K</kbd>
+      </a>
+      <ThemeToggle />
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--background);
+  }
+
+  .header-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    min-height: 64px;
+    padding-block: 0.25rem;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.5rem 0.375rem 0;
+    border-radius: var(--radius-control);
+  }
+
+  .main-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-control);
+    color: var(--text-muted);
+    font-size: 15px;
+    text-decoration: none;
+    transition:
+      color 150ms ease,
+      background-color 150ms ease;
+  }
+
+  .nav-link:hover {
+    color: var(--text);
+  }
+
+  /* 当前页：文字色 + 品牌色细线（指南 9.1，不用大胶囊底色） */
+  .nav-link[aria-current='page'] {
+    color: var(--text);
+    font-weight: 600;
+    text-decoration-line: underline;
+    text-decoration-color: var(--cove-blue-strong);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.5em;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .search-entry {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 44px;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background-color: var(--surface);
+    color: var(--text-muted);
+    font-size: 14px;
+    text-decoration: none;
+    transition:
+      color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  .search-entry:hover {
+    color: var(--text);
+    border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
+  }
+
+  .search-kbd {
+    display: none;
+    padding: 0.125rem 0.375rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background-color: var(--surface-muted);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  @media (min-width: 640px) {
+    .search-kbd {
+      display: inline-block;
+    }
+  }
+</style>

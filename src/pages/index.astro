@@ -1,0 +1,91 @@
+---
+/**
+ * 首页空壳（Phase 1 交付物）。
+ * 真实首页区块（精选、最新文章、最近笔记、代表项目）在 Phase 3 实现（指南 9.2）。
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Button from '@/components/base/Button.astro';
+import { siteConfig } from '@/data/site';
+---
+
+<BaseLayout title={siteConfig.name} description={siteConfig.tagline} path="/">
+  <section class="hero">
+    <div class="cove-container">
+      <!-- Display 层级：全站最多一处（指南 8.3） -->
+      <h1 class="hero-title">你好，这里是 <span class="hero-name">Cove</span></h1>
+      <p class="hero-description">{siteConfig.description}</p>
+      <div class="hero-actions">
+        <Button href="/posts/" variant="primary">阅读文章</Button>
+        <Button href="/about/" variant="secondary">了解 Cove</Button>
+      </div>
+    </div>
+  </section>
+
+  <section class="cove-container building-note" aria-label="建设状态说明">
+    <p>
+      站点骨架建设中：文章、笔记、项目与搜索等内容区块将随后续阶段上线。
+      当前可查看 <a href="/dev/">组件与设计令牌展示页</a>。
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  /* 首屏高度 360–440px（指南 9.2） */
+  .hero {
+    display: flex;
+    align-items: center;
+    min-height: 380px;
+    padding-block: 3rem;
+  }
+
+  .hero-title {
+    margin: 0;
+    font-size: clamp(2.25rem, 5vw, 3.5rem); /* 36px → 56px */
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+  }
+
+  .hero-name {
+    /* 品牌名允许使用蓝粉渐变这一处关键视觉（指南 8.2） */
+    background: linear-gradient(120deg, var(--cove-blue-strong), var(--shell-pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero-description {
+    max-width: 40rem;
+    margin-top: 1.25rem;
+    color: var(--text-muted);
+    font-size: 17px;
+    line-height: 1.9;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.875rem;
+    margin-top: 2rem;
+  }
+
+  .building-note {
+    margin-top: 1.5rem;
+  }
+
+  .building-note p {
+    margin: 0;
+    padding: 0.875rem 1.25rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-control);
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .building-note a {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+</style>

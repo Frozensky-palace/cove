@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Cove 临时 favicon：正式品牌资产确认后替换（docs/content-checklist.md） -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6799bd"/>
+      <stop offset="1" stop-color="#dea0af"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <path d="M13 35c6-6.5 12-6.5 18 0s12 6.5 18 0" fill="none" stroke="#f8fbfc" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M17 45c5-5 10-5 15 0s10 5 15 0" fill="none" stroke="#f7e8ec" stroke-opacity="0.75" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

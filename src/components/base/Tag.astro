@@ -1,0 +1,38 @@
+---
+/**
+ * 标签原语：胶囊形态仅用于标签或短状态（指南 8.4）。
+ * 贝壳粉 tone 使用柔和背景 + 常规文字色，不用粉色小字（指南 8.2）。
+ * 传 href 渲染为可点击标签链接。
+ */
+import { cn } from '@/lib/utils';
+
+interface Props {
+  href?: string;
+  tone?: 'neutral' | 'pink';
+  class?: string;
+}
+
+const { href, tone = 'neutral', class: className } = Astro.props;
+
+const classes = cn(
+  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium leading-5',
+  {
+    neutral: 'bg-surface-muted text-text-muted hover:bg-cove-blue/20 hover:text-text',
+    pink: 'bg-shell-pink-soft text-text hover:opacity-85',
+  }[tone],
+  href ? 'transition-colors duration-150' : '',
+  className,
+);
+---
+
+{
+  href ? (
+    <a href={href} class={classes}>
+      <slot />
+    </a>
+  ) : (
+    <span class={classes}>
+      <slot />
+    </span>
+  )
+}

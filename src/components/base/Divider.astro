@@ -1,0 +1,15 @@
+---
+/**
+ * 分隔线原语：普通内容主要使用分隔线和留白建立层级（指南 8.4）。
+ * 语义化 <hr>，默认上下间距 2rem。
+ */
+import { cn } from '@/lib/utils';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<hr class={cn('my-8 border-0 bg-border', className)} />

@@ -1,0 +1,121 @@
+/**
+ * Cove 全局样式。
+ * 设计令牌见 ./tokens.css；正文排版样式（prose.css）在 Phase 3 引入。
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './tokens.css';
+
+/* 深色模式由 <html>.dark 类驱动（IMPL-004），与 prefers-color-scheme 解耦，
+   以支持“浅色 / 深色 / 跟随系统”三态。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 将 CSS variables 映射为 Tailwind 颜色工具类：
+   bg-background、text-text-muted、border-border、bg-cove-blue-strong 等。 */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-cove-blue: var(--cove-blue);
+  --color-cove-blue-strong: var(--cove-blue-strong);
+  --color-shell-pink: var(--shell-pink);
+  --color-shell-pink-soft: var(--shell-pink-soft);
+  --color-focus: var(--focus);
+
+  /* 字体（指南 8.3）：UI 与正文均使用系统无衬线字体栈，保证中文一致性 */
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, 'Courier New', monospace;
+
+  /* 阴影与圆角令牌（tokens.css） */
+  --shadow-overlay: var(--shadow-overlay);
+  --radius-control: var(--radius-control);
+  --radius-overlay: var(--radius-overlay);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background font-sans text-text antialiased;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    /* 移动端正文不低于 16px（指南 8.3） */
+    font-size: 16px;
+    line-height: 1.8;
+    text-underline-offset: 0.2em;
+  }
+
+  main {
+    flex: 1;
+    width: 100%;
+  }
+
+  /* 键盘焦点环（指南 15：清晰 :focus-visible） */
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--cove-blue);
+    color: #ffffff;
+  }
+
+  .dark ::selection {
+    background-color: var(--cove-blue-strong);
+    color: var(--background);
+  }
+
+  /* 尊重系统“减少动态效果”设置（指南 8.6） */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* 页面容器：最大宽度约 1180–1240px（指南 8.4），取 1200px */
+  .cove-container {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 1200px;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .cove-container {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  /* 跳转到主要内容：首个可聚焦元素（指南 9.1 / 15） */
+  .skip-link {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 100;
+    transform: translateY(-300%);
+    @apply rounded-[10px] bg-cove-blue-strong px-4 py-2 text-sm font-medium text-white
+      dark:text-background;
+  }
+
+  .skip-link:focus-visible {
+    transform: none;
+  }
+}

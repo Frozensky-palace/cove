@@ -1,0 +1,65 @@
+---
+/**
+ * 404 页面（Phase 1 空壳）：“走出海湾 / 迷航”轻量文案，
+ * 提供首页、文章、搜索三个明确出口（指南 9.8）。
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Button from '@/components/base/Button.astro';
+---
+
+<BaseLayout
+  title="迷航了"
+  description="这片海域没有你要找的港湾。返回首页、浏览文章或使用搜索找到方向。"
+  path="/404"
+>
+  <section class="cove-container lost">
+    <p class="lost-code" aria-hidden="true">404</p>
+    <h1 class="lost-title">迷航了</h1>
+    <p class="lost-description">
+      这片海域没有你要找的港湾。也许它已随潮水移动，从下面这些方向重新出发吧。
+    </p>
+    <div class="lost-actions">
+      <Button href="/" variant="primary">回到首页</Button>
+      <Button href="/posts/" variant="secondary">浏览文章</Button>
+      <Button href="/search/" variant="ghost">使用搜索</Button>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .lost {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-block: 6rem 4rem;
+  }
+
+  .lost-code {
+    margin: 0;
+    color: var(--cove-blue);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    letter-spacing: 0.2em;
+  }
+
+  .lost-title {
+    margin: 0.75rem 0 0;
+    font-size: clamp(2rem, 4vw, 2.75rem); /* 32px → 44px */
+    font-weight: 700;
+  }
+
+  .lost-description {
+    max-width: 34rem;
+    margin-top: 1rem;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1.9;
+  }
+
+  .lost-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.875rem;
+    margin-top: 2rem;
+  }
+</style>

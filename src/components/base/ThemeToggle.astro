@@ -1,0 +1,96 @@
+---
+/**
+ * 主题切换按钮：原生实现，无 Vue runtime（指南 10：优先原生按钮）。
+ * 循环顺序：浅色 → 深色 → 跟随系统。
+ * 图标显示由 <html data-theme> 驱动的 CSS 控制，未加载 JS 时默认展示“系统”。
+ */
+import SunIcon from '@/components/base/icons/SunIcon.astro';
+import MoonIcon from '@/components/base/icons/MoonIcon.astro';
+import MonitorIcon from '@/components/base/icons/MonitorIcon.astro';
+---
+
+<button
+  type="button"
+  class="theme-toggle"
+  data-theme-toggle
+  aria-label="切换主题（浅色、深色或跟随系统）"
+  title="切换主题"
+>
+  <span class="theme-icon theme-icon-light"><SunIcon size={18} /></span>
+  <span class="theme-icon theme-icon-dark"><MoonIcon size={18} /></span>
+  <span class="theme-icon theme-icon-system"><MonitorIcon size={18} /></span>
+</button>
+
+<style>
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .theme-toggle:hover {
+    background-color: var(--surface-muted);
+    color: var(--text);
+  }
+
+  .theme-icon {
+    display: none;
+  }
+
+  /* data-theme 未设置（无 JS）或为 system 时显示显示器图标 */
+  :global(html:not([data-theme])) .theme-icon-system,
+  :global(html[data-theme='system']) .theme-icon-system,
+  :global(html[data-theme='light']) .theme-icon-light,
+  :global(html[data-theme='dark']) .theme-icon-dark {
+    display: flex;
+  }
+</style>
+
+<script>
+  const order = ['light', 'dark', 'system'] as const;
+  type ThemeMode = (typeof order)[number];
+
+  function normalizeMode(value: string | undefined): ThemeMode {
+    return value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
+  }
+
+  function applyTheme(mode: ThemeMode): void {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const dark = mode === 'dark' || (mode === 'system' && prefersDark);
+    const root = document.documentElement;
+    root.classList.toggle('dark', dark);
+    root.dataset.theme = mode;
+    root.style.colorScheme = dark ? 'dark' : 'light';
+  }
+
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')) {
+    button.addEventListener('click', () => {
+      const current = normalizeMode(document.documentElement.dataset.theme);
+      const next = order[(order.indexOf(current) + 1) % order.length]!;
+      try {
+        localStorage.setItem('cove:theme', next);
+      } catch {
+        /* 存储不可用时仅影响记忆，不影响当次切换 */
+      }
+      applyTheme(next);
+    });
+  }
+
+  /* 跟随系统模式下，系统主题变化时同步应用 */
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  media.addEventListener('change', () => {
+    if (normalizeMode(document.documentElement.dataset.theme) === 'system') {
+      applyTheme('system');
+    }
+  });
+</script>

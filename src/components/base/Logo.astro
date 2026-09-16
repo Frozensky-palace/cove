@@ -1,0 +1,70 @@
+---
+/**
+ * Cove 标志（临时占位，指南 Phase 0：正式品牌资产确认后替换，
+ * 见 src/assets/brand/README.md）。
+ * 蓝粉渐变仅允许用于品牌标志（指南 8.2）。
+ */
+interface Props {
+  /** 图形尺寸（px），常用 20/24 */
+  size?: number;
+  /** 是否携带 Cove 字标 */
+  wordmark?: boolean;
+}
+
+const { size = 24, wordmark = true } = Astro.props;
+const gradientId = `cove-logo-gradient-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<span class="logo">
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+    class="logo-mark"
+  >
+    <defs>
+      <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#6799bd"></stop>
+        <stop offset="1" stop-color="#dea0af"></stop>
+      </linearGradient>
+    </defs>
+    <rect width="24" height="24" rx="6" fill={`url(#${gradientId})`}></rect>
+    <path
+      d="M5 13.2c2.33-2.4 4.67-2.4 7 0s4.67 2.4 7 0"
+      stroke="#f8fbfc"
+      stroke-width="1.75"
+      stroke-linecap="round"
+    ></path>
+    <path
+      d="M7 16.8c1.83-1.8 3.67-1.8 5.5 0s3.67 1.8 5.5 0"
+      stroke="#f7e8ec"
+      stroke-opacity="0.75"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    ></path>
+  </svg>
+  {wordmark && <span class="logo-word">Cove</span>}
+</span>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1;
+  }
+
+  .logo-mark {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .logo-word {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+</style>

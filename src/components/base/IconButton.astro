@@ -1,0 +1,40 @@
+---
+/**
+ * 图标按钮原语：44×44px 触达目标（指南 8.7）。
+ * label 为可访问名称，必填（指南 15：图标按钮必须有可访问名称）。
+ */
+import { cn } from '@/lib/utils';
+
+interface Props {
+  /** 可访问名称，必填 */
+  label: string;
+  /** 提供时渲染为链接 */
+  href?: string;
+  class?: string;
+}
+
+const { label, href, class: className } = Astro.props;
+
+if (!label || label.trim() === '') {
+  throw new Error('IconButton：label 是必填的可访问名称，不能为空。');
+}
+
+const classes = cn(
+  'inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-[10px]',
+  'text-text-muted transition-colors duration-150',
+  'hover:bg-surface-muted hover:text-text',
+  className,
+);
+---
+
+{
+  href ? (
+    <a href={href} class={classes} aria-label={label}>
+      <slot />
+    </a>
+  ) : (
+    <button type="button" class={classes} aria-label={label}>
+      <slot />
+    </button>
+  )
+}

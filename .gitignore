@@ -1,0 +1,29 @@
+# 构建输出
+dist/
+
+# 依赖
+node_modules/
+
+# 日志
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 环境变量（不提交任何密钥）
+.env
+.env.*
+!.env.example
+
+# 生成文件与缓存（.astro 下的类型文件 types.d.ts / content.d.ts 需提交，供编辑器使用）
+.astro/preview.json
+.astro/preview.log
+.astro/content-module.mjs
+.astro/collections/
+.tmp/
+
+# 编辑器与系统
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

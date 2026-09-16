@@ -1,0 +1,62 @@
+---
+/**
+ * 基础按钮原语（指南 6 / Phase 1）。
+ * Astro 原生实现：静态页面不得为了按钮外观加载 Vue runtime（指南 5.1）。
+ * 传 href 渲染为链接，否则渲染为按钮。
+ */
+import { cn } from '@/lib/utils';
+
+interface Props {
+  /** 提供时渲染为链接 */
+  href?: string;
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  /** 仅按钮形态有效 */
+  type?: 'button' | 'submit' | 'reset';
+  /** 链接的打开方式 */
+  target?: '_blank' | '_self' | '_parent' | '_top';
+  rel?: string;
+  class?: string;
+}
+
+const {
+  href,
+  variant = 'secondary',
+  size = 'md',
+  type = 'button',
+  target,
+  rel,
+  class: className,
+} = Astro.props;
+
+const classes = cn(
+  'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-[10px] font-medium select-none',
+  'transition-colors duration-150',
+  'disabled:pointer-events-none disabled:opacity-50',
+  {
+    sm: 'h-9 px-3 text-sm',
+    md: 'min-h-11 px-5 text-[15px]',
+    lg: 'h-12 px-6 text-base',
+  }[size],
+  {
+    /* 深色模式下品牌蓝加深为浅色，文字同步换为深色以维持对比度（WCAG AA） */
+    primary: 'bg-cove-blue-strong text-white hover:bg-cove-blue-strong/90 dark:text-background',
+    secondary:
+      'border border-border bg-surface text-text hover:border-cove-blue-strong/50 hover:text-cove-blue-strong',
+    ghost: 'text-text-muted hover:bg-surface-muted hover:text-text',
+  }[variant],
+  className,
+);
+---
+
+{
+  href ? (
+    <a href={href} class={classes} {target} rel={target === '_blank' ? (rel ?? 'noopener noreferrer') : rel}>
+      <slot />
+    </a>
+  ) : (
+    <button type={type} class={classes}>
+      <slot />
+    </button>
+  )
+}

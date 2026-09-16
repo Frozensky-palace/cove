@@ -1,0 +1,8 @@
+# Cloudflare Workers Static Assets 响应头（指南 16）
+# 基础安全头在 Phase 1 先行落地；CSP 与 HSTS 按实际生产资源在 Phase 7 收紧
+# （HSTS 需确认所有子域均使用 HTTPS 后再启用 includeSubDomains）。
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()

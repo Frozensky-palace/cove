@@ -1,0 +1,74 @@
+---
+import '@/styles/global.css';
+import SiteHeader from '@/components/navigation/SiteHeader.astro';
+import SiteFooter from '@/components/navigation/SiteFooter.astro';
+import { buildMetadata } from '@/lib/seo';
+
+interface Props {
+  /** 页面标题（不含站名后缀） */
+  title: string;
+  /** 页面描述，缺省回退站点描述 */
+  description?: string;
+  /** 站内路径，用于 canonical 与 og:url */
+  path?: string;
+  /** 预览/开发页面设为 true（指南 13.1） */
+  noindex?: boolean;
+  /** 页面语言，默认 zh-CN */
+  lang?: string;
+}
+
+const { title, description, path = '/', noindex = false, lang = 'zh-CN' } = Astro.props;
+const meta = buildMetadata({ title, description, path, noindex });
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{meta.title}</title>
+    <meta name="description" content={meta.description} />
+    <link rel="canonical" href={meta.canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    {meta.noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <meta property="og:type" content={meta.ogType} />
+    <meta property="og:site_name" content="Cove" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content={meta.title} />
+    <meta property="og:description" content={meta.description} />
+    <meta property="og:url" content={meta.canonical} />
+    <meta name="twitter:card" content="summary" />
+
+    <!-- 主题引导：在首次绘制前恢复主题，避免闪烁（指南 4.2 / 10，IMPL-004）。
+         必须保持 is:inline 且自包含，不依赖任何外部资源。 -->
+    <script is:inline>
+      (function () {
+        var mode = 'system';
+        try {
+          var stored = localStorage.getItem('cove:theme');
+          if (stored === 'light' || stored === 'dark' || stored === 'system') mode = stored;
+        } catch (e) {
+          /* 隐私模式等场景下回退到跟随系统 */
+        }
+        var dark =
+          mode === 'dark' ||
+          (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var root = document.documentElement;
+        root.classList.toggle('dark', dark);
+        root.dataset.theme = mode;
+        root.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+    <SiteHeader />
+    <main id="main-content" tabindex="-1">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>

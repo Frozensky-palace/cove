@@ -1,0 +1,53 @@
+/**
+ * Cove 设计令牌 —— 颜色、圆角与阴影的单一事实源。
+ * 数值来源：docs/COVE-DEVELOPMENT-GUIDE.md 8.2 / 8.4。
+ *
+ * 约束（指南 8.2）：
+ * - 语义名称稳定，数值可在视觉验收时小幅调整。
+ * - 正文与关键操作满足 WCAG AA 对比度。
+ * - 贝壳粉不直接用于小号正文文字。
+ * - 蓝粉渐变只用于品牌标志、当前导航细线或一处关键视觉。
+ */
+
+:root {
+  color-scheme: light;
+
+  /* 颜色令牌（浅色模式） */
+  --background: #f8fbfc;
+  --surface: #ffffff;
+  --surface-muted: #edf4f7;
+  --text: #243746;
+  --text-muted: #687b87;
+  --border: #dce7ec;
+  --cove-blue: #6799bd;
+  --cove-blue-strong: #3f789f;
+  --shell-pink: #dea0af;
+  --shell-pink-soft: #f7e8ec;
+  --focus: #2f78aa;
+
+  /* 圆角（指南 8.4：普通控件 8–10px，浮层与重点卡片 12–16px） */
+  --radius-control: 10px;
+  --radius-overlay: 14px;
+
+  /* 阴影：只用于浮层、菜单和少量重点内容（指南 8.4） */
+  --shadow-overlay: 0 8px 24px rgb(2 32 44 / 0.1);
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* 颜色令牌（深色模式） */
+  --background: #111a20;
+  --surface: #17232b;
+  --surface-muted: #1d2b34;
+  --text: #e7eff3;
+  --text-muted: #a9bbc5;
+  --border: #30414b;
+  --cove-blue: #82b4d2;
+  --cove-blue-strong: #9ac7df;
+  --shell-pink: #d9a7b4;
+  --shell-pink-soft: #382a31;
+  --focus: #9ed7f4;
+
+  --shadow-overlay: 0 8px 24px rgb(0 0 0 / 0.35);
+}
