@@ -18,6 +18,8 @@ yarn-error.log*
 # 生成文件与缓存（.astro 下的类型文件 types.d.ts / content.d.ts 需提交，供编辑器使用）
 .astro/preview.json
 .astro/preview.log
+.astro/dev.json
+.astro/settings.json
 .astro/content-module.mjs
 .astro/collections/
 .tmp/
