@@ -88,7 +88,7 @@ cove/
 | `.editorconfig` | 编辑器基础格式约定（UTF-8、LF、2 空格缩进） | EditorConfig，从文件向上查找 |
 | `.vscode/extensions.json` | 推荐安装的 VS Code 扩展 | VS Code |
 | `CLAUDE.md` | AI 协作工作流约定 | Claude Code，每次会话自动读取 |
-| `.pages.yml`（Phase 6） | Pages CMS 内容与媒体编辑配置 | Pages CMS，强制仓库根目录 |
+| `.pages.yml` | Pages CMS 三类内容（文章/笔记/项目）与媒体源编辑配置，字段对齐 `src/content.config.ts` | Pages CMS，强制仓库根目录 |
 | `wrangler.jsonc`（Phase 7） | Workers Static Assets 部署配置 | Wrangler，按根目录约定查找 |
 | `.github/workflows/`（Phase 7） | CI/CD 质量门禁工作流 | GitHub Actions，路径固定 |
 
