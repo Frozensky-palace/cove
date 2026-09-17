@@ -15,6 +15,7 @@ import TagList from '@/components/content/TagList.astro';
 import PrevNextNav from '@/components/content/PrevNextNav.astro';
 import RelatedPosts from '@/components/content/RelatedPosts.astro';
 import SeriesCard from '@/components/content/SeriesCard.astro';
+import CommentProvider from '@/components/integrations/CommentProvider.astro';
 import {
   getAdjacentPosts,
   getRelatedPosts,
@@ -138,6 +139,9 @@ const ogMetadata = {
           <RelatedPosts posts={related} />
         </div>
       </div>
+
+      {/* 评论区（指南 9.4 / 19 Phase 6）：草稿与计划发布的预览页不渲染，避免污染讨论映射 */}
+      {!previewOnly && <CommentProvider />}
     </article>
   </div>
 </BaseLayout>

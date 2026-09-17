@@ -1,0 +1,29 @@
+---
+/**
+ * Analytics 边界组件（指南 10 边界组件表、19 Phase 6）：Cloudflare Web Analytics。
+ *
+ * - 仅生产构建输出：import.meta.env.PROD 在构建期判定，dev 与
+ *   `pnpm build` 未启用的场景不会出现任何第三方代码（指南 722 行
+ *   「统计仅生产加载」、19 Phase 6「仅在生产环境接入」）；
+ * - 未配置 token 时不输出任何代码（服务可替换，指南 3.4）；
+ * - beacon token 为公开标识而非密钥（指南 16），访问控制由
+ *   Cloudflare 站点域名管理承担。
+ *
+ * 挂载：BaseLayout body 末尾，全站生效。
+ */
+import { analyticsConfig } from '@/data/integrations';
+
+const { token } = analyticsConfig;
+const enabled = import.meta.env.PROD && Boolean(token);
+---
+
+{
+  enabled && (
+    <script
+      is:inline
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon={JSON.stringify({ token })}
+    />
+  )
+}

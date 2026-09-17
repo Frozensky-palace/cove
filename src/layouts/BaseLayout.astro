@@ -5,6 +5,7 @@ import SiteHeader from '@/components/navigation/SiteHeader.astro';
 import SiteFooter from '@/components/navigation/SiteFooter.astro';
 import AppSplash from '@/components/base/AppSplash.astro';
 import RouteProgress from '@/components/base/RouteProgress.astro';
+import Analytics from '@/components/integrations/Analytics.astro';
 import { buildMetadata, personJsonLd } from '@/lib/seo';
 import { siteConfig } from '@/data/site';
 
@@ -179,5 +180,6 @@ const structuredData = [personJsonLd(), ...jsonLd];
     </main>
     <SiteFooter />
     <RouteProgress />
+    <Analytics />
   </body>
 </html>

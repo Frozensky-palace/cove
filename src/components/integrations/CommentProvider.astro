@@ -1,0 +1,181 @@
+---
+/**
+ * CommentProvider（指南 10 边界组件表、19 Phase 6）：Giscus 评论边界组件。
+ *
+ * - 延迟加载：评论区容器进入视口（rootMargin 200px 预热）才注入 giscus
+ *   脚本（指南 8.6：评论区进入视口后加载）；
+ * - 失败占位：脚本加载失败（onerror）或超时未见 iframe 时显示占位提示，
+ *   正文与导航不受影响（指南 3.5、19 Phase 6 验收「阻止 Giscus 后正文
+ *   不受影响」），并提供重试按钮；
+ * - 主题同步：MutationObserver 观察 `<html data-theme>`（IMPL-011 的两态
+ *   主题机制），变化时向 giscus iframe postMessage setConfig；
+ * - pathname 映射：URL 即讨论标识（指南 19 Phase 6）。
+ *
+ * 配置见 src/data/integrations.ts；四项 Giscus 标识任一为空则整块不渲染。
+ * 挂载：ArticleLayout（仅文章详情页，指南 9.4 / 6.1）。
+ */
+import { giscusConfig } from '@/data/integrations';
+
+const { repo, repoId, category, categoryId } = giscusConfig;
+const enabled = Boolean(repo && repoId && category && categoryId);
+---
+
+{
+  enabled && (
+    <section class="comments" aria-label="评论" data-pagefind-ignore>
+      <h2 class="comments-title">评论</h2>
+      <div class="comments-host" data-comments-host>
+        <p class="comments-loading">评论加载中……</p>
+        <p class="comments-fallback" data-comments-fallback hidden>
+          评论区加载失败或被浏览器扩展拦截。阅读不受影响；如想反馈，可通过页脚的联系方式找到我，
+          或 <button type="button" class="comments-retry" data-comments-retry>重试加载</button>。
+        </p>
+        <noscript>
+          <p class="comments-fallback">评论区需要 JavaScript；此时正文阅读不受影响。</p>
+        </noscript>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .comments {
+    max-width: 45rem;
+    margin-inline: auto;
+    margin-top: 2.5rem;
+  }
+
+  .comments-title {
+    margin: 0 0 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .comments-loading,
+  .comments-fallback {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.8;
+  }
+
+  .comments-retry {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--cove-blue-strong);
+    font: inherit;
+    text-decoration-line: underline;
+    text-underline-offset: 0.25em;
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  /**
+   * ClientRouter 环境（IMPL-017）：挂 astro:page-load，首次加载与每次
+   * 换页后执行；评论 host 随页面内容整体替换，按元素幂等守卫。
+   */
+  import { giscusConfig } from '@/data/integrations';
+
+  const GISCUS_ORIGIN = 'https://giscus.app';
+  /** 脚本注入后等待 iframe 出现的超时；被拦截时以此兜底显示占位 */
+  const IFRAME_TIMEOUT_MS = 10_000;
+
+  function giscusTheme(): string {
+    return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+  }
+
+  function setupComments(): void {
+    const host = document.querySelector<HTMLElement>('[data-comments-host]');
+    if (!host || host.dataset.commentsBound === 'true') return;
+    host.dataset.commentsBound = 'true';
+    const fallback = host.querySelector<HTMLElement>('[data-comments-fallback]');
+
+    let pollTimer = 0;
+
+    const clearPoll = () => {
+      window.clearInterval(pollTimer);
+      pollTimer = 0;
+    };
+
+    const showFallback = () => {
+      clearPoll();
+      if (fallback) fallback.hidden = false;
+      host.querySelector<HTMLElement>('.comments-loading')?.setAttribute('hidden', '');
+    };
+
+    /** 主题同步：向既有 iframe 转发当前主题（iframe 未就绪时静默跳过） */
+    const postTheme = () => {
+      const frame = host.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+      frame?.contentWindow?.postMessage(
+        { giscus: { setConfig: { theme: giscusTheme() } } },
+        GISCUS_ORIGIN,
+      );
+    };
+
+    const themeObserver = new MutationObserver(postTheme);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    const load = () => {
+      if (host.querySelector('script[data-giscus-script]')) return;
+      const script = document.createElement('script');
+      script.src = `${GISCUS_ORIGIN}/client.js`;
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.dataset.giscusScript = 'true';
+      script.setAttribute('data-repo', giscusConfig.repo);
+      script.setAttribute('data-repo-id', giscusConfig.repoId);
+      script.setAttribute('data-category', giscusConfig.category);
+      script.setAttribute('data-category-id', giscusConfig.categoryId);
+      script.setAttribute('data-mapping', giscusConfig.mapping);
+      script.setAttribute('data-strict', '0');
+      script.setAttribute('data-reactions-enabled', '1');
+      script.setAttribute('data-emit-metadata', '0');
+      script.setAttribute('data-input-position', 'top');
+      script.setAttribute('data-theme', giscusTheme());
+      script.setAttribute('data-lang', giscusConfig.lang);
+      script.addEventListener('error', showFallback);
+      host.appendChild(script);
+
+      /* 成功判定：giscus 注入 iframe（class giscus-frame）后撤掉加载文案 */
+      pollTimer = window.setInterval(() => {
+        if (!host.isConnected) {
+          clearPoll();
+          return;
+        }
+        if (host.querySelector('iframe.giscus-frame')) {
+          clearPoll();
+          host.querySelector<HTMLElement>('.comments-loading')?.setAttribute('hidden', '');
+        }
+      }, 500);
+      window.setTimeout(() => {
+        if (!host.querySelector('iframe.giscus-frame')) showFallback();
+      }, IFRAME_TIMEOUT_MS);
+    };
+
+    host.querySelector('[data-comments-retry]')?.addEventListener('click', () => {
+      if (fallback) fallback.hidden = true;
+      host.querySelector<HTMLElement>('.comments-loading')?.removeAttribute('hidden');
+      load();
+    });
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer.disconnect();
+          load();
+        }
+      },
+      { rootMargin: '200px 0px' },
+    );
+    observer.observe(host);
+  }
+
+  document.addEventListener('astro:page-load', setupComments);
+</script>
