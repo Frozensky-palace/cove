@@ -14,9 +14,11 @@ import PostMeta from '@/components/content/PostMeta.astro';
 import TagList from '@/components/content/TagList.astro';
 import PrevNextNav from '@/components/content/PrevNextNav.astro';
 import RelatedPosts from '@/components/content/RelatedPosts.astro';
+import SeriesCard from '@/components/content/SeriesCard.astro';
 import {
   getAdjacentPosts,
   getRelatedPosts,
+  getSeriesGroup,
   isPreviewOnly,
   shanghaiDate,
   showPreviewContent,
@@ -35,6 +37,11 @@ const { Content, headings } = await render(post);
 const { prev, next } = await getAdjacentPosts(post);
 const related = await getRelatedPosts(post);
 const previewOnly = showPreviewContent && isPreviewOnly(post);
+
+/* 所属系列（指南 11.1 预留字段）：有 series 且当前文章在组内时，正文上方渲染系列卡 */
+const seriesGroup = post.data.series ? await getSeriesGroup(post.data.series) : null;
+const showSeriesCard =
+  seriesGroup !== null && seriesGroup.posts.some((entry) => entry.id === post.id);
 
 /* 社交分享图：封面为位图时用封面（SVG 封面多数平台不识别，回退默认图） */
 const cover = post.data.cover;
@@ -90,7 +97,7 @@ const ogMetadata = {
                   src={post.data.cover}
                   alt={post.data.coverAlt ?? ''}
                   widths={[640, 960, 1280]}
-                  sizes="(min-width: 780px) 740px, 100vw"
+                  sizes="(min-width: 780px) 720px, 100vw"
                   loading="eager"
                   fetchpriority="high"
                 />
@@ -102,6 +109,10 @@ const ogMetadata = {
         <ArticleTOC headings={headings} />
 
         <div class="article-main">
+          {showSeriesCard && seriesGroup && (
+            <SeriesCard series={seriesGroup} currentId={post.id} />
+          )}
+
           <div class="prose">
             <Content />
           </div>
@@ -245,6 +256,11 @@ const ogMetadata = {
     min-width: 0;
   }
 
+  /* 系列卡与正文的间距由布局控制（组件内部不感知所处上下文） */
+  .article-main :global(.series-card) {
+    margin-bottom: 2rem;
+  }
+
   .article-footer {
     max-width: 720px;
     margin-top: 2.5rem;
@@ -265,6 +281,8 @@ const ogMetadata = {
   .canonical-note a {
     color: var(--cove-blue-strong);
     text-underline-offset: 0.25em;
+    /* 转载说明直接渲染完整 URL：窄屏允许任意断点 */
+    overflow-wrap: anywhere;
   }
 
   .article-nav-area {

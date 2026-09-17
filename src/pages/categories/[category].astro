@@ -2,14 +2,17 @@
 /**
  * 分类聚合页（指南 7.2）：单一主分类下的文章；
  * 侧向提供全部分类切换与归档入口（普通链接，无 JS 可用）。
+ * 列表与 /posts/ 同构（IMPL-035）：同系列文章折叠为一个可展开条目
+ * （组内仅含该分类的篇目），其余文章逐篇平铺。
  */
 import ContentLayout from '@/layouts/ContentLayout.astro';
 import ArticleListItem from '@/components/content/ArticleListItem.astro';
+import SeriesFeedCard from '@/components/content/SeriesFeedCard.astro';
 import EmptyState from '@/components/content/EmptyState.astro';
 import Button from '@/components/base/Button.astro';
 import { categoryLabel, type CategoryKey } from '@/data/taxonomy';
 import { categoryUrl } from '@/lib/urls';
-import { getCategoryStats, getPostsByCategory } from '@/lib/content';
+import { getCategoryStats, getCategoryFeed } from '@/lib/content';
 
 export async function getStaticPaths() {
   const stats = await getCategoryStats();
@@ -18,17 +21,19 @@ export async function getStaticPaths() {
 
 const { category } = Astro.params;
 const key = category as CategoryKey;
-const posts = await getPostsByCategory(key);
+const feed = await getCategoryFeed(key);
+/* 页面文案中的「N 篇」按真实文章数计（系列组展开后的篇数计入） */
+const postCount = feed.reduce((n, entry) => n + ('posts' in entry ? entry.posts.length : 1), 0);
 const stats = await getCategoryStats();
 const label = categoryLabel(key);
 ---
 
 <ContentLayout
   title={`${label} · 分类`}
-  description={`分类「${label}」下的全部文章，共 ${posts.length} 篇。`}
+  description={`分类「${label}」下的全部文章，共 ${postCount} 篇。`}
   path={categoryUrl(key)}
   heading={label}
-  intro={`这个分类下共有 ${posts.length} 篇文章。`}
+  intro={`这个分类下共有 ${postCount} 篇文章。`}
 >
   <nav class="category-switch" aria-label="切换分类">
     <ul>
@@ -51,11 +56,11 @@ const label = categoryLabel(key);
   </nav>
 
   {
-    posts.length > 0 ? (
+    feed.length > 0 ? (
       <div class="category-list">
-        {posts.map((post) => (
-          <ArticleListItem post={post} />
-        ))}
+        {feed.map((entry) =>
+          'posts' in entry ? <SeriesFeedCard series={entry} /> : <ArticleListItem post={entry} />,
+        )}
       </div>
     ) : (
       <EmptyState title="这个分类还没有文章" description="内容正在路上，可以先看看其他分类或回到文章列表。">

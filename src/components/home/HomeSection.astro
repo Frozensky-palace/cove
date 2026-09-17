@@ -37,9 +37,10 @@ const { title, moreHref, moreLabel = '查看全部', label } = Astro.props;
 
   .section-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.5rem 1rem;
     margin-bottom: 1.25rem;
     padding-bottom: 0.625rem;
     border-bottom: 1px solid var(--border);

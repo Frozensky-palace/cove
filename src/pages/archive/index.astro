@@ -1,52 +1,93 @@
 ---
 /**
  * 归档页（指南 7.2「按年份和月份归档」）：时间轴形式——
- * 左侧竖线贯穿全页，年份为品牌色节点，条目带月-日与悬停点亮；
+ * 左侧竖轨贯穿全页（两端渐隐），年份为品牌色圆环节点 + 篇数徽标，
+ * 月份为浅色小标 + 轨上短刻度，条目带月-日与悬停点亮；
  * 纯 CSS 无 JS，普通链接可直达（渐进增强）。
  */
 import ContentLayout from '@/layouts/ContentLayout.astro';
 import { categoryLabel } from '@/data/taxonomy';
-import { groupPostsByYear } from '@/lib/content';
+import { groupPostsByYear, type Post } from '@/lib/content';
 import { postUrl } from '@/lib/urls';
 
 const groups = await groupPostsByYear();
 const total = groups.reduce((sum, group) => sum + group.posts.length, 0);
 
-/** ISO 日期串（YYYY-MM-DD）→ 紧凑月-日（MM-DD），年份由时间轴节点承担 */
-const monthDay = (dateString: string): string => dateString.slice(5);
+const MONTHS = [
+  '一月',
+  '二月',
+  '三月',
+  '四月',
+  '五月',
+  '六月',
+  '七月',
+  '八月',
+  '九月',
+  '十月',
+  '十一月',
+  '十二月',
+];
+
+interface MonthChunk {
+  month: number;
+  posts: Post[];
+}
+
+/** 年内按月分块（posts 已按日期倒序，相邻同月聚合） */
+function chunkByMonth(posts: Post[]): MonthChunk[] {
+  const chunks: MonthChunk[] = [];
+  for (const post of posts) {
+    const month = Number(post.data.publishedAt.slice(5, 7));
+    const current = chunks.at(-1);
+    if (current && current.month === month) {
+      current.posts.push(post);
+    } else {
+      chunks.push({ month, posts: [post] });
+    }
+  }
+  return chunks;
+}
 ---
 
 <ContentLayout
   title="归档"
-  description={`按年份归档的全部文章，共 ${total} 篇。`}
+  description={`按年月归档的全部文章，共 ${total} 篇。`}
   path="/archive/"
   heading="归档"
-  intro={`共 ${total} 篇文章，按发布年份倒序排列。`}
+  intro={`共 ${total} 篇文章，按年月倒序排列。`}
 >
   {
     groups.length > 0 ? (
       <div class="timeline">
-        {groups.map(({ year, posts }) => (
-          <section class="tl-year" aria-labelledby={`year-${year}`}>
-            <h2 class="tl-year-title" id={`year-${year}`}>
-              {year}
-              <span class="tl-year-count">（{posts.length} 篇）</span>
-            </h2>
-            <ul class="tl-list">
-              {posts.map((post) => (
-                <li>
-                  <a class="tl-item" href={postUrl(post.id)}>
-                    <time datetime={post.data.publishedAt}>
-                      {monthDay(post.data.publishedAt)}
-                    </time>
-                    <span class="tl-title">{post.data.title}</span>
-                    <span class="tl-category">{categoryLabel(post.data.category)}</span>
-                  </a>
-                </li>
+        {groups.map(({ year, posts }) => {
+          const months = chunkByMonth(posts);
+          return (
+            <section class="tl-year" aria-labelledby={`year-${year}`}>
+              <h2 class="tl-year-title" id={`year-${year}`}>
+                {year}
+                <span class="tl-year-count">{posts.length} 篇</span>
+              </h2>
+              {months.map(({ month, posts: monthPosts }) => (
+                <>
+                  <h3 class="tl-month">{MONTHS[month - 1]}</h3>
+                  <ul class="tl-list">
+                    {monthPosts.map((post) => (
+                      <li>
+                        <a class="tl-item" href={postUrl(post.id)}>
+                          <time datetime={post.data.publishedAt}>
+                            {post.data.publishedAt.slice(5)}
+                          </time>
+                          <span class="tl-title">{post.data.title}</span>
+                          <span class="tl-category">{categoryLabel(post.data.category)}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               ))}
-            </ul>
-          </section>
-        ))}
+            </section>
+          );
+        })}
       </div>
     ) : (
       <p class="archive-empty">还没有已发布的文章。</p>
@@ -55,26 +96,33 @@ const monthDay = (dateString: string): string => dateString.slice(5);
 </ContentLayout>
 
 <style>
-  /* 时间轴几何：竖线中心 x = 6px（left 5px + 线宽 2px 的一半），
-     年份节点与条目节点的圆心都对齐到它 */
+  /* 时间轴几何：竖轨中心 x = 6px（left 5px + 轨宽 2px 的一半），
+     年份圆环与条目圆点的圆心都对齐到它；月份刻度从轨右缘伸向文字 */
   .timeline {
     position: relative;
     max-width: 46rem;
   }
 
+  /* 竖轨：两端 36px 渐隐，避免硬边截断 */
   .timeline::before {
     content: '';
     position: absolute;
     left: 5px;
-    top: 8px;
-    bottom: 8px;
+    top: 10px;
+    bottom: 10px;
     width: 2px;
     border-radius: 1px;
-    background-color: var(--border);
+    background-image: linear-gradient(
+      to bottom,
+      transparent,
+      var(--border) 36px,
+      var(--border) calc(100% - 36px),
+      transparent
+    );
   }
 
   .tl-year {
-    margin-bottom: 2.75rem;
+    margin-bottom: 3rem;
   }
 
   .tl-year:last-child {
@@ -83,31 +131,63 @@ const monthDay = (dateString: string): string => dateString.slice(5);
 
   .tl-year-title {
     position: relative;
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.5rem;
     padding-left: 2rem;
-    font-size: 1.375rem;
+    font-size: 1.5rem;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
     line-height: 1.4;
   }
 
+  /* 篇数徽标：轻量 pill，避免括号式的口语感 */
   .tl-year-count {
+    margin-left: 0.625rem;
+    padding: 0.0625rem 0.625rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
     color: var(--text-muted);
-    font-size: 0.9375rem;
-    font-weight: 400;
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.6;
+    vertical-align: middle;
+    white-space: nowrap;
   }
 
-  /* 年份节点：品牌色圆环，背景色盖住竖线形成「串珠」 */
+  /* 年份节点：品牌色圆环，背景色盖住竖轨形成「串珠」 */
   .tl-year-title::before {
     content: '';
     position: absolute;
     left: 0;
-    top: 0.6em;
+    top: 0.65em;
     width: 12px;
     height: 12px;
     border-radius: 50%;
     background-color: var(--background);
     border: 3px solid var(--cove-blue);
     transform: translateY(-50%);
+  }
+
+  /* 月份小标：轨上短刻度 + 浅色字，作为年与条目之间的节奏层 */
+  .tl-month {
+    position: relative;
+    margin: 1.375rem 0 0.375rem;
+    padding-left: 2rem;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  .tl-month::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 0.72em;
+    width: 11px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: var(--border);
   }
 
   .tl-list {
@@ -122,16 +202,19 @@ const monthDay = (dateString: string): string => dateString.slice(5);
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.375rem 0.875rem;
-    padding-block: 0.625rem;
-    border-bottom: 1px solid var(--border);
+    /* 负外边距 + 内边距对称扩展：悬停底色出血而不改变排版位置 */
+    padding: 0.5rem 0.75rem;
+    margin-inline: -0.75rem;
+    border-radius: var(--radius-control);
     text-decoration-line: none;
+    transition: background-color 150ms ease;
   }
 
-  /* 条目节点：默认与竖线同色，悬停点亮为品牌色（指南 8.6：仅颜色变化） */
+  /* 条目节点：默认与竖轨同色，悬停点亮为品牌色（指南 8.6：仅颜色变化） */
   .tl-item::before {
     content: '';
     position: absolute;
-    left: -29px;
+    left: -17px;
     top: 50%;
     width: 6px;
     height: 6px;
@@ -159,6 +242,18 @@ const monthDay = (dateString: string): string => dateString.slice(5);
     margin-left: auto;
     color: var(--text-muted);
     font-size: 0.8125rem;
+  }
+
+  /* 窄屏：长标题换行后分类标签不再右推到行端，紧跟标题之后 */
+  @media (max-width: 640px) {
+    .tl-category {
+      margin-left: 0;
+    }
+  }
+
+  /* 悬停：品牌色淡底（与文章/笔记列表项同一视觉语言） */
+  .tl-item:hover {
+    background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
   }
 
   .tl-item:hover::before {

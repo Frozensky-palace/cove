@@ -9,6 +9,8 @@
   font-size: 17px;
   line-height: 1.85;
   color: var(--text);
+  /* 长英文单词/URL 兜底断行，防止撑破行宽（中文排版窄屏溢出的根因） */
+  overflow-wrap: break-word;
 }
 
 /* ------------------------------- 标题与锚点 ------------------------------- */
@@ -62,6 +64,8 @@
   text-decoration-line: underline;
   text-underline-offset: 0.25em;
   text-decoration-thickness: 1px;
+  /* 链接文本常为完整 URL：允许任意断点（break-word 不足以保护 flex/grid min-content） */
+  overflow-wrap: anywhere;
 }
 
 .prose a:hover {
@@ -129,6 +133,8 @@
   font-family: var(--font-mono);
   font-size: 0.875em;
   color: var(--cove-blue-strong);
+  /* 长命令/路径/base64 允许断行 */
+  overflow-wrap: anywhere;
 }
 
 .prose pre.astro-code {
@@ -218,6 +224,15 @@
   max-width: 100%;
   height: auto;
   border-radius: var(--radius-control);
+}
+
+/* GFM 原生 HTML：视频/内嵌帧约束在行宽内（原生尺寸常 ≥1280px） */
+.prose :is(video, iframe) {
+  max-width: 100%;
+}
+
+.prose video {
+  height: auto;
 }
 
 .prose figure.prose-figure {

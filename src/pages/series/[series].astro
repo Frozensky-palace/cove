@@ -1,0 +1,144 @@
+---
+/**
+ * 系列详情页：有序叙事线，阅读顺序 = 发布顺序（publishedAt 升序）。
+ * 篇目带「第 N 篇」序号；页头返回全部系列。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import PostMeta from '@/components/content/PostMeta.astro';
+import { getAllSeries } from '@/lib/content';
+import { postUrl, seriesUrl, slugifyTag } from '@/lib/urls';
+
+export async function getStaticPaths() {
+  const seriesList = await getAllSeries();
+  return seriesList.map((series) => ({
+    params: { series: slugifyTag(series.name) },
+    props: { series },
+  }));
+}
+
+const { series } = Astro.props;
+---
+
+<ContentLayout
+  title={`${series.name} · 系列`}
+  description={`系列「${series.name}」共 ${series.posts.length} 篇，按发布顺序排列。`}
+  path={seriesUrl(series.name)}
+  heading={series.name}
+  intro={`共 ${series.posts.length} 篇，按发布顺序排列——从第一篇读起。`}
+>
+  <a class="all-series" href="/series/" slot="header-actions">
+    ← 全部系列
+  </a>
+
+  <ol class="series-list">
+    {
+      series.posts.map((post, index) => (
+        <li>
+          <article class="series-post">
+            <span class="sp-index" aria-label={`第 ${index + 1} 篇`}>
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <div class="sp-body">
+              <h2 class="sp-title">
+                <a href={postUrl(post.id)}>{post.data.title}</a>
+              </h2>
+              <PostMeta post={post} showUpdated={false} />
+              <p class="sp-description">{post.data.description}</p>
+            </div>
+          </article>
+        </li>
+      ))
+    }
+  </ol>
+</ContentLayout>
+
+<style>
+  .all-series {
+    display: inline-block;
+    margin-top: 1.25rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    text-decoration-line: none;
+    transition: color 150ms ease;
+  }
+
+  .all-series:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .series-list {
+    max-width: 46rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: none;
+  }
+
+  .series-post {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    /* 负外边距 + 内边距对称扩展：悬停底色出血而不改变排版位置 */
+    padding: 1.5rem 0.75rem;
+    margin-inline: -0.75rem;
+    border-radius: var(--radius-control);
+    transition: background-color 150ms ease;
+  }
+
+  .series-post:hover {
+    background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
+  }
+
+  .series-post + .series-post {
+    margin-top: 0.25rem;
+  }
+
+  /* 序号：等宽数字，首篇/最新一篇用品牌色强调当前阅读起点 */
+  .sp-index {
+    flex-shrink: 0;
+    min-width: 2.25rem;
+    padding-top: 0.25rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .series-post:first-child .sp-index {
+    color: var(--cove-blue-strong);
+  }
+
+  .sp-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .sp-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .sp-title a {
+    color: var(--text);
+    text-decoration-line: none;
+  }
+
+  .sp-title a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .sp-description {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.75;
+  }
+</style>

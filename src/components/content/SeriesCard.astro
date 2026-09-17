@@ -1,0 +1,255 @@
+---
+/**
+ * 文内系列卡：原生 <details> 折叠的同系列文章列表（默认收起）。
+ * 展开后列出系列全部文章，当前篇淡底高亮且不可点（aria-current）；
+ * 单篇系列无折叠意义，仅显示归属与进度。
+ * 动效均在指南 8.6 白名单内：悬停颜色变化、箭头旋转（随移动端折叠目录先例）；
+ * 另有 ::details-content 展开高度过渡 + 淡入（IMPL-034，渐进增强，
+ * 与列表页 SeriesFeedCard 同语言但无错峰，正文流中动效更轻）。
+ */
+import { postUrl } from '@/lib/urls';
+import type { SeriesGroup } from '@/lib/content';
+
+interface Props {
+  series: SeriesGroup;
+  /** 当前文章 ID（posts collection） */
+  currentId: string;
+}
+
+const { series, currentId } = Astro.props;
+const index = series.posts.findIndex((post) => post.id === currentId);
+const single = series.posts.length === 1;
+---
+
+{
+  single ? (
+    <aside class="series-card" aria-label="所属系列">
+      <p class="series-summary">
+        <span class="series-label">系列</span>
+        <span class="series-name">{series.name}</span>
+        <span class="series-progress">
+          第 {index + 1} / {series.posts.length} 篇
+        </span>
+      </p>
+    </aside>
+  ) : (
+    <aside class="series-card" aria-label="所属系列">
+      <details class="series-details">
+        <summary class="series-summary">
+          <span class="series-label">系列</span>
+          <span class="series-name">{series.name}</span>
+          <span class="series-progress">
+            第 {index + 1} / {series.posts.length} 篇
+          </span>
+          <svg
+            class="series-chevron"
+            viewBox="0 0 20 20"
+            width="16"
+            height="16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="m5 8 5 5 5-5"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </summary>
+        <ol class="series-list">
+          {series.posts.map((post, i) => {
+            const isCurrent = post.id === currentId;
+            return (
+              <li>
+                {isCurrent ? (
+                  <span class="series-item is-current" aria-current="page">
+                    <span class="si-num">{String(i + 1).padStart(2, '0')}</span>
+                    <span class="si-title">{post.data.title}</span>
+                    <span class="si-badge">本篇</span>
+                  </span>
+                ) : (
+                  <a class="series-item" href={postUrl(post.id)}>
+                    <span class="si-num">{String(i + 1).padStart(2, '0')}</span>
+                    <span class="si-title">{post.data.title}</span>
+                  </a>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </details>
+    </aside>
+  )
+}
+
+<style>
+  .series-card {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--cove-blue);
+    border-radius: var(--radius-control);
+    background-color: var(--surface);
+  }
+
+  .series-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.375rem 0.75rem;
+    margin: 0;
+    padding: 0.75rem 1rem;
+  }
+
+  .series-details summary {
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .series-details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* 展开时摘要行与列表以虚线分隔（与笔记列表分隔线同语言） */
+  .series-details[open] .series-summary {
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .series-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+
+  .series-name {
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    transition: color 150ms ease;
+  }
+
+  .series-progress {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .series-chevron {
+    flex-shrink: 0;
+    align-self: center;
+    color: var(--text-muted);
+    transition:
+      transform 150ms ease,
+      color 150ms ease;
+  }
+
+  /* 悬停暗示可点：仅颜色变化（指南 8.6） */
+  .series-details summary:hover .series-name,
+  .series-details summary:hover .series-chevron {
+    color: var(--cove-blue-strong);
+  }
+
+  .series-details[open] .series-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* 展开过渡（IMPL-034，渐进增强）：高度 0↔auto + 淡入，
+     依赖全局 interpolate-size（Chromium 129+），不支持时原生瞬时展开 */
+  .series-details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      block-size 280ms ease,
+      opacity 220ms ease,
+      content-visibility 280ms allow-discrete;
+  }
+
+  .series-details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+
+  .series-list {
+    margin: 0;
+    padding: 0.375rem 0.875rem 0.75rem;
+    list-style: none;
+  }
+
+  .series-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.625rem;
+    /* 负外边距 + 内边距对称扩展：悬停底色出血而不改变排版位置 */
+    padding: 0.4375rem 0.5rem;
+    margin-inline: -0.5rem;
+    border-radius: var(--radius-control);
+    text-decoration-line: none;
+    transition: background-color 150ms ease;
+  }
+
+  .si-num {
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    transition: color 150ms ease;
+  }
+
+  .si-title {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    transition: color 120ms ease;
+  }
+
+  a.series-item:hover {
+    background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
+  }
+
+  a.series-item:hover .si-title {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  /* 当前篇：淡底 + 品牌色序号 + 徽标（与归档年份徽标同视觉层级） */
+  .is-current {
+    background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
+  }
+
+  .is-current .si-num {
+    color: var(--cove-blue-strong);
+  }
+
+  .is-current .si-title {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .si-badge {
+    margin-left: auto;
+    padding: 0.0625rem 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--cove-blue) 45%, transparent);
+    border-radius: 999px;
+    color: var(--cove-blue-strong);
+    font-size: 0.75rem;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+
+  /* 窄屏：系列名/篇名较长换行后，进度与徽标不再右推到行端（与归档条目同一策略） */
+  @media (max-width: 640px) {
+    .series-progress {
+      margin-left: 0;
+    }
+
+    .si-badge {
+      margin-left: 0.5rem;
+    }
+  }
+</style>

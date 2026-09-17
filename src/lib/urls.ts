@@ -24,6 +24,11 @@ export function tagUrl(tag: string): string {
   return `/tags/${slugifyTag(tag)}/`;
 }
 
+/** 系列 URL：slug 规范化与标签同策略（保留中日文字符，构建期碰撞检测见 lib/content）。 */
+export function seriesUrl(name: string): string {
+  return `/series/${slugifyTag(name)}/`;
+}
+
 export function categoryUrl(key: string): string {
   return `/categories/${key}/`;
 }

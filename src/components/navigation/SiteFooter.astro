@@ -1,23 +1,36 @@
 ---
 /**
- * 全局页脚：站点信息、主导航入口、内容发现入口与版权。
- * 分类/标签/归档/RSS 在页脚提供入口（指南 7.1）。
+ * 全局页脚：站点信息、主导航、分类与发现入口、版权。
+ * 顶部波浪饰线呼应 Logo 与品牌加载页；分类/标签/归档/RSS 在页脚
+ * 提供入口（指南 7.1；标签暂无索引页，待后续阶段补充）。
  */
 import Logo from '@/components/base/Logo.astro';
 import { siteConfig } from '@/data/site';
+import { CATEGORIES } from '@/data/taxonomy';
+import { categoryUrl } from '@/lib/urls';
 
 const year = new Date().getFullYear();
+const categories = Object.entries(CATEGORIES);
 ---
 
 <footer class="site-footer">
+  <svg class="footer-wave" viewBox="0 0 24 6" preserveAspectRatio="none" aria-hidden="true">
+    <path
+      class="wave-a"
+      vector-effect="non-scaling-stroke"
+      d="M0 3c1.9-2.2 4.1-2.2 6 0s4.1 2.2 6 0 4.1 2.2 6 0 4.1 2.2 6 0"
+    />
+    <path
+      class="wave-b"
+      vector-effect="non-scaling-stroke"
+      d="M3 4.6c1.5-1.6 3.5-1.6 5 0s3.5 1.6 5 0 3.5 1.6 5 0 3.5 1.6 5 0"
+    />
+  </svg>
+
   <div class="cove-container footer-inner">
     <div class="footer-brand">
       <Logo size={22} />
       <p class="footer-tagline">{siteConfig.tagline}</p>
-      <p class="footer-copy">
-        © {year} {siteConfig.name}
-        {siteConfig.author.name && ` · ${siteConfig.author.name}`}
-      </p>
     </div>
 
     <nav class="footer-nav" aria-label="页脚导航">
@@ -28,6 +41,19 @@ const year = new Date().getFullYear();
             siteConfig.nav.map((item) => (
               <li>
                 <a href={item.href}>{item.label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="footer-heading">分类</h2>
+        <ul>
+          {
+            categories.map(([key, label]) => (
+              <li>
+                <a href={categoryUrl(key)}>{label}</a>
               </li>
             ))
           }
@@ -48,21 +74,52 @@ const year = new Date().getFullYear();
       </div>
     </nav>
   </div>
+
+  <div class="cove-container footer-bottom">
+    <p class="footer-copy">
+      © {year} {siteConfig.name}
+      {siteConfig.author.name && ` · ${siteConfig.author.name}`}
+    </p>
+  </div>
 </footer>
 
 <style>
   .site-footer {
-    border-top: 1px solid var(--border);
     background-color: var(--surface-muted);
     margin-top: 4rem;
+  }
+
+  /* 顶部波浪饰线：双波呼应 Logo 描线，落在页面底色与页脚底色的接缝上 */
+  .footer-wave {
+    display: block;
+    width: 100%;
+    height: 28px;
+  }
+
+  .footer-wave path {
+    fill: none;
+    stroke-linecap: round;
+  }
+
+  .wave-a {
+    stroke: var(--cove-blue);
+    stroke-width: 1.75px;
+    opacity: 0.5;
+  }
+
+  .wave-b {
+    stroke: var(--shell-pink);
+    stroke-width: 1.5px;
+    opacity: 0.45;
   }
 
   .footer-inner {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 2rem 3rem;
-    padding-block: 2.5rem;
+    gap: 2rem 3.5rem;
+    padding-block: 1.5rem 2.25rem;
   }
 
   .footer-brand {
@@ -73,12 +130,7 @@ const year = new Date().getFullYear();
     margin-top: 0.75rem;
     color: var(--text);
     font-size: 14px;
-  }
-
-  .footer-copy {
-    margin-top: 0.5rem;
-    color: var(--text-muted);
-    font-size: 13px;
+    line-height: 1.8;
   }
 
   .footer-nav {
@@ -115,5 +167,16 @@ const year = new Date().getFullYear();
     color: var(--cove-blue-strong);
     text-decoration-line: underline;
     text-underline-offset: 0.3em;
+  }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding-block: 1.25rem 1.5rem;
+  }
+
+  .footer-copy {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
   }
 </style>

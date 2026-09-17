@@ -1,13 +1,13 @@
 ---
 /**
  * 构建期分页导航（指南 9.3）：普通链接，无 JS 可用。
- * 与 Astro paginate() 的 page 结构配套（Page<T>）。
+ * 与 Astro paginate() 的 page 结构配套；条目类型无关（只读 url/页码），
+ * 用 unknown 兼容任意 feed 条目（Post、FeedEntry 等，IMPL-030）。
  */
 import type { Page } from 'astro';
-import type { Post } from '@/lib/content';
 
 interface Props {
-  page: Page<Post>;
+  page: Page<unknown>;
 }
 
 const { page } = Astro.props;

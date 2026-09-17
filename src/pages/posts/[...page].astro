@@ -1,21 +1,24 @@
 ---
 /**
- * 文章列表页（指南 9.3）：构建期分页（paginate），每页 10 篇；
+ * 文章列表页（指南 9.3）：构建期分页（paginate），每页 10 条；
  * 筛选导航为普通链接，无 JS 可用。
+ * 列表条目为「文章或系列组」（IMPL-030）：同系列文章先折叠为一个
+ * 系列卡再参与分页，避免同一系列跨页拆开。
  */
 import type { GetStaticPaths } from 'astro';
 import ContentLayout from '@/layouts/ContentLayout.astro';
 import ArticleListItem from '@/components/content/ArticleListItem.astro';
+import SeriesFeedCard from '@/components/content/SeriesFeedCard.astro';
 import Pagination from '@/components/content/Pagination.astro';
 import EmptyState from '@/components/content/EmptyState.astro';
 import Button from '@/components/base/Button.astro';
 import { categoryLabel } from '@/data/taxonomy';
 import { categoryUrl } from '@/lib/urls';
-import { getCategoryStats, getPublishedPosts } from '@/lib/content';
+import { getCategoryStats, getPostFeed } from '@/lib/content';
 
 export async function getStaticPaths({ paginate }: Parameters<GetStaticPaths>[0]) {
-  const posts = await getPublishedPosts();
-  return paginate(posts, { pageSize: 10 });
+  const feed = await getPostFeed();
+  return paginate(feed, { pageSize: 10 });
 }
 
 const { page } = Astro.props;
@@ -42,9 +45,13 @@ const categoryStats = await getCategoryStats();
   {
     page.data.length > 0 ? (
       <div class="post-list">
-        {page.data.map((post) => (
-          <ArticleListItem post={post} />
-        ))}
+        {page.data.map((entry) =>
+          'posts' in entry ? (
+            <SeriesFeedCard series={entry} />
+          ) : (
+            <ArticleListItem post={entry} />
+          ),
+        )}
       </div>
     ) : (
       <EmptyState

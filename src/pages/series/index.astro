@@ -1,0 +1,107 @@
+---
+/**
+ * 系列索引页（指南 11.1 预留字段的落地）：列出全部系列，
+ * 系列间按最近更新倒序；空态提示 series 字段用法。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import EmptyState from '@/components/content/EmptyState.astro';
+import { getAllSeries, formatDate } from '@/lib/content';
+import { seriesUrl } from '@/lib/urls';
+
+const seriesList = await getAllSeries();
+---
+
+<ContentLayout
+  title="系列"
+  description={`全部系列，共 ${seriesList.length} 个。`}
+  path="/series/"
+  heading="系列"
+  intro="按主题连缀的有序文章——每个系列都有一条完整的叙事线，从第一篇读起。"
+>
+  {
+    seriesList.length > 0 ? (
+      <ul class="series-index">
+        {seriesList.map((series) => (
+          <li>
+            <a class="si-item" href={seriesUrl(series.name)}>
+              <span class="si-name">{series.name}</span>
+              <span class="si-meta">
+                {series.posts.length} 篇
+                <span class="si-latest">· 最近更新 {formatDate(series.latestAt)}</span>
+              </span>
+              <span class="si-arrow" aria-hidden="true">
+                →
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <EmptyState
+        title="还没有系列"
+        description="在文章 frontmatter 写 series: '系列名' 即可创建系列，同名文章自动归为一组。"
+      />
+    )
+  }
+</ContentLayout>
+
+<style>
+  .series-index {
+    max-width: 46rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .si-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.375rem 1rem;
+    /* 负外边距 + 内边距对称扩展：悬停底色出血而不改变排版位置 */
+    padding: 1.125rem 0.75rem;
+    margin-inline: -0.75rem;
+    border-radius: var(--radius-control);
+    text-decoration-line: none;
+    transition: background-color 150ms ease;
+  }
+
+  .si-item + .si-item {
+    margin-top: 0.25rem;
+  }
+
+  .si-item:hover {
+    background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
+  }
+
+  .si-name {
+    color: var(--text);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.5;
+    transition: color 120ms ease;
+  }
+
+  .si-item:hover .si-name {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .si-meta {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .si-arrow {
+    margin-left: auto;
+    color: var(--text-muted);
+    transition: transform 150ms ease, color 150ms ease;
+  }
+
+  .si-item:hover .si-arrow {
+    color: var(--cove-blue-strong);
+    transform: translateX(2px);
+  }
+</style>

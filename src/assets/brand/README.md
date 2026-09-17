@@ -1,13 +1,15 @@
 # 品牌资产目录
 
-存放 Cove 品牌相关源文件与导出物。需求清单与收集状态见 `docs/content-checklist.md` 第四节。
+Cove 当前品牌素材：
 
-## 约定
+- `cove-icon.svg`：带浅色圆角底板的可编辑矢量源文件，塔身使用海雾渐变内芯。
+- `cove-icon.png`：完整品牌图标的 256×256 PNG 预览。
+- `cove-favicon.svg`：移除底板后的透明标签页图标源文件。
+- `cove-favicon.png`：透明标签页图标的 256×256 PNG 预览。
+- `cove-support-illustration.jpg`：首页品牌插画原图。
+- `cove-support-illustration-cropped.png`：仅保留原图圆角边框内画面的无文字裁切版本，圆角外区域透明。
+- `public/cove-icon.svg`：页头、加载页与 Web App 使用的完整品牌图标。
+- `public/favicon.svg`：浏览器标签页使用的透明图标。
+- `public/home-brand.webp`：首页使用的插画裁切版本。
 
-- `logo.source.svg`：标志矢量源文件（蓝粉配色）。
-- `logo-light.svg` / `logo-dark.svg`：浅色 / 深色模式导出，供 `SiteHeader`、`SiteFooter` 使用。
-- 约束（指南 8.2）：蓝粉渐变只用于品牌标志、当前导航细线或一处关键视觉。
-
-## 当前状态
-
-尚未提供正式品牌资产。页头/页脚暂用文字字标（wordmark）+ `public/favicon.svg` 临时占位。
+图标使用站点现有的雾蓝、强调蓝和贝壳粉色板。后续调整需同步维护完整品牌图标与透明 favicon 两种用途版本。

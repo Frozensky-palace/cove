@@ -1,0 +1,363 @@
+---
+/**
+ * 文章列表中的系列折叠条目（IMPL-030/031/033，用户需求）：
+ * /posts/ 列表上同系列文章收束为一个可展开条目。
+ * 信息密度与普通文章行对齐（IMPL-033/034）：
+ * - 收起态：系列名 + 元信息行（分类/篇数/合计时长/更新时间）+ 系列导语
+ *   （取阅读顺序首篇 description，通常即为系列开篇的框架说明）+ 标签并集，
+ *   与文章行标题/元信息/摘要/标签四层同构；
+ * - 展开态：每篇透出标题、日期、时长与摘要（两行截断），
+ *   供用户在列表层直接判断想读哪篇。
+ * 与文章详情页内的 SeriesCard（紧凑卡）刻意保持两种形态：
+ * 列表条目要有发现力，文内卡片只需定位。
+ * 外形沿用列表行语言：无卡片边框/底色，悬停淡底出血，细线分隔；
+ * 原生 <details> 零 JS、键盘原生支持、ClientRouter 换页兼容。
+ * 展开动效为渐进增强（IMPL-034）：::details-content 高度过渡 + 淡入 +
+ * 篇目错峰上浮；依赖全局 interpolate-size，不支持的浏览器保持原生瞬时展开。
+ */
+import { categoryLabel } from '@/data/taxonomy';
+import { categoryUrl, postUrl } from '@/lib/urls';
+import { formatDate, readingMinutes, type SeriesGroup } from '@/lib/content';
+import TagList from '@/components/content/TagList.astro';
+
+interface Props {
+  series: SeriesGroup;
+}
+
+const { series } = Astro.props;
+
+const totalMinutes = series.posts.reduce(
+  (sum, post) => sum + readingMinutes(post.body ?? ''),
+  0,
+);
+
+/* 系列内通常同分类；仅当唯一时展示分类入口 */
+const categories = [...new Set(series.posts.map((post) => post.data.category))];
+const singleCategory = categories.length === 1 ? categories[0] : null;
+
+/* 系列导语：阅读顺序首篇的 description（开篇通常交代系列框架） */
+const intro = series.posts[0]?.data.description ?? '';
+
+/* 系列标签：全系列标签并集，按阅读顺序去重；封顶四枚与文章行（max=3）同量级 */
+const allTags = [...new Set(series.posts.flatMap((post) => post.data.tags))];
+---
+
+<details class="series-feed">
+  <summary class="feed-summary">
+    <h3 class="feed-title">
+      <span class="feed-label">系列</span>
+      <span class="feed-name">{series.name}</span>
+      <svg
+        class="feed-chevron"
+        viewBox="0 0 20 20"
+        width="18"
+        height="18"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="m5 8 5 5 5-5"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
+      </svg>
+    </h3>
+    <p class="feed-meta">
+      {
+        singleCategory && (
+          <a class="feed-category" href={categoryUrl(singleCategory)}>
+            {categoryLabel(singleCategory)}
+          </a>
+        )
+      }
+      <span aria-hidden="true">·</span>
+      <span>共 {series.posts.length} 篇</span>
+      <span aria-hidden="true">·</span>
+      <span>合计约 {totalMinutes} 分钟</span>
+      <span aria-hidden="true">·</span>
+      <span>
+        更新于 <time datetime={series.latestAt}>{formatDate(series.latestAt)}</time>
+      </span>
+    </p>
+    {intro && <p class="feed-desc">{intro}</p>}
+    {allTags.length > 0 && <TagList tags={allTags} max={4} />}
+  </summary>
+  <ol class="feed-list">
+    {
+      series.posts.map((post, i) => {
+        const minutes = readingMinutes(post.body ?? '');
+        return (
+          <li style={`--i: ${i}`}>
+            <a class="feed-item" href={postUrl(post.id)}>
+              <span class="fi-num">{String(i + 1).padStart(2, '0')}</span>
+              <span class="fi-body">
+                <span class="fi-title">{post.data.title}</span>
+                <span class="fi-meta">
+                  <time datetime={post.data.publishedAt}>
+                    {formatDate(post.data.publishedAt)}
+                  </time>
+                  <span aria-hidden="true">·</span>
+                  <span>约 {minutes} 分钟</span>
+                </span>
+                {post.data.description && (
+                  <span class="fi-desc">{post.data.description}</span>
+                )}
+              </span>
+            </a>
+          </li>
+        );
+      })
+    }
+  </ol>
+</details>
+
+<style>
+  /* 与 ArticleListItem 同宽同位：负外边距出血 + 等量内边距；
+     上下细线承担与相邻列表条目的分隔（相邻 .article-item 的
+     border-top 链在非同类兄弟处断开，分隔由本元素补齐） */
+  .series-feed {
+    border-block: 1px solid var(--border);
+  }
+
+  /* 收起态四层（标题/元信息/导语/标签）与 .article-item 逐属性同距：
+     flex column + gap 0.5rem + padding-block 1.5rem（IMPL-035），
+     保证同一列表里两种条目占据的高度节奏一致 */
+
+  .series-feed:first-child {
+    border-top: none;
+  }
+
+  .series-feed:last-child {
+    border-bottom: none;
+  }
+
+  /* 连续两个系列条目时避免双线 */
+  .series-feed + .series-feed {
+    border-top: none;
+  }
+
+  .feed-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-block: 1.5rem;
+    padding-inline: 0.75rem;
+    margin-inline: -0.75rem;
+    cursor: pointer;
+    list-style: none;
+    border-radius: var(--radius-control);
+    transition: background-color 150ms ease;
+  }
+
+  .feed-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* 悬停：与列表行同一语言（品牌色 6% 淡底，仅颜色变化，指南 8.6） */
+  .feed-summary:hover {
+    background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
+  }
+
+  .feed-summary:hover .feed-name {
+    color: var(--cove-blue-strong);
+  }
+
+  /* 展开时摘要与篇目列表以虚线分隔（与文内系列卡同语言） */
+  .series-feed[open] .feed-summary {
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed var(--border);
+    border-radius: 0;
+  }
+
+  .feed-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.375rem 0.625rem;
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .feed-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+
+  .feed-name {
+    color: var(--text);
+    transition: color 150ms ease;
+  }
+
+  .feed-chevron {
+    flex-shrink: 0;
+    align-self: center;
+    margin-left: auto;
+    color: var(--text-muted);
+    transition:
+      transform 150ms ease,
+      color 150ms ease;
+  }
+
+  .feed-summary:hover .feed-chevron {
+    color: var(--cove-blue-strong);
+  }
+
+  .series-feed[open] .feed-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* 元信息行：与 PostMeta 同规格（muted 0.875rem，间隔点分隔，行高继承） */
+  .feed-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.375rem 0.625rem;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .feed-category {
+    color: var(--cove-blue-strong);
+    font-weight: 600;
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+    text-decoration-thickness: 1px;
+    transition: text-decoration-thickness 120ms ease;
+  }
+
+  .feed-category:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  /* 系列导语：与 .item-description 完全同规格（不截断，长文同样自然换行，
+     保证两种条目在同内容量下高度一致） */
+  .feed-desc {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.75;
+  }
+
+  .feed-list {
+    margin: 0;
+    padding: 0.5rem 0 0.875rem;
+    list-style: none;
+  }
+
+  .feed-item {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0 0.5rem;
+    /* 负外边距 + 内边距对称扩展：悬停底色出血而不改变排版位置 */
+    padding: 0.625rem 0.5rem;
+    margin-inline: -0.5rem;
+    border-radius: var(--radius-control);
+    text-decoration-line: none;
+    transition: background-color 150ms ease;
+  }
+
+  .fi-num {
+    padding-top: 0.1em;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    transition: color 150ms ease;
+  }
+
+  .fi-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .fi-title {
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.6;
+    transition: color 120ms ease;
+  }
+
+  .fi-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.375rem;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .fi-desc {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  a.feed-item:hover {
+    background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
+  }
+
+  a.feed-item:hover .fi-title {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  a.feed-item:hover .fi-num {
+    color: var(--cove-blue-strong);
+  }
+
+  /* 展开过渡（渐进增强，IMPL-034）：::details-content 高度 0↔auto + 淡入。
+     依赖全局 html { interpolate-size: allow-keywords }（Chromium 129+）；
+     不支持的浏览器自动退回原生瞬时展开，无降级成本。
+     content-visibility 以 allow-discrete 参与过渡，收起动画期间内容保持可见。 */
+  .series-feed::details-content {
+    block-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      block-size 300ms ease,
+      opacity 240ms ease,
+      content-visibility 300ms allow-discrete;
+  }
+
+  .series-feed[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+
+  /* 篇目错峰浮现：展开时随高度过渡依次上浮（--i 由模板内联注入），
+     min() 封顶延迟，长系列不必等全部条目依次现身；
+     reduced-motion 下由全局规则将动画压到 0.01ms，等效关闭 */
+  .series-feed[open] .feed-list li {
+    animation: feed-item-in 320ms ease backwards;
+    animation-delay: min(calc(var(--i, 0) * 45ms), 270ms);
+  }
+
+  @keyframes feed-item-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* 窄屏：元信息行自然换行（flex-wrap），无需额外右推处理 */
+</style>

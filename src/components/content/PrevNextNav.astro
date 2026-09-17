@@ -42,7 +42,8 @@ const { prev, next } = Astro.props;
 <style>
   .prev-next {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* minmax(0, …)：长标题不可断时避免撑破列 */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1rem;
     margin-top: 2.5rem;
   }

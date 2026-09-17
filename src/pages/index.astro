@@ -37,13 +37,27 @@ const hasContent =
 
 <BaseLayout title={siteConfig.name} description={siteConfig.tagline} path="/">
   <section class="hero">
-    <div class="cove-container">
-      <!-- Display 层级：全站最多一处（指南 8.3） -->
-      <h1 class="hero-title">你好，这里是 <span class="hero-name">Cove</span></h1>
-      <p class="hero-description">{siteConfig.description}</p>
-      <div class="hero-actions">
-        <Button href="/posts/" variant="primary">阅读文章</Button>
-        <Button href="/about/" variant="secondary">了解 Cove</Button>
+    <div class="cove-container hero-grid">
+      <div class="hero-copy">
+        <!-- Display 层级：全站最多一处（指南 8.3） -->
+        <h1 class="hero-title">你好，这里是 <span class="hero-name">Cove</span></h1>
+        <p class="hero-description">{siteConfig.description}</p>
+        <div class="hero-actions">
+          <Button href="/posts/" variant="primary">阅读文章</Button>
+          <Button href="/about/" variant="secondary">了解 Cove</Button>
+        </div>
+      </div>
+      <!-- 品牌标志图（插画卡片逐列描摹抠底，IMPL-037）：纯装饰，仅 ≥768px 显示。
+           卡片外区域（含贴边软投影）已在 WebP 内烘焙为透明；投影用 drop-shadow 按形状投射 -->
+      <div class="hero-brand" aria-hidden="true">
+        <img
+          src="/home-brand.webp"
+          alt=""
+          width="430"
+          height="449"
+          loading="eager"
+          decoding="async"
+        />
       </div>
     </div>
   </section>
@@ -115,12 +129,99 @@ const hasContent =
 </BaseLayout>
 
 <style>
-  /* 首屏高度 360–440px（指南 9.2） */
+  /* 首屏高度：桌面 360–440px（指南 9.2），矮视口（小手机横竖屏）按视口收缩 */
   .hero {
     display: flex;
     align-items: center;
-    min-height: 380px;
+    min-height: clamp(320px, 52vh, 440px);
     padding-block: 3rem;
+  }
+
+  /* 品牌图在文案列右侧；<768px 无「右侧」语义，隐藏保持首屏紧凑 */
+  .hero-grid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-brand {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 2.5rem;
+    }
+
+    .hero-brand {
+      display: block;
+      align-self: center;
+      /* 裁切后插画不再自带四周底色（IMPL-036），内收一点避免贴住版心右缘 */
+      margin-inline-end: clamp(0rem, 1.5vw, 1rem);
+      /* 入场：淡入 + 上浮（用户点名动效；reduced-motion 下由全局规则关闭） */
+      animation: brand-in 560ms ease-out both;
+    }
+
+    .hero-brand img {
+      display: block;
+      width: clamp(200px, 22vw, 288px);
+      height: auto;
+      /* 卡片外区域已在 WebP 内烘焙为透明（IMPL-037），无需圆角裁切；
+         投影用 drop-shadow 按 alpha 形状投射——box-shadow 只能是矩形，
+         且原图卡片底部是 squircle 曲线，几何圆角无法贴合 */
+      filter: drop-shadow(0 24px 32px color-mix(in srgb, var(--cove-blue-strong) 32%, transparent))
+        drop-shadow(0 8px 14px color-mix(in srgb, var(--cove-blue-strong) 22%, transparent));
+      /* 缓慢上下漂浮；scale 用独立属性与 transform 动画叠加互不干扰 */
+      animation: brand-float 7s ease-in-out infinite alternate;
+      transition:
+        scale 240ms ease,
+        filter 240ms ease;
+    }
+
+    .hero-brand:hover img {
+      scale: 1.025;
+      filter: drop-shadow(0 30px 40px color-mix(in srgb, var(--cove-blue-strong) 40%, transparent))
+        drop-shadow(0 10px 18px color-mix(in srgb, var(--cove-blue-strong) 26%, transparent));
+    }
+
+    /* 深色模式：深色投影（浮在暗面上的卡片），悬停同步加深 */
+    :global(.dark) .hero-brand img {
+      filter: drop-shadow(0 24px 32px rgb(0 0 0 / 0.62)) drop-shadow(0 8px 14px rgb(0 0 0 / 0.46));
+    }
+
+    :global(.dark) .hero-brand:hover img {
+      filter: drop-shadow(0 30px 40px rgb(0 0 0 / 0.68)) drop-shadow(0 10px 18px rgb(0 0 0 / 0.52));
+    }
+  }
+
+  @keyframes brand-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes brand-float {
+    from {
+      transform: translateY(-4px);
+    }
+
+    to {
+      transform: translateY(4px);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .hero-grid {
+      gap: 4rem;
+    }
   }
 
   .hero-title {
@@ -154,7 +255,8 @@ const hasContent =
     margin-top: 2rem;
   }
 
-  /* 精选：重点卡片 + 两个紧凑条目；窄屏纵向堆叠 */
+  /* 精选：重点卡片 + 两个紧凑条目；窄屏纵向堆叠。
+     minmax(0, …) 防止不可断长内容撑破列（响应式审查 #9） */
   .featured-grid {
     display: grid;
     gap: 1rem;
@@ -167,7 +269,7 @@ const hasContent =
 
   @media (min-width: 960px) {
     .featured-grid {
-      grid-template-columns: 1.55fr 1fr;
+      grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
       align-items: start;
     }
   }

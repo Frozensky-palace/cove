@@ -193,6 +193,121 @@ export async function groupPostsByYear(): Promise<{ year: string; posts: Post[] 
     .map(([year, list]) => ({ year, posts: list }));
 }
 
+/* --------------------------------- series --------------------------------- */
+
+export interface SeriesGroup {
+  /** 系列展示名（frontmatter 中首次出现的写法） */
+  name: string;
+  /** 阅读顺序：publishedAt 升序（发布顺序即阅读顺序） */
+  posts: Post[];
+  /** 系列最新一篇日期（用于系列间排序） */
+  latestAt: string;
+}
+
+/**
+ * 全部系列（指南 11.1 预留字段的落地）：同名 series 值聚合为一个系列，
+ * 系列间按最近更新倒序；与标签同策略检测 URL slug 碰撞。
+ */
+export async function getAllSeries(): Promise<SeriesGroup[]> {
+  const posts = await getPublishedPosts();
+  const byName = new Map<string, Post[]>();
+  for (const post of posts) {
+    const name = post.data.series;
+    if (!name) continue;
+    byName.set(name, [...(byName.get(name) ?? []), post]);
+  }
+
+  const bySlug = new Map<string, string>();
+  for (const name of byName.keys()) {
+    const slug = slugifyTag(name);
+    const existing = bySlug.get(slug);
+    if (existing && existing !== name) {
+      throw new Error(
+        `系列 URL 碰撞：「${existing}」与「${name}」都规范化为 ${slug}，请调整系列写法`,
+      );
+    }
+    bySlug.set(slug, name);
+  }
+
+  return [...byName.entries()]
+    .map(([name, list]) => {
+      const ascending = [...list].reverse(); // getPublishedPosts 为倒序
+      return { name, posts: ascending, latestAt: list[0]?.data.publishedAt ?? '' };
+    })
+    .sort((a, b) => b.latestAt.localeCompare(a.latestAt));
+}
+
+/** 按展示名取单个系列（getStaticPaths 传 props.series，ArticleLayout 传 frontmatter 值）。 */
+export async function getSeriesGroup(name: string): Promise<SeriesGroup | null> {
+  const all = await getAllSeries();
+  return all.find((series) => series.name === name) ?? null;
+}
+
+/** 文章列表条目：独立文章，或折叠了整个系列的系列组（IMPL-030）。 */
+export type FeedEntry = Post | SeriesGroup;
+
+/**
+ * 从给定文章集合构建系列组（IMPL-035 抽出为共用逻辑）：
+ * 同名 series 聚合，阅读顺序 = publishedAt 升序，latestAt 取最新一篇。
+ * 输入集合先行过滤（如按分类），组内自然只含过滤后的篇目——
+ * 跨分类系列在分类页只呈现该分类的部分，与页面语境一致。
+ */
+function groupSeriesByName(posts: Post[]): Map<string, SeriesGroup> {
+  const byName = new Map<string, Post[]>();
+  for (const post of posts) {
+    const name = post.data.series;
+    if (!name) continue;
+    byName.set(name, [...(byName.get(name) ?? []), post]);
+  }
+  return new Map(
+    [...byName.entries()].map(([name, list]) => [
+      name,
+      { name, posts: [...list].reverse(), latestAt: list[0]?.data.publishedAt ?? '' },
+    ]),
+  );
+}
+
+/**
+ * 列表折叠（IMPL-030/035）：同系列文章收束为一个系列组，
+ * 组的位置取系列最新一篇在时间线中的位置；组外文章原样保留。
+ * 输入集合已按页面语境过滤（全部文章 / 单一分类）。
+ */
+function collapseSeries(posts: Post[]): FeedEntry[] {
+  const byName = groupSeriesByName(posts);
+  const emitted = new Set<string>();
+  const feed: FeedEntry[] = [];
+  for (const post of posts) {
+    const group = post.data.series ? byName.get(post.data.series) : undefined;
+    if (!group) {
+      feed.push(post);
+      continue;
+    }
+    if (emitted.has(group.name)) continue;
+    emitted.add(group.name);
+    feed.push(group);
+  }
+  return feed;
+}
+
+/**
+ * 文章列表 feed（IMPL-030，用户需求）：同系列文章在列表层
+ * 收束为一个系列组（可展开卡片），不再逐篇占据条目。
+ * 折叠发生在分页之前，同一系列不会跨页拆开。
+ */
+export async function getPostFeed(): Promise<FeedEntry[]> {
+  return collapseSeries(await getPublishedPosts());
+}
+
+/**
+ * 分类页 feed（IMPL-035，用户需求）：分类页与 /posts/ 同款系列折叠。
+ * 先按分类过滤再折叠：系列组内仅含该分类的篇目，
+ * 位置仍取组内最新一篇在该分类时间线中的位置。
+ */
+export async function getCategoryFeed(key: CategoryKey): Promise<FeedEntry[]> {
+  const posts = (await getPublishedPosts()).filter((post) => post.data.category === key);
+  return collapseSeries(posts);
+}
+
 /* --------------------------------- 格式化 --------------------------------- */
 
 /**

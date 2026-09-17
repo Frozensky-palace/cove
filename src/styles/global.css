@@ -41,6 +41,10 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* 尺寸关键字可插值（IMPL-034）：允许 height/block-size 向 auto 过渡，
+       <details>::details-content 展开动画依赖此开关（Chromium 129+）；
+       不支持的浏览器忽略该值，无副作用。 */
+    interpolate-size: allow-keywords;
   }
 
   body {

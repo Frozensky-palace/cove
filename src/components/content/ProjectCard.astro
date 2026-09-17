@@ -144,7 +144,8 @@ const year = project.data.startedAt?.slice(0, 4) ?? '';
 
   .project-cover {
     flex-shrink: 0;
-    width: 220px;
+    /* 随容器伸缩：640–800px 区间不挤占文字列（clamp 下限 150px，上限 220px） */
+    width: clamp(150px, 26%, 220px);
     border-radius: var(--radius-control);
     overflow: hidden;
     display: none;
