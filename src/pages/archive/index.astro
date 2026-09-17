@@ -6,6 +6,8 @@
  * 纯 CSS 无 JS，普通链接可直达（渐进增强）。
  */
 import ContentLayout from '@/layouts/ContentLayout.astro';
+import EmptyState from '@/components/content/EmptyState.astro';
+import Button from '@/components/base/Button.astro';
 import { categoryLabel } from '@/data/taxonomy';
 import { groupPostsByYear, type Post } from '@/lib/content';
 import { postUrl } from '@/lib/urls';
@@ -90,7 +92,12 @@ function chunkByMonth(posts: Post[]): MonthChunk[] {
         })}
       </div>
     ) : (
-      <p class="archive-empty">还没有已发布的文章。</p>
+      <EmptyState
+        title="还没有可归档的文章"
+        description="文章发布后会按年月出现在这里，可以先去逛逛全部文章。"
+      >
+        <Button href="/posts/" variant="secondary" slot="actions">全部文章</Button>
+      </EmptyState>
     )
   }
 </ContentLayout>
@@ -268,9 +275,5 @@ function chunkByMonth(posts: Post[]): MonthChunk[] {
     color: var(--cove-blue-strong);
     text-decoration-line: underline;
     text-underline-offset: 0.3em;
-  }
-
-  .archive-empty {
-    color: var(--text-muted);
   }
 </style>
