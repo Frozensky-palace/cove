@@ -4,6 +4,8 @@
  * 两态切换：浅色 ↔ 深色（IMPL-011），上次选择持久化到 localStorage。
  * 图标显示由 <html data-theme> 驱动的 CSS 控制（规则在 global.css，未分层），
  * 未加载 JS 时默认展示浅色图标。
+ * 切换动效：View Transitions 圆形揭示（IMPL-044），新主题画面从按钮
+ * 位置扩散；不支持或减少动效时退化为瞬时切换。
  */
 import SunIcon from '@/components/base/icons/SunIcon.astro';
 import MoonIcon from '@/components/base/icons/MoonIcon.astro';
@@ -62,17 +64,68 @@ import MoonIcon from '@/components/base/icons/MoonIcon.astro';
     root.style.colorScheme = mode;
   }
 
+  /* View Transitions API 的最小结构类型（lib.dom 版本差异下保持可编译） */
+  interface MinimalViewTransition {
+    ready: Promise<void>;
+    finished: Promise<void>;
+  }
+  type ViewTransitionDocument = Document & {
+    startViewTransition?: (updateCallback: () => void) => MinimalViewTransition;
+  };
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  /**
+   * 主题切换动效（IMPL-044）：整页快照后应用新主题，新画面以触发按钮
+   * 为圆心做圆形揭示（clip-path 扩散），比整页瞬间跳变更自然。
+   * - 不支持 View Transitions 或 prefers-reduced-motion：直接切换（原行为）；
+   * - html 上的 theme-vt 类把 ::view-transition 覆盖样式限定在主题切换，
+   *   不干扰 ClientRouter 的导航过渡（配套样式在 global.css）；
+   * - ready 被拒绝（连续快速点击时过渡被跳过）属正常路径，静默忽略。
+   */
+  function switchTheme(next: ThemeMode, origin: Element | null): void {
+    try {
+      localStorage.setItem('cove:theme', next);
+    } catch {
+      /* 存储不可用时仅影响记忆，不影响当次切换 */
+    }
+    const doc = document as ViewTransitionDocument;
+    if (!doc.startViewTransition || prefersReducedMotion.matches) {
+      applyTheme(next);
+      return;
+    }
+    const root = document.documentElement;
+    root.classList.add('theme-vt');
+    const transition = doc.startViewTransition(() => applyTheme(next));
+    transition.ready
+      .then(() => {
+        const rect = origin?.getBoundingClientRect();
+        if (!rect) return;
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        /* 圆心在按钮中心，半径取到视口最远角的距离，保证揭示铺满全屏 */
+        const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+        root.animate(
+          {
+            clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`],
+          },
+          {
+            duration: 450,
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            pseudoElement: '::view-transition-new(root)',
+          },
+        );
+      })
+      .catch(() => {});
+    transition.finished.finally(() => root.classList.remove('theme-vt'));
+  }
+
   document.addEventListener('click', (event) => {
     const target = event.target as Element | null;
     const button = target?.closest('[data-theme-toggle]');
     if (!button) return;
     const current = normalizeMode(document.documentElement.dataset.theme);
     const next: ThemeMode = current === 'dark' ? 'light' : 'dark';
-    try {
-      localStorage.setItem('cove:theme', next);
-    } catch {
-      /* 存储不可用时仅影响记忆，不影响当次切换 */
-    }
-    applyTheme(next);
+    switchTheme(next, button);
   });
 </script>
