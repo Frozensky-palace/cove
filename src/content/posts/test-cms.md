@@ -4,7 +4,7 @@ description: 这是一个cms的测试文件
 publishedAt: 2026-09-20
 updatedAt: 2026-09-20
 category: tools
-draft: true
+draft: false
 featured: false
 lang: zh-CN
 cover: ../../assets/posts/home-brand-1.webp
