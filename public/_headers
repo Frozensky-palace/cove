@@ -1,8 +1,26 @@
 # Cloudflare Workers Static Assets 响应头（指南 16）
-# 基础安全头在 Phase 1 先行落地；CSP 与 HSTS 按实际生产资源在 Phase 7 收紧
-# （HSTS 需确认所有子域均使用 HTTPS 后再启用 includeSubDomains）。
-
+# Phase 1 落地基础安全头；Phase 7 收紧 CSP（下方 allowlist）。
+# HSTS 暂不启用：需确认所有子域均使用 HTTPS 后再加
+# Strict-Transport-Security（含 includeSubDomains）。
+#
+# CSP 指令依据（只放行实际使用的第三方来源，Phase 6/7 验收：
+# 「第三方脚本符合 CSP allowlist」）：
+# - script-src：Astro 内联模块脚本与主题引导（'unsafe-inline'，Astro
+#   默认内联小脚本）+ giscus 客户端脚本（giscus.app/client.js）+
+#   CF 统计信标（static.cloudflareinsights.com/beacon.min.js）；
+# - style-src：构建样式 + 组件内联样式/首绘镜像规则（'unsafe-inline'）
+#   + giscus.app 样式（PHASE6 清单第 5 节约定）；
+# - frame-src：giscus 评论 iframe；
+# - connect-src：CF 信标上报（sendBeacon/fetch）；giscus 客户端经
+#   postMessage 通信本不需要 connect，保留 giscus.app 以免其脚本
+#   版本演进后的探测请求被误拦；
+# - img-src：站点图片全部自托管（Astro 优化产物），data: 供内联 SVG
+#   兜底；未来正文出现外链图片需在此显式放行；
+# - giscus iframe 内部的 GitHub 资源（头像等）由 iframe 自身源治理，
+#   不受本页 CSP 约束，无需放行。
+# 注意：新增第三方集成时必须同步扩展本文件并在 decision-log 记录。
 /*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://giscus.app; img-src 'self' data:; font-src 'self'; connect-src 'self' https://giscus.app https://static.cloudflareinsights.com; frame-src https://giscus.app; object-src 'none'; base-uri 'self'; frame-ancestors 'self'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()

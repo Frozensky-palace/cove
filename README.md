@@ -89,7 +89,7 @@ cove/
 | `.vscode/extensions.json` | 推荐安装的 VS Code 扩展 | VS Code |
 | `CLAUDE.md` | AI 协作工作流约定 | Claude Code，每次会话自动读取 |
 | `.pages.yml` | Pages CMS 三类内容（文章/笔记/项目）与媒体源编辑配置，字段对齐 `src/content.config.ts` | Pages CMS，强制仓库根目录 |
-| `wrangler.jsonc`（Phase 7） | Workers Static Assets 部署配置 | Wrangler，按根目录约定查找 |
+| `wrangler.jsonc` | Workers Static Assets 部署配置：静态资源目录 `dist/`、404 回退（`not_found_handling`）、兼容日期 | Wrangler / Workers Builds，按根目录约定查找 |
 | `.github/workflows/`（Phase 7） | CI/CD 质量门禁工作流 | GitHub Actions，路径固定 |
 
 ## 阶段进度

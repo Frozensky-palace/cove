@@ -1,0 +1,26 @@
+/**
+ * Cloudflare Workers Static Assets 部署配置（指南 4.4 / ADR-009，Phase 7）。
+ *
+ * - 纯静态托管：不安装 @astrojs/cloudflare adapter，构建产物 dist/ 直接
+ *   作为静态资源发布（指南 4.4「构建与部署配置约束」）；
+ * - not_found_handling: "404-page"：未匹配路由统一回退到 dist/404.html
+ *   （Astro 构建产出，含完整站点框架）；
+ * - html_handling 使用默认值 "auto-trailing-slash"：目录式 index.html 的
+ *   无斜杠请求 308 跳转到带斜杠形式，与 astro.config.mjs 的
+ *   trailingSlash: "always" 一致——部署后仍需用 /posts/example、
+ *   /posts/example/ 与 404 三类请求实测（指南 4.4 明确要求）；
+ * - compatibility_date 指首次部署（Workers Builds 构建）实际验证通过后
+ *   固化的日期；后续升级作为独立变更测试（指南 4.4）。
+ *
+ * 部署路径：GitHub 推送 → Workers Builds 自动构建（pnpm install &&
+ * pnpm build）→ wrangler deploy 读取本配置发布。生产分支 main；
+ * 非生产分支构建的产物经 scripts/noindex-preview.mjs 注入 noindex。
+ */
+{
+  "name": "cove",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  }
+}

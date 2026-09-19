@@ -13,7 +13,7 @@
     "check": "astro check",
     "build:site": "astro build",
     "build:search": "pagefind --site dist",
-    "build": "astro check && astro build && pagefind --site dist",
+    "build": "astro check && astro build && pagefind --site dist && node scripts/noindex-preview.mjs",
     "preview": "astro preview",
     "sync": "astro sync"
   },
