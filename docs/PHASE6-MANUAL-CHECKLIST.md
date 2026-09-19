@@ -2,13 +2,13 @@
 
 Phase 6（CMS 与外部集成）代码侧已全部就绪，三项功能的**启用与实测**需要你在真实环境中操作。本文按服务分节，每节含「前置 → 操作 → 验证」；全部完成后对照第 5 节验收表勾收，Phase 6 即可关闭。
 
-当前状态：
+当前状态（2026-09-20 更新）：
 
 | 功能 | 代码 | 配置 | 状态 |
 | --- | --- | --- | --- |
-| Pages CMS | `.pages.yml` 已提交 | 已完成 | 待真实环境验证（第 1 节） |
-| Giscus 评论 | `CommentProvider` 已实现 | **关闭**（标识为空） | 待你启用（第 2 节） |
-| CF Web Analytics | `Analytics` 组件已实现 | **关闭**（token 为空） | 待你启用（第 3 节） |
+| Pages CMS | `.pages.yml` 已提交（IMPL-039/041/043） | 已完成 | test-cms 实测通过日期/标签/分类/封面路径；其余项按 GUIDE 第 7 节随用随验 |
+| Giscus 评论 | `CommentProvider` 已实现（IMPL-040，IMPL-044 视觉优化） | **已启用**（四项标识已填） | 待线上/本地实测（发评论、主题跟随、屏蔽回退） |
+| CF Web Analytics | `Analytics` 组件已实现（IMPL-040） | **已启用**（token 已填） | 生产构建已含 beacon（dist 已验证）；数据上报待 Phase 7 上线 |
 
 功能关闭 = 页面不渲染对应区块、不发任何第三方请求，站点行为与 Phase 5 完全一致。
 
@@ -25,11 +25,11 @@ Phase 6（CMS 与外部集成）代码侧已全部就绪，三项功能的**启�
 
 **验证**（新建一篇 `draft: true` 测试文章，对照 `docs/PAGES-CMS-GUIDE.md` 第 7 节逐项确认）：
 
-- [ ] ① date 字段保存后 frontmatter 是带引号的 `'YYYY-MM-DD'` 字符串；
-- [ ] ② 上传封面后 frontmatter 写入 `../../assets/posts/...`，拉回本地 `pnpm build` 通过；
+- [x] ① ~~date 字段保存后 frontmatter 是带引号的 `'YYYY-MM-DD'` 字符串~~ **实测（IMPL-042）**：CMS 保存的日期不加引号（YAML Date 对象），schema preprocess 已兼容，此项按实测结论关闭；
+- [x] ② 上传封面后 frontmatter 写入 `../../assets/posts/...`，拉回本地 `pnpm build` 通过（test-cms 封面 `home-brand-1.webp` 实测通过）；
 - [ ] ③ 上传中文/空格文件名图片被重命名为安全文件名（无效则删 `.pages.yml` 里的 `rename: safe` 行）；
 - [ ] ④ 项目封面上传走 `src/assets/projects`（字段级 `media:` 命名源生效）；
-- [ ] ⑤ 中文标题新建条目时文件名派生行为可接受（必要时手工重命名）；
+- [ ] ⑤ filename 字段（IMPL-043）：创建/编辑表单出现独立「文件名」输入框，中文标题不再影响文件名；
 - [ ] ⑥ 编辑含 `series`/`canonicalURL` 的旧文并保存，未展示字段未被删除（merge 行为）；
 - [ ] ⑦ 含代码块、表格、引用的正文经 CMS 保存后 diff 无改写。
 
@@ -110,6 +110,6 @@ Phase 6（CMS 与外部集成）代码侧已全部就绪，三项功能的**启�
 
 ## 6. 遗留事项（不阻塞 Phase 6 关闭）
 
-- 正式域名（`src/data/site.ts` 的占位 `cove.example.com`）→ Phase 7，影响 giscus origins、canonical、RSS 链接；
+- ~~正式域名占位~~ **已确认 `cove.xin`**（IMPL-045，astro.config 与 site.ts 已对齐）→ 建议现在到 giscus.app 的 **origins** 里补两条：`https://cove.xin` 与 `http://localhost:4321`（本地实测用）；
 - CMS 首次验证若发现 `.pages.yml` 语法与真实版本不符 → 按第 1 节反馈修正；
 - 评论数据备份：GitHub Discussions 随仓库走，定期镜像仓库即同步备份（指南 16 恢复约定）。

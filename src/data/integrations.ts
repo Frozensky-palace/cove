@@ -27,6 +27,6 @@ export const giscusConfig = {
 
 /** Cloudflare Web Analytics（基础流量与真实用户性能，V1 不追踪个人画像，指南 6.3） */
 export const analyticsConfig = {
-  /** Cloudflare「Web Analytics」站点 beacon token */
-  token: '',
+  /** Cloudflare「Web Analytics」站点 beacon token（公开标识，非 API 密钥） */
+  token: '92d584914dc747d88bf251207eab94de',
 } as const;
