@@ -9,6 +9,11 @@
 # 字符串。date 字段的 options.format 使用 date-fns 小写令牌
 # （yyyy-MM-dd），大写 DD 在 date-fns 中是「一年中的第几日」。
 #
+# select 语法（官方文档字段规范）：选项必须写在 options.values 下
+# （values: [{name, label}] 或纯值数组），不能写成裸对象列表——
+# 裸列表会导致 CMS 下拉框无选项（2026-09 实测踩坑）。
+# 需要动态选项的场景用 reference 字段（如文章分类指向 categories）。
+#
 # 待真实验证项（指南 12：正式接入前需用一篇测试文章验证）见
 # docs/PAGES-CMS-GUIDE.md 的「上线前验证清单」。
 
@@ -44,6 +49,43 @@ media:
     extensions: [jpg, jpeg, png, webp, avif, gif, svg]
 
 content:
+  # ── 分类（文章分类的字典，可在 CMS 直接增删改） ──────────
+  # 每个分类一个小文件，文件名 = 分类 key = URL slug（/categories/<key>/）。
+  # 构建期 src/data/taxonomy.ts 从该目录派生分类体系（keys、label、排序），
+  # 文章的 category 字段经 reference 引用这里，存储值为 key。
+  # 约束（发布后视为冻结）：key 是已发布文章 URL 的一部分，改名等于换 URL；
+  # 删除仍被文章引用的分类会导致构建失败（z.enum 校验报错，防坏链）。
+  - name: categories
+    label: 分类
+    type: collection
+    path: src/content/categories
+    format: yaml-frontmatter
+    filename: "{primary}.md"
+    view:
+      primary: key
+      fields: [label, key, order]
+      sort: [order, key]
+      default:
+        sort: order
+        order: asc
+    fields:
+      - name: key
+        label: 标识
+        type: string
+        required: true
+        description: >-
+          URL slug：小写字母、数字、连字符（如 web-dev）。同时是文件名与
+          文章分类的存储值；发布后改名会改变所有相关文章的 URL，需同步迁移内容。
+      - name: label
+        label: 显示名称
+        type: string
+        required: true
+        description: 站点上展示的名称（如「Web 开发」）
+      - name: order
+        label: 排序
+        type: number
+        description: 可选。导航与分类页中的排序，越小越靠前；留空排最后
+
   # ── 文章 ────────────────────────────────────────────────
   # schema：src/content.config.ts → posts（.strict() + 日期顺序 refine）
   - name: posts
@@ -82,16 +124,17 @@ content:
         options:
           format: yyyy-MM-dd
         description: 不得早于发布日期
+      # 分类来自 categories collection（本文件下方），存储值为分类 key，
+      # 与 Astro schema（src/content.config.ts z.enum）及历史文章兼容。
       - name: category
         label: 分类
-        type: select
+        type: reference
         required: true
         options:
-          - { label: 工程实践, value: engineering }
-          - { label: Web 开发, value: web-dev }
-          - { label: 工具与效率, value: tools }
-          - { label: 阅读与思考, value: reading }
-          - { label: 海湾生活, value: life }
+          collection: categories
+          search: "key,label"
+          value: "{primary}"
+          label: "{fields.label}"
       - name: tags
         label: 标签
         type: string
@@ -103,8 +146,9 @@ content:
         label: 语言
         type: select
         options:
-          - { label: 中文, value: zh-CN }
-          - { label: English, value: en }
+          values:
+            - { name: zh-CN, label: 中文 }
+            - { name: en, label: English }
         default: zh-CN
       - name: cover
         label: 封面
@@ -156,8 +200,9 @@ content:
         label: 语言
         type: select
         options:
-          - { label: 中文, value: zh-CN }
-          - { label: English, value: en }
+          values:
+            - { name: zh-CN, label: 中文 }
+            - { name: en, label: English }
         default: zh-CN
       - { name: body, label: 正文, type: rich-text }
 
@@ -188,9 +233,10 @@ content:
         type: select
         required: true
         options:
-          - { label: 进行中, value: active }
-          - { label: 已完成, value: completed }
-          - { label: 已归档, value: archived }
+          values:
+            - { name: active, label: 进行中 }
+            - { name: completed, label: 已完成 }
+            - { name: archived, label: 已归档 }
       - name: startedAt
         label: 开始日期
         type: date
@@ -220,11 +266,12 @@ content:
             label: 类型
             type: select
             options:
-              - { label: 演示, value: demo }
-              - { label: 源码, value: source }
-              - { label: 论文, value: paper }
-              - { label: 下载, value: download }
-              - { label: 其他, value: other }
+              values:
+                - { name: demo, label: 演示 }
+                - { name: source, label: 源码 }
+                - { name: paper, label: 论文 }
+                - { name: download, label: 下载 }
+                - { name: other, label: 其他 }
             default: other
       - name: relatedPosts
         label: 相关文章
