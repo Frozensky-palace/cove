@@ -56,7 +56,7 @@ H2 之下是 H3，H3 之下是 H4，层级保持连续。
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://cove.example.com',
+  site: 'https://cove.xin',
   trailingSlash: 'always',
 });
 ```
@@ -64,7 +64,7 @@ export default defineConfig({
 长行代码不得撑破容器，应当出现横向滚动而不是折行 `const veryLongVariableName = '这一行故意写得很长很长的目的是验证 pre 块的横向滚动行为是否正确生效';`：
 
 ```ts
-const configuration = { site: 'https://cove.example.com', trailingSlash: 'always', integrations: [], markdown: { shikiConfig: { themes: { light: 'github-light', dark: 'github-dark' } } } };
+const configuration = { site: 'https://cove.xin', trailingSlash: 'always', integrations: [], markdown: { shikiConfig: { themes: { light: 'github-light', dark: 'github-dark' } } } };
 ```
 
 Shell 代码块：

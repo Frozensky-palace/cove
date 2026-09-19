@@ -9,9 +9,10 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import { rehypeFigure } from './src/plugins/rehype-figure.ts';
 
 // site 为 SEO/Canonical 派生的事实源（指南 4.4）。
-// TODO(Phase 0/7)：正式域名确认后替换，见 docs/content-checklist.md 第五节。
+// 正式域名 cove.xin（IMPL-045，作者确认；与 src/data/site.ts 的
+// siteConfig.url 保持一致——后者是页面级 URL 的唯一来源）。
 export default defineConfig({
-  site: 'https://cove.example.com',
+  site: 'https://cove.xin',
   // 纯静态输出，不安装 Cloudflare adapter（指南 4.4）。
   // trailingSlash 与 Workers Static Assets 的 HTML handling 需保持一致，
   // 在 Phase 7 部署时用 /posts/example 与 /posts/example/ 实测验证。
