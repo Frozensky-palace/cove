@@ -35,3 +35,9 @@ yarn-error.log*
 .idea/
 .vscode/*
 !.vscode/extensions.json
+# Windows 资源管理器生成
+Thumbs.db
+desktop.ini
+
+# Wrangler 本地状态（Phase 7 部署引入，预防误提交）
+.wrangler/
