@@ -81,7 +81,7 @@ export function buildMetadata({
 
 type JsonLd = Record<string, unknown>;
 
-/** 全站作者 Person（BaseLayout 输出） */
+/** 全站作者 Person（BaseLayout 输出）；mailto 链接走 email 属性，其余进 sameAs */
 export function personJsonLd(): JsonLd {
   const author: JsonLd = {
     '@context': 'https://schema.org',
@@ -89,9 +89,10 @@ export function personJsonLd(): JsonLd {
     name: siteConfig.author.name,
   };
   if (siteConfig.author.url) author.url = siteConfig.author.url;
-  if (siteConfig.social.length > 0) {
-    author.sameAs = siteConfig.social.map((link) => link.href);
-  }
+  const mail = siteConfig.social.find((link) => link.href.startsWith('mailto:'));
+  if (mail) author.email = mail.href;
+  const profiles = siteConfig.social.filter((link) => !link.href.startsWith('mailto:'));
+  if (profiles.length > 0) author.sameAs = profiles.map((link) => link.href);
   return author;
 }
 

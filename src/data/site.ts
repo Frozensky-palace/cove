@@ -1,9 +1,8 @@
 /**
  * 站点级配置的唯一来源。
  *
- * Phase 0 说明：作者名、简介与社交链接为占位值，待确认后逐项替换
- * （见 docs/content-checklist.md 第五节）；正式域名已确认为 cove.xin
- * （IMPL-045），astro.config.mjs 的 site 与此处保持一致。
+ * Phase 0 说明：正式域名已确认为 cove.xin（IMPL-045），astro.config.mjs
+ * 的 site 与此处保持一致；作者名与联系邮箱已确认（IMPL-047）。
  * 页面与组件不得另行硬编码站点信息。
  */
 
@@ -31,9 +30,9 @@ export const siteConfig = {
   description:
     'Cove 是一个温柔、静谧的个人内容空间，沉淀完整论述的文章、随手记录的笔记与有过程、有反思的项目。',
 
-  /** TODO(Phase 0)：替换为真实作者信息 */
+  /** 站点作者（IMPL-047 确认） */
   author: {
-    name: 'Cove 作者',
+    name: '温晚安',
     url: '',
   },
 
@@ -54,6 +53,6 @@ export const siteConfig = {
     { label: 'RSS', href: '/rss.xml' },
   ] satisfies NavItem[],
 
-  /** TODO(Phase 0)：社交链接确认后补充 */
-  social: [] as SocialLink[],
+  /** 社交与联系入口（IMPL-047：邮箱）；mailto 链接在 JSON-LD 中走 Person.email（seo.ts） */
+  social: [{ label: '邮箱', href: 'mailto:wananwen7@gmail.com', icon: 'email' }] as SocialLink[],
 } as const;
