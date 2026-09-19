@@ -152,6 +152,37 @@ html[data-theme='dark'] .theme-icon-dark {
 }
 
 /*
+ * 主题切换动效（IMPL-044）。刻意未分层，与上方图标状态规则同理。
+ * 仅在 html 携带 .theme-vt（切换由 ThemeToggle 发起，见 ThemeToggle.astro
+ * 的 switchTheme）时生效，避免干扰 ClientRouter 的导航过渡：
+ * - 关闭新旧快照的默认交叉淡化与混合，改由脚本对 ::view-transition-new(root)
+ *   做 clip-path 圆形揭示（新主题画面从按钮圆心扩散）；
+ * - 图标的 display 切换无法过渡，给当次登场图标加一次性旋转入场，
+ *   替代生硬的瞬间替换；动画随 .theme-vt 移除而结束，不影响稳态。
+ */
+:root.theme-vt::view-transition-old(root),
+:root.theme-vt::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@keyframes theme-icon-in {
+  from {
+    transform: rotate(-90deg) scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+html.theme-vt:not([data-theme='dark']) .theme-icon-light,
+html.theme-vt[data-theme='dark'] .theme-icon-dark {
+  animation: theme-icon-in 360ms cubic-bezier(0.33, 0, 0.2, 1);
+}
+
+/*
  * 全局加载状态（IMPL-017）。
  * 刻意放在所有 @layer 之外：
  * - #route-progress 由脚本在运行时创建，scoped/分层选择器不可靠；

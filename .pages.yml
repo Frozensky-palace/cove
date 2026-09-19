@@ -1,0 +1,297 @@
+# Pages CMS 配置（指南第 12 节「Pages CMS 约定」）。
+#
+# 作用：Pages CMS（https://pagescms.org）按仓库、按分支读取本文件，
+# 为 GitHub 上的内容提供网页编辑界面。字段与 src/content.config.ts
+# 的 zod schema 一一对应（指南 12：CMS 字段必须与 Content Collections
+# schema 同步）。
+#
+# 日期约定：content.config.ts 要求 frontmatter 日期为 'YYYY-MM-DD'
+# 字符串。date 字段的 options.format 使用 date-fns 小写令牌
+# （yyyy-MM-dd），大写 DD 在 date-fns 中是「一年中的第几日」。
+#
+# select 语法（官方文档字段规范）：选项必须写在 options.values 下
+# （values: [{name, label}] 或纯值数组），不能写成裸对象列表——
+# 裸列表会导致 CMS 下拉框无选项（2026-09 实测踩坑）。
+# 需要动态选项的场景用 reference 字段（如文章分类指向 categories）。
+#
+# filename 对象形式（{template, field}）：field: true 时创建/编辑表单
+# 出现独立「文件名」输入框，标题与路由 slug 分开填写（IMPL-043，官方
+# filename 文档核实）；分类用 field: false，文件名始终由 key 派生。
+#
+# 待真实验证项（指南 12：正式接入前需用一篇测试文章验证）见
+# docs/PAGES-CMS-GUIDE.md 的「上线前验证清单」。
+
+settings:
+  content:
+    # 保存时合并未在表单中展示的既有字段，避免受管字段被删除
+    # （指南 12）。注意 schema 为 .strict()，历史文件不得手工添加
+    # schema 之外的键，否则构建期校验会失败。
+    merge: true
+
+# 媒体源：input 是仓库内上传目录，output 是写入内容文件的引用前缀。
+# Astro content collection 的 image() 按内容文件相对路径解析封面，
+# 因此 output 是相对路径而非 URL：
+#   src/content/posts/*.md     的 ../../ = src/     → src/assets/posts
+#   src/content/projects/*.md  的 ../../ = src/     → src/assets/projects
+#   src/content/notes/*.md     的 ../../ = src/     → 同样可达 posts 目录
+media:
+  - name: posts-media
+    label: 文章媒体
+    input: src/assets/posts
+    output: ../../assets/posts
+    # 安全文件名（slugify）：指南 12「上传媒体优先使用安全文件名」。
+    # 该键出自指南示意配置，键名与取值需按上线前验证清单确认。
+    rename: safe
+    # 含 svg：既有封面为手写 SVG，需允许继续上传同类文件。
+    extensions: [jpg, jpeg, png, webp, avif, gif, svg]
+
+  - name: projects-media
+    label: 项目媒体
+    input: src/assets/projects
+    output: ../../assets/projects
+    rename: safe
+    extensions: [jpg, jpeg, png, webp, avif, gif, svg]
+
+content:
+  # ── 分类（文章分类的字典，可在 CMS 直接增删改） ──────────
+  # 每个分类一个小文件，文件名 = 分类 key = URL slug（/categories/<key>/）。
+  # 构建期 src/data/taxonomy.ts 从该目录派生分类体系（keys、label、排序），
+  # 文章的 category 字段经 reference 引用这里，存储值为 key。
+  # 约束（发布后视为冻结）：key 是已发布文章 URL 的一部分，改名等于换 URL；
+  # 删除仍被文章引用的分类会导致构建失败（z.enum 校验报错，防坏链）。
+  - name: categories
+    label: 分类
+    type: collection
+    path: src/content/categories
+    format: yaml-frontmatter
+    # field: false：分类文件名始终由标识（key）派生，表单不出现文件名
+    # 输入框——key 字段本身就是 slug，避免两处可改导致不一致。
+    filename:
+      template: "{primary}.md"
+      field: false
+    view:
+      primary: key
+      fields: [label, key, order]
+      sort: [order, key]
+      default:
+        sort: order
+        order: asc
+    fields:
+      - name: key
+        label: 标识
+        type: string
+        required: true
+        description: >-
+          URL slug：小写字母、数字、连字符（如 web-dev）。同时是文件名与
+          文章分类的存储值；发布后改名会改变所有相关文章的 URL，需同步迁移内容。
+      - name: label
+        label: 显示名称
+        type: string
+        required: true
+        description: 站点上展示的名称（如「Web 开发」）
+      - name: order
+        label: 排序
+        type: number
+        description: 可选。导航与分类页中的排序，越小越靠前；留空排最后
+
+  # ── 文章 ────────────────────────────────────────────────
+  # schema：src/content.config.ts → posts（.strict() + 日期顺序 refine）
+  - name: posts
+    label: 文章
+    type: collection
+    path: src/content/posts
+    format: yaml-frontmatter
+    # MDX（含组件的内容）不进 CMS，保持本地编辑（指南 12）
+    exclude: ["*.mdx"]
+    # 文件名即 URL slug（指南 12）。对象形式 {template, field}（IMPL-043）：
+    # field: true → 创建与编辑表单都出现「文件名」输入框，标题（可中文）
+    # 与路由 slug（英文标识）分开决定，不再依赖标题 slugify。
+    filename:
+      template: "{primary}.md"
+      field: true
+    view:
+      primary: title
+      fields: [title, publishedAt, category, draft]
+      sort: [publishedAt, title]
+      default:
+        sort: publishedAt
+        order: desc
+    fields:
+      - { name: title, label: 标题, type: string, required: true }
+      - name: description
+        label: 摘要
+        type: text
+        required: true
+        description: 8–200 字，用于列表卡片、RSS 与 SEO description
+      - name: publishedAt
+        label: 发布日期
+        type: date
+        required: true
+        options:
+          format: yyyy-MM-dd
+      - name: updatedAt
+        label: 更新日期
+        type: date
+        options:
+          format: yyyy-MM-dd
+        description: 不得早于发布日期
+      # 分类来自 categories collection（本文件下方），存储值为分类 key，
+      # 与 Astro schema（src/content.config.ts z.enum）及历史文章兼容。
+      - name: category
+        label: 分类
+        type: reference
+        required: true
+        options:
+          collection: categories
+          search: "key,label"
+          value: "{primary}"
+          label: "{fields.label}"
+      - name: tags
+        label: 标签
+        type: string
+        list: true
+        required: true
+        description: 1–8 个，每个 1–30 字；留空会导致构建失败
+      - { name: draft, label: 草稿, type: boolean, default: true, description: 未完成一律保持勾选；取消勾选才会发布 }
+      - { name: featured, label: 首页精选, type: boolean, default: false }
+      - name: lang
+        label: 语言
+        type: select
+        options:
+          values:
+            - { name: zh-CN, label: 中文 }
+            - { name: en, label: English }
+        default: zh-CN
+      - name: cover
+        label: 封面
+        type: image
+        media: posts-media
+      - name: coverAlt
+        label: 封面替代文本
+        type: string
+        description: 有信息含义的封面必填（无障碍，指南 11.1）
+      - name: canonicalURL
+        label: 原文地址
+        type: string
+        description: 首发于其他站点或转载时填写完整 URL
+      - { name: series, label: 系列, type: string, description: 同系列文章填写相同的系列名 }
+      - { name: body, label: 正文, type: rich-text }
+
+  # ── 笔记 ────────────────────────────────────────────────
+  # schema：src/content.config.ts → notes（title 可省略，标签 ≤5）
+  - name: notes
+    label: 笔记
+    type: collection
+    path: src/content/notes
+    format: yaml-frontmatter
+    filename:
+      template: "{primary}.md"
+      field: true
+    view:
+      primary: title
+      fields: [title, publishedAt, tags, draft]
+      sort: [publishedAt, title]
+      default:
+        sort: publishedAt
+        order: desc
+    fields:
+      - { name: title, label: 标题, type: string, description: 可省略，省略时以正文开头作为标识 }
+      - name: publishedAt
+        label: 日期
+        type: date
+        required: true
+        options:
+          format: yyyy-MM-dd
+      - name: updatedAt
+        label: 更新日期
+        type: date
+        options:
+          format: yyyy-MM-dd
+        description: 不得早于发布日期
+      - { name: tags, label: 标签, type: string, list: true, description: 最多 5 个 }
+      - { name: draft, label: 草稿, type: boolean, default: true }
+      - name: lang
+        label: 语言
+        type: select
+        options:
+          values:
+            - { name: zh-CN, label: 中文 }
+            - { name: en, label: English }
+        default: zh-CN
+      - { name: body, label: 正文, type: rich-text }
+
+  # ── 项目 ────────────────────────────────────────────────
+  # schema：src/content.config.ts → projects（links 为对象数组）
+  - name: projects
+    label: 项目
+    type: collection
+    path: src/content/projects
+    format: yaml-frontmatter
+    filename:
+      template: "{primary}.md"
+      field: true
+    view:
+      primary: title
+      fields: [title, status, featured, draft]
+      sort: [title]
+      default:
+        sort: title
+        order: asc
+    fields:
+      - { name: title, label: 名称, type: string, required: true }
+      - name: summary
+        label: 一句话简介
+        type: text
+        required: true
+        description: 4–120 字，用于项目列表
+      - name: status
+        label: 状态
+        type: select
+        required: true
+        options:
+          values:
+            - { name: active, label: 进行中 }
+            - { name: completed, label: 已完成 }
+            - { name: archived, label: 已归档 }
+      - name: startedAt
+        label: 开始日期
+        type: date
+        options:
+          format: yyyy-MM-dd
+      - name: completedAt
+        label: 完成日期
+        type: date
+        options:
+          format: yyyy-MM-dd
+        description: 不得早于开始日期
+      - { name: stack, label: 技术栈, type: string, list: true, description: 最多 12 项 }
+      - name: cover
+        label: 封面
+        type: image
+        media: projects-media
+      - { name: featured, label: 首页精选, type: boolean, default: false }
+      - { name: draft, label: 草稿, type: boolean, default: true }
+      - name: links
+        label: 相关链接
+        type: object
+        list: true
+        fields:
+          - { name: label, label: 名称, type: string, required: true }
+          - { name: url, label: 地址, type: string, required: true, description: 完整 URL，构建期校验 }
+          - name: type
+            label: 类型
+            type: select
+            options:
+              values:
+                - { name: demo, label: 演示 }
+                - { name: source, label: 源码 }
+                - { name: paper, label: 论文 }
+                - { name: download, label: 下载 }
+                - { name: other, label: 其他 }
+            default: other
+      - name: relatedPosts
+        label: 相关文章
+        type: string
+        list: true
+        description: 填写文章 ID（文件名去掉 .md），如 hello-cove；构建期校验其存在
+      - { name: body, label: 详情, type: rich-text }

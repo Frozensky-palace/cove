@@ -1,8 +1,9 @@
 /**
  * 站点级配置的唯一来源。
  *
- * Phase 0 说明：作者名、简介、社交链接与正式域名均为占位值，
- * 待确认后逐项替换（见 docs/content-checklist.md 第五节）。
+ * Phase 0 说明：作者名、简介与社交链接为占位值，待确认后逐项替换
+ * （见 docs/content-checklist.md 第五节）；正式域名已确认为 cove.xin
+ * （IMPL-045），astro.config.mjs 的 site 与此处保持一致。
  * 页面与组件不得另行硬编码站点信息。
  */
 
@@ -22,8 +23,8 @@ export interface SocialLink {
 export const siteConfig = {
   /** 站点名称 */
   name: 'Cove',
-  /** TODO(Phase 0)：正式域名确认后替换 */
-  url: 'https://cove.example.com',
+  /** 正式域名（IMPL-045 已确认；astro.config.mjs 的 site 与此一致） */
+  url: 'https://cove.xin',
   /** 站点主张，用于页脚与首页 Hero */
   tagline: '小海湾里的文字、项目与技术分享',
   /** 默认 SEO 描述 */
