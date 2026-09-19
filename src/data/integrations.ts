@@ -12,13 +12,13 @@
 /** Giscus 评论（基于 GitHub Discussions，指南 ADR-008） */
 export const giscusConfig = {
   /** 仓库，格式 `owner/repo` */
-  repo: '',
+  repo: 'Frozensky-palace/cove',
   /** giscus.app 生成的仓库 Discussion ID（base64） */
-  repoId: '',
+  repoId: 'R_kgDOUdAnug',
   /** 存放评论的 Discussion 分类名（建议 Announcements，仅维护者可发起） */
-  category: '',
+  category: 'Comments',
   /** 对应分类的 ID（base64） */
-  categoryId: '',
+  categoryId: 'DIC_kwDOUdAnus4DF-CU',
   /** 讨论 ↔ 页面映射：pathname（指南 19 Phase 6），URL 即标识，改名需处理重定向（指南 9.7） */
   mapping: 'pathname',
   /** 评论界面语言 */

@@ -6,15 +6,29 @@ import { categoryKeys } from '@/data/taxonomy';
 /**
  * 内容 schema（指南 11 内容模型）。
  *
- * 日期约定（指南 11.1）：frontmatter 一律写 `YYYY-MM-DD` 字符串，站点按
- * Asia/Shanghai 解释与展示。刻意不用 z.coerce.date()：它按 UTC 解析，
+ * 日期约定（指南 11.1）：frontmatter 日期按 `YYYY-MM-DD` 解释，站点按
+ * Asia/Shanghai 展示。刻意不用 z.coerce.date()：它按 UTC 解析，
  * 序列化与格式化时会产生日期偏移；字符串排序（字典序）与 ISO 日期排序一致。
+ *
+ * Pages CMS 实测（IMPL-042）：date 字段保存的 YAML 不加引号
+ * （`publishedAt: 2026-09-20`），YAML 解析后是 Date 对象而非字符串——
+ * preprocess 把它规范化为日期字符串（js-yaml 对裸日期按 UTC 零点解析，
+ * 取 UTC 分量在任何时区都得原日期），手工书写的字符串仍走同一正则校验。
  *
  * Astro 7：image() 经 schema 上下文（SchemaContext）提供，不在 z 命名空间上。
  */
-const dateString = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, '日期必须写为 YYYY-MM-DD（如 2026-09-16）');
+const dateString = z.preprocess(
+  (value) => {
+    if (value instanceof Date) {
+      const y = value.getUTCFullYear();
+      const m = String(value.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(value.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    return value;
+  },
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期必须写为 YYYY-MM-DD（如 2026-09-16）'),
+);
 
 const posts = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/posts' }),

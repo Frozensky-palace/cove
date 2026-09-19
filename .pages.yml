@@ -14,6 +14,10 @@
 # 裸列表会导致 CMS 下拉框无选项（2026-09 实测踩坑）。
 # 需要动态选项的场景用 reference 字段（如文章分类指向 categories）。
 #
+# filename 对象形式（{template, field}）：field: true 时创建/编辑表单
+# 出现独立「文件名」输入框，标题与路由 slug 分开填写（IMPL-043，官方
+# filename 文档核实）；分类用 field: false，文件名始终由 key 派生。
+#
 # 待真实验证项（指南 12：正式接入前需用一篇测试文章验证）见
 # docs/PAGES-CMS-GUIDE.md 的「上线前验证清单」。
 
@@ -60,7 +64,11 @@ content:
     type: collection
     path: src/content/categories
     format: yaml-frontmatter
-    filename: "{primary}.md"
+    # field: false：分类文件名始终由标识（key）派生，表单不出现文件名
+    # 输入框——key 字段本身就是 slug，避免两处可改导致不一致。
+    filename:
+      template: "{primary}.md"
+      field: false
     view:
       primary: key
       fields: [label, key, order]
@@ -95,9 +103,12 @@ content:
     format: yaml-frontmatter
     # MDX（含组件的内容）不进 CMS，保持本地编辑（指南 12）
     exclude: ["*.mdx"]
-    # 文件名即 URL slug（指南 12）：以标题派生并 slugify。
-    # 中文标题 slugify 行为见 docs/PAGES-CMS-GUIDE.md「文件名规则」。
-    filename: "{primary}.md"
+    # 文件名即 URL slug（指南 12）。对象形式 {template, field}（IMPL-043）：
+    # field: true → 创建与编辑表单都出现「文件名」输入框，标题（可中文）
+    # 与路由 slug（英文标识）分开决定，不再依赖标题 slugify。
+    filename:
+      template: "{primary}.md"
+      field: true
     view:
       primary: title
       fields: [title, publishedAt, category, draft]
@@ -139,7 +150,8 @@ content:
         label: 标签
         type: string
         list: true
-        description: 1–8 个，每个 1–30 字
+        required: true
+        description: 1–8 个，每个 1–30 字；留空会导致构建失败
       - { name: draft, label: 草稿, type: boolean, default: true, description: 未完成一律保持勾选；取消勾选才会发布 }
       - { name: featured, label: 首页精选, type: boolean, default: false }
       - name: lang
@@ -172,7 +184,9 @@ content:
     type: collection
     path: src/content/notes
     format: yaml-frontmatter
-    filename: "{primary}.md"
+    filename:
+      template: "{primary}.md"
+      field: true
     view:
       primary: title
       fields: [title, publishedAt, tags, draft]
@@ -213,7 +227,9 @@ content:
     type: collection
     path: src/content/projects
     format: yaml-frontmatter
-    filename: "{primary}.md"
+    filename:
+      template: "{primary}.md"
+      field: true
     view:
       primary: title
       fields: [title, status, featured, draft]
