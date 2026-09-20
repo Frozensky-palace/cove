@@ -208,8 +208,35 @@ html.splash-on .app-splash {
   display: grid;
 }
 
+/* 入场（IMPL-050）：内容一次性淡入 + 2px 上浮，指南 8.6 档位内；
+   backwards 填充——动画结束后不驻留样式，退场过渡才能接管同名属性 */
+html.splash-on .app-splash-inner {
+  animation: splash-in 220ms ease-out backwards;
+}
+
+@keyframes splash-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .app-splash-out {
   opacity: 0;
+}
+
+/* 退场（IMPL-050）：背景随 .app-splash 自身的 opacity 过渡淡出，
+   内容同步 2px 上浮淡出；节点在过渡播完后由脚本移除（AppSplash.astro） */
+.app-splash-out .app-splash-inner {
+  transform: translateY(-2px);
+  opacity: 0;
+  transition:
+    transform 200ms ease,
+    opacity 200ms ease;
 }
 
 .app-splash-inner {

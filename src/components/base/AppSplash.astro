@@ -1,11 +1,14 @@
 ---
 /**
- * 首次进入品牌加载页（IMPL-017）：
+ * 首次进入品牌加载页（IMPL-017；IMPL-050 修复退场与动效抛光）：
  * - 会话内仅首次进入显示（sessionStorage `cove:splash-shown`）
  * - 显示逻辑由紧随标记的内联脚本在解析期同步执行，先于首绘、无闪现；
    无 JS 时 html 不携带 splash-on，加载页永不出现（渐进增强）
  * - astro:page-load 或 2500ms 兜底后淡出移除；ClientRouter 环境下
    首次加载同样触发 astro:page-load
+ * - IMPL-050 修复：退场先加 .app-splash-out 播完 200ms 淡出，再移除
+   splash-on 与节点——原实现先移除 splash-on，display 立即回 none，
+   opacity 过渡从未渲染，实际是硬切消失；入场/退场动效见 global.css
  * - 视觉复用 Logo 品牌语言（渐变标志 + 波浪）；reduced-motion 下
    波浪动画由 global.css 全局规则关闭，静态呈现后正常退出
  */
@@ -87,19 +90,24 @@
       if (done) return;
       done = true;
       document.removeEventListener('astro:page-load', maybeDismiss);
-      document.documentElement.classList.remove('splash-on');
       try {
         sessionStorage.setItem('cove:splash-shown', '1');
       } catch (e) {
         /* 存储不可用时仅影响本页内去重，可接受 */
       }
       var splash = document.querySelector('.app-splash');
-      if (splash) {
-        splash.classList.add('app-splash-out');
-        setTimeout(function () {
-          splash.remove();
-        }, 240);
+      if (!splash) {
+        document.documentElement.classList.remove('splash-on');
+        return;
       }
+      /* IMPL-050：保持 splash-on 维持 display:grid，先播 200ms 淡出，
+         过渡结束后再移除标记与节点——原实现先移除 splash-on，
+         display 立即回 none，opacity 过渡从未渲染（硬切消失） */
+      splash.classList.add('app-splash-out');
+      setTimeout(function () {
+        document.documentElement.classList.remove('splash-on');
+        splash.remove();
+      }, 240);
     }
 
     /* 双 rAF：等到至少一帧真实绘制完成后再淡出 */
