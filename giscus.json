@@ -1,0 +1,4 @@
+{
+  "origins": ["https://cove.xin"],
+  "originsRegex": ["http://localhost:[0-9]+"]
+}

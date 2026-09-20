@@ -3,6 +3,7 @@
 个人博客与内容空间。以 Git 为唯一事实源，Astro 静态构建，部署于 Cloudflare Workers Static Assets。
 
 - 开发实施基线：[`docs/COVE-DEVELOPMENT-GUIDE.md`](docs/COVE-DEVELOPMENT-GUIDE.md)
+- 运维手册（发文 / 回滚 / 恢复 / 依赖更新）：[`docs/OPERATIONS.md`](docs/OPERATIONS.md)
 - 架构推导提案：`docs/personal-blog-project-proposal-v2.html`
 - 实施决策记录：[`docs/decision-log.md`](docs/decision-log.md)
 - 真实内容清单：[`docs/content-checklist.md`](docs/content-checklist.md)
@@ -43,6 +44,12 @@ pnpm dev                 # 本地开发预览 http://localhost:4321
 | `pnpm build:search` | 单独运行 Pagefind 索引（已包含在 `build` 链中） |
 | `pnpm build` | 检查 + 生产构建 + Pagefind 索引 |
 | `pnpm preview` | 本地预览生产构建 |
+
+## 运营与发布
+
+推送 `main` 即自动构建发布（Cloudflare Workers Builds，约 2–3 分钟生效；非 `main`
+分支构建产物自动 noindex）。写作发文、发布验证、回滚、季度恢复演练与依赖更新的
+完整操作说明见 [`docs/OPERATIONS.md`](docs/OPERATIONS.md)。
 
 ## 项目结构
 
@@ -90,6 +97,7 @@ cove/
 | `CLAUDE.md` | AI 协作工作流约定 | Claude Code，每次会话自动读取 |
 | `.pages.yml` | Pages CMS 三类内容（文章/笔记/项目）与媒体源编辑配置，字段对齐 `src/content.config.ts` | Pages CMS，强制仓库根目录 |
 | `wrangler.jsonc` | Workers Static Assets 部署配置：静态资源目录 `dist/`、404 回退（`not_found_handling`）、兼容日期 | Wrangler / Workers Builds，按根目录约定查找 |
+| `giscus.json` | Giscus 评论域名 allowlist（仅生产域名与本地开发可加载评论，其余来源拒绝加载） | giscus，从仓库默认分支根目录读取 |
 | `.github/workflows/`（Phase 7） | CI/CD 质量门禁工作流 | GitHub Actions，路径固定 |
 
 ## 阶段进度
@@ -100,8 +108,8 @@ cove/
 - [x] Phase 3：首页与核心阅读体验
 - [x] Phase 4：内容发现与搜索
 - [x] Phase 5：SEO、分享与可访问性（Lighthouse 与 200% 缩放等运行时验收待 `pnpm preview` 实测）
-- [ ] Phase 6：CMS 与外部集成
-- [ ] Phase 7：部署、质量门禁与上线
+- [x] Phase 6：CMS 与外部集成
+- [x] Phase 7：部署、质量门禁与上线
 - [ ] Phase 8：上线观察与后续迭代
 
 ## Git 约定
