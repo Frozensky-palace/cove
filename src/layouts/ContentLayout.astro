@@ -14,15 +14,17 @@ interface Props {
   /** 页头说明文字 */
   intro?: string;
   noindex?: boolean;
+  /** 页面级结构化数据（透传 BaseLayout，Person 全站输出不在此传；IMPL-051） */
+  jsonLd?: Record<string, unknown>[];
 }
 
-const { title, description, path, heading, intro, noindex = false } = Astro.props;
+const { title, description, path, heading, intro, noindex = false, jsonLd = [] } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description} path={path} noindex={noindex}>
+<BaseLayout title={title} description={description} path={path} noindex={noindex} jsonLd={jsonLd}>
   <div class="cove-container content-page">
     <header class="page-header">
-      <h1 class="page-title">{heading ?? title}</h1>
+      <h1 class="page-title"><slot name="heading">{heading ?? title}</slot></h1>
       {intro && <p class="page-intro">{intro}</p>}
       <slot name="header-actions" />
     </header>

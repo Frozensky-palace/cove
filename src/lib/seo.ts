@@ -102,6 +102,15 @@ function personNode(): JsonLd {
   return node;
 }
 
+/** 关于页 ProfilePage（指南 13.2）：mainEntity 复用全站 Person 节点 */
+export function profilePageJsonLd(): JsonLd {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    mainEntity: personNode(),
+  };
+}
+
 /** 文章页 BlogPosting（ArticleLayout 输出）；imageUrl 为绝对地址的分享图 */
 export function blogPostingJsonLd(post: Post, imageUrl: string): JsonLd {
   const data = post.data;
