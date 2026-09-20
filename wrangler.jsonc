@@ -6,8 +6,9 @@
  * - not_found_handling: "404-page"：未匹配路由统一回退到 dist/404.html
  *   （Astro 构建产出，含完整站点框架）；
  * - html_handling 使用默认值 "auto-trailing-slash"：目录式 index.html 的
- *   无斜杠请求 308 跳转到带斜杠形式，与 astro.config.mjs 的
- *   trailingSlash: "always" 一致——部署后仍需用 /posts/example、
+ *   无斜杠请求 307 跳转到带斜杠形式（IMPL-048 上线实测；与 308 相比仅
+ *   语义差异，重定向定位与 SEO 归一效果一致），与 astro.config.mjs 的
+ *   trailingSlash: "always" 一致——已按 /posts/example、
  *   /posts/example/ 与 404 三类请求实测（指南 4.4 明确要求）；
  * - compatibility_date 指首次部署（Workers Builds 构建）实际验证通过后
  *   固化的日期；后续升级作为独立变更测试（指南 4.4）。

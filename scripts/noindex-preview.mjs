@@ -2,10 +2,11 @@
  * 非生产分支构建注入 X-Robots-Tag: noindex（指南 4.4「预览站点必须
  * noindex」，Phase 7）。
  *
- * 原理：Workers Builds 按分支检出仓库后执行构建，`git rev-parse
- * --abbrev-ref HEAD` 即部署意图分支；本地构建同理。仅 main 缺省
- * 允许索引；分支名不可得（git 不可用等）一律按预览处理——失败安全
- * 方向是「宁可不被索引，不可误索引预览内容」。
+ * 原理：分支名优先取 Workers Builds 注入的 WORKERS_CI_BRANCH（CI
+ * 检出是 detached HEAD，`git rev-parse --abbrev-ref HEAD` 返回
+ * "HEAD"，会让生产构建被误判为预览——IMPL-048 实测踩坑）；本地
+ * 构建无该变量，回退 git。仅 main 允许索引；分支名不可得一律按
+ * 预览处理——失败安全方向是「宁可不被索引，不可误索引预览内容」。
  *
  * 用法：构建链末尾执行（package.json build 脚本已接入），读写
  * dist/_headers（public/_headers 的拷贝），幂等可重复执行。
@@ -23,13 +24,16 @@ if (!existsSync(headersPath)) {
   process.exit(1);
 }
 
-let branch = '';
-try {
-  branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
-    encoding: 'utf8',
-  }).trim();
-} catch {
-  branch = '';
+// 分支名：优先 Workers Builds 注入变量，本地构建回退 git（IMPL-048）
+let branch = process.env.WORKERS_CI_BRANCH || '';
+if (!branch) {
+  try {
+    branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+      encoding: 'utf8',
+    }).trim();
+  } catch {
+    branch = '';
+  }
 }
 
 if (branch === 'main') {
