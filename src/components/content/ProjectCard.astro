@@ -5,6 +5,7 @@
  */
 import { Image } from 'astro:assets';
 import { projectUrl } from '@/lib/urls';
+import { authorName } from '@/data/authors';
 import type { Project } from '@/lib/content';
 
 interface Props {
@@ -34,6 +35,7 @@ const year = project.data.startedAt?.slice(0, 4) ?? '';
     </div>
     <p class="project-summary">{project.data.summary}</p>
     <div class="project-meta">
+      <span class="project-author">{authorName(project.data.author)}</span>
       {year && <span class="project-year">{year}</span>}
       {
         project.data.stack.length > 0 && (
@@ -67,8 +69,8 @@ const year = project.data.startedAt?.slice(0, 4) ?? '';
     border-radius: var(--radius-overlay);
     background-color: var(--surface);
     transition:
-      transform 180ms ease,
-      border-color 120ms ease;
+      transform 200ms var(--ease-standard),
+      border-color 200ms var(--ease-standard);
   }
 
   /* 悬停：2px 上浮 + 品牌色描边（指南 8.6） */

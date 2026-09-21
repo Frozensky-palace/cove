@@ -135,6 +135,42 @@ export async function resolveProjectRelatedPosts(project: Project): Promise<Post
   });
 }
 
+/* --------------------------------- authors --------------------------------- */
+
+export type Author = CollectionEntry<'authors'>;
+
+/** 全部值守者（order 升序，其次 key 字典序），档案页与 about 展示用。 */
+export async function getAllAuthors(): Promise<Author[]> {
+  const authors = await getCollection('authors');
+  return authors.sort(
+    (a, b) => a.data.order - b.data.order || a.data.key.localeCompare(b.data.key),
+  );
+}
+
+/** 单个值守者（按 frontmatter key 查找；不存在返回 null）。 */
+export async function getAuthor(key: string): Promise<Author | null> {
+  const authors = await getCollection('authors');
+  return authors.find((author) => author.data.key === key) ?? null;
+}
+
+/** 某位值守者名下的已发布内容（署名页内容列表）。 */
+export async function getContentByAuthor(key: string): Promise<{
+  posts: Post[];
+  notes: Note[];
+  projects: Project[];
+}> {
+  const [posts, notes, projects] = await Promise.all([
+    getPublishedPosts(),
+    getPublishedNotes(),
+    getPublishedProjects(),
+  ]);
+  return {
+    posts: posts.filter((post) => post.data.author === key),
+    notes: notes.filter((note) => note.data.author === key),
+    projects: projects.filter((project) => project.data.author === key),
+  };
+}
+
 /* ------------------------------ 聚合与派生数据 ------------------------------ */
 
 export interface TagStat {

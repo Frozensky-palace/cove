@@ -5,6 +5,7 @@
  */
 import TagList from '@/components/content/TagList.astro';
 import { noteUrl } from '@/lib/urls';
+import { authorName } from '@/data/authors';
 import { formatDate, type Note } from '@/lib/content';
 
 interface Props {
@@ -21,9 +22,12 @@ const displayTitle = note.data.title ?? `${formatDate(note.data.publishedAt)} �
     <h3 class="note-title">
       <a href={noteUrl(note.id)}>{displayTitle}</a>
     </h3>
-    <time class="note-date" datetime={note.data.publishedAt}>
-      {formatDate(note.data.publishedAt)}
-    </time>
+    <span class="note-aside">
+      <span class="note-author">{authorName(note.data.author)}</span>
+      <time class="note-date" datetime={note.data.publishedAt}>
+        {formatDate(note.data.publishedAt)}
+      </time>
+    </span>
   </div>
   {
     note.data.title && (
@@ -78,6 +82,19 @@ const displayTitle = note.data.title ?? `${formatDate(note.data.publishedAt)} �
     color: var(--cove-blue-strong);
     text-decoration-line: underline;
     text-underline-offset: 0.3em;
+  }
+
+  .note-aside {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  /* 值守者名（IMPL-052）：纯文字，不带头像（用户决策） */
+  .note-author {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    white-space: nowrap;
   }
 
   .note-date {

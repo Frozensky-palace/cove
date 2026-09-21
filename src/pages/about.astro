@@ -1,20 +1,24 @@
 ---
 /**
- * 关于页（指南 9.8）：介绍作者、Cove 的含义、长期主题、联系方式和 RSS。
- * 内容应真实具体，避免能力图标墙和百分比进度条。
+ * 关于页（指南 9.8）：介绍作者、Cove 的含义、三位值守者、长期主题、
+ * 联系方式和 RSS。内容应真实具体，避免能力图标墙和百分比进度条。
  * 站点信息一律取自 siteConfig（IMPL-005：占位值待 Phase 0 确认项替换）。
  * Phase 8.1（IMPL-051）：长期主题链接分类、「最近在写」最新 3 篇内链、
  * 联系方式显示真实邮箱、heading 名字品牌渐变标记、链接 hover 抛光、
  * ProfilePage JSON-LD（经 ContentLayout 新增的 jsonLd 透传）。
+ * IMPL-052（用户需求）：三位值守者叙事与百叶窗展示——站点并非由三位
+ * 现实作者运营，而是由三种观察方式共同维护；站长温晚安整合发出全部内容。
  */
 import ContentLayout from '@/layouts/ContentLayout.astro';
+import KeeperPanels from '@/components/content/KeeperPanels.astro';
 import { siteConfig } from '@/data/site';
-import { categoryUrl, postUrl } from '@/lib/urls';
-import { formatDate, getPublishedPosts } from '@/lib/content';
+import { categoryUrl, characterUrl, postUrl } from '@/lib/urls';
+import { formatDate, getAllAuthors, getPublishedPosts } from '@/lib/content';
 import { profilePageJsonLd } from '@/lib/seo';
 import RssIcon from '@/components/base/icons/RssIcon.astro';
 
 const recentPosts = (await getPublishedPosts()).slice(0, 3);
+const authors = await getAllAuthors();
 ---
 
 <ContentLayout
@@ -33,8 +37,19 @@ const recentPosts = (await getPublishedPosts()).slice(0, 3);
       Cove 的本意是「小海湾」。我希望这个站点像一片安静的小海湾：潮水来去，
       沉淀下来的都是值得留住的文字与作品。这里没有热点的喧嚣，只有三样东西——
       完整论述的<strong>文章</strong>、随手记录的<strong>笔记</strong>，
-      以及有过程、有反思的<strong>项目</strong>。
+      以及有过程、有反思的<strong>项目</strong>。海湾里有人值守——
+      准确地说，是三种观察方式。
     </p>
+
+    <h2>三位值守者</h2>
+    <p>
+      这个站点并不是由三位现实作者共同运营的：所有内容都由站长
+      <a href={characterUrl('wen-wanan')}>温晚安</a>整合发出（RSS、搜索与归档里的
+      每一篇都经她的灯照看过）。而你看到的署名，是写下它们的观察方式——
+      <a href={characterUrl('xu-zhaoxi')}>许朝夕</a>沿岸记录日常，
+      <a href={characterUrl('shen-yuzhou')}>沈予舟</a>看管每一艘建造中的船。
+    </p>
+    <KeeperPanels authors={authors} />
 
     <h2>长期主题</h2>
     <p>我关注的方向会随时间慢慢生长，目前主要包括：</p>
@@ -96,7 +111,9 @@ const recentPosts = (await getPublishedPosts()).slice(0, 3);
 
 <style>
   .about {
-    max-width: 720px;
+    /* 46rem 与 ContentLayout 页头列对齐（720px→46rem，IMPL-053） */
+    max-width: 46rem;
+    margin-inline: auto;
   }
 
   /* 名字品牌渐变标记（IMPL-051）：Logo 同款双色（--cove-blue → --shell-pink）
@@ -160,7 +177,7 @@ const recentPosts = (await getPublishedPosts()).slice(0, 3);
      与全站控件一致；不变更到低对比颜色 */
   .about-links a,
   .about-recent a {
-    transition: color 160ms ease;
+    transition: color 160ms var(--ease-standard);
   }
 
   .about-links a:hover,

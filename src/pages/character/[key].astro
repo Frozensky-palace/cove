@@ -1,0 +1,259 @@
+---
+/**
+ * 值守者档案页（IMPL-052）：/character/<key>/
+ * 立绘（兼 og:image 分享卡，用户决策）、象征物与代表色、设定文正文、
+ * 名下已发布内容列表（文章 / 小记 / 项目）。
+ * 数据来自 authors content collection；key = 文件名，发布后冻结。
+ */
+import { render } from 'astro:content';
+import { Image } from 'astro:assets';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ArticleListItem from '@/components/content/ArticleListItem.astro';
+import NoteListItem from '@/components/content/NoteListItem.astro';
+import ProjectCard from '@/components/content/ProjectCard.astro';
+import { getAllAuthors, getContentByAuthor, type Author } from '@/lib/content';
+import { characterUrl } from '@/lib/urls';
+
+export async function getStaticPaths() {
+  const authors = await getAllAuthors();
+  return authors.map((author) => ({ params: { key: author.data.key }, props: { author } }));
+}
+
+interface Props {
+  author: Author;
+}
+
+const { author } = Astro.props;
+const { Content } = await render(author);
+const { posts, notes, projects } = await getContentByAuthor(author.data.key);
+
+const { name, role, tagline, avatar, symbol, colors } = author.data;
+const accent = colors[0]?.value ?? 'var(--cove-blue)';
+
+/* 名下内容截断：档案页展示近期即可，完整列表走对应索引页 */
+const shownPosts = posts.slice(0, 6);
+const shownNotes = notes.slice(0, 8);
+const shownProjects = projects.slice(0, 6);
+---
+
+<BaseLayout
+  title={`${name} · ${role}`}
+  description={tagline}
+  path={characterUrl(author.data.key)}
+  imagePath={avatar.src}
+  imageWidth={avatar.width}
+  imageHeight={avatar.height}
+  imageAlt={`${name}的立绘`}
+>
+  <div class="cove-container character-page">
+    <article
+      class="character"
+      style={`--keeper-accent: ${accent}`}
+      data-pagefind-body
+      data-pagefind-filter="类型:值守者"
+      data-pagefind-meta={`title:${name}`}
+    >
+      <header class="character-hero">
+        <div class="character-portrait">
+          <Image
+            src={avatar}
+            alt={`${name}的立绘`}
+            widths={[480, 720, 960]}
+            sizes="(min-width: 760px) 340px, min(70vw, 420px)"
+          />
+        </div>
+        <div class="character-intro">
+          <p class="character-symbol">{symbol}</p>
+          <h1 class="character-name">{name}</h1>
+          <p class="character-role">{role}</p>
+          <p class="character-tagline">{tagline}</p>
+          {
+            colors.length > 0 && (
+              <ul class="character-colors" aria-label="代表色">
+                {colors.map(({ name: colorName, value }) => (
+                  <li>
+                    <span class="swatch" style={`background-color: ${value}`} aria-hidden="true" />
+                    {colorName}
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </div>
+      </header>
+
+      <div class="prose character-lore">
+        <Content />
+      </div>
+
+      <nav class="character-works" aria-label={`${name}的内容`}>
+        {
+          posts.length > 0 && (
+            <section>
+              <h2 class="works-title">
+                文章 <span class="works-count">{posts.length}</span>
+              </h2>
+              <div class="works-list">
+                {shownPosts.map((post) => (
+                  <ArticleListItem post={post} />
+                ))}
+              </div>
+              {posts.length > shownPosts.length && <a class="works-more" href="/posts/">查看全部文章</a>}
+            </section>
+          )
+        }
+        {
+          notes.length > 0 && (
+            <section>
+              <h2 class="works-title">
+                小记 <span class="works-count">{notes.length}</span>
+              </h2>
+              <div class="works-list">
+                {shownNotes.map((note) => (
+                  <NoteListItem note={note} />
+                ))}
+              </div>
+              {notes.length > shownNotes.length && <a class="works-more" href="/notes/">查看全部小记</a>}
+            </section>
+          )
+        }
+        {
+          projects.length > 0 && (
+            <section>
+              <h2 class="works-title">
+                项目 <span class="works-count">{projects.length}</span>
+              </h2>
+              <div class="works-list works-projects">
+                {shownProjects.map((project) => (
+                  <ProjectCard project={project} />
+                ))}
+              </div>
+              {projects.length > shownProjects.length && (
+                <a class="works-more" href="/projects/">查看全部项目</a>
+              )
+              }
+            </section>
+          )
+        }
+      </nav>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .character-page {
+    padding-block: 2.5rem 4rem;
+  }
+
+  .character {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+
+  .character-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1.75rem 2.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .character-portrait {
+    flex: 0 1 340px;
+    min-width: 220px;
+    border-radius: var(--radius-overlay);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background-color: var(--surface-muted);
+  }
+
+  .character-portrait :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .character-intro {
+    flex: 1 1 240px;
+    min-width: 0;
+  }
+
+  .character-symbol {
+    margin: 0 0 0.5rem;
+    color: var(--keeper-accent);
+    font-size: 0.875rem;
+    letter-spacing: 0.2em;
+  }
+
+  .character-name {
+    margin: 0;
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .character-role {
+    margin: 0.5rem 0 0;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .character-tagline {
+    margin: 0.75rem 0 0;
+    color: var(--text-muted);
+    line-height: 1.85;
+  }
+
+  .character-colors {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .character-colors li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .swatch {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+  }
+
+  .character-lore {
+    margin-bottom: 3rem;
+  }
+
+  .works-title {
+    margin: 2.5rem 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .works-count {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 400;
+    margin-left: 0.25rem;
+  }
+
+  .works-more {
+    display: inline-block;
+    margin-top: 0.875rem;
+    color: var(--cove-blue-strong);
+    font-size: 0.9375rem;
+  }
+
+  .works-more:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+</style>

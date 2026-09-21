@@ -1,0 +1,142 @@
+---
+/**
+ * 值守者署名（IMPL-052）：详情页显示作者头像、名字、身份与一句话简介。
+ * 名字链接到 /character/<key>/ 档案页；头像为装饰（alt 空），信息由文字承载。
+ * 名字标注 data-pagefind-meta="author"：搜索值守者名可命中其内容（用户需求）。
+ * IMPL-053 重做：单一紧凑设计（40px 头像 + 名字/身份同行 + 简介在下），
+ * 统一置于三类详情页（文章/笔记/项目）正文上方；三轮修正：立绘为全身 3:4
+ * 构图，object-fit: cover 默认居中裁出躯干，object-position: top 对齐人物面部。
+ * ⑧ 头像取景（用户点名「温/许改取偏上部分，许更多」）：改为 transform 放大
+ * 取景，AVATAR_ZOOM 是每位值守者的取景倍数（越大取景越集中在头部，
+ * 沈 1 保持原构图）；圆形裁切放在外层 frame（overflow: hidden）而非图片
+ * 自身——border-radius 会随 transform 一起放大，圆就失效了。
+ */
+import { Image } from 'astro:assets';
+import { getAuthor } from '@/lib/content';
+import { characterUrl } from '@/lib/urls';
+
+interface Props {
+  authorKey: string;
+}
+
+const { authorKey } = Astro.props;
+const author = await getAuthor(authorKey);
+
+/**
+ * 取景倍数旋钮（IMPL-053 ⑧，用户可调）：立绘经 object-fit: cover + 顶部
+ * 对齐后，40px 圆默认可见约顶部 75%；scale(k) 后可见区域收窄为约 75%/k，
+ * 即 k 越大取景越靠上、人物在圆内也越大。温 1.9（约见顶部 40%）、
+ * 许 2.8（约 27%，用户两轮加码「再高一点、展示更大」）、沈 1（原构图）。
+ */
+const AVATAR_ZOOM: Record<string, number> = {
+  'wen-wanan': 1.9,
+  'xu-zhaoxi': 2.8,
+  'shen-yuzhou': 1,
+};
+---
+
+{
+  author && (
+    <aside class="author-byline">
+      <span
+        class="byline-avatar-frame"
+        style={`--avatar-zoom: ${AVATAR_ZOOM[author.data.key] ?? 1}`}
+      >
+        {/* 渲染尺寸给足余量（200px）：头像经 --avatar-zoom 放大取景后，
+            40px 圆在 2 倍屏 × 取景倍数下需要更大幅源图，72px 会发虚 */}
+        <Image
+          class="byline-avatar"
+          src={author.data.avatar}
+          alt=""
+          width={200}
+          height={200}
+          loading="lazy"
+        />
+      </span>
+      <div class="byline-text">
+        <p class="byline-name">
+          <a href={characterUrl(author.data.key)} data-pagefind-meta="author">
+            {author.data.name}
+          </a>
+          <span class="byline-role">{author.data.role}</span>
+        </p>
+        <p class="byline-tagline">{author.data.tagline}</p>
+      </div>
+    </aside>
+  )
+}
+
+<style>
+  .author-byline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background-color: var(--surface);
+  }
+
+  /* 圆形取景框（IMPL-053 ⑧）：裁切由 frame 完成（overflow + radius 恒定
+     40px），内部图片 transform 放大取景，frame 不随缩放变形 */
+  .byline-avatar-frame {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .byline-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* object-position 顶对齐 + transform 原点同在顶部：倍数越大可见区域
+       越向头部集中（--avatar-zoom 由 frontmatter 的 AVATAR_ZOOM 注入） */
+    object-position: top;
+    transform: scale(var(--avatar-zoom, 1));
+    transform-origin: 50% 0;
+  }
+
+  .byline-text {
+    min-width: 0;
+    /* 头像 40px 的两行文字（名字行 + 简介行）与头像视觉居中 */
+    padding-block: 0.125rem;
+  }
+
+  .byline-name {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.125rem 0.5rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .byline-name a {
+    font-weight: 600;
+    color: var(--text);
+    text-decoration-line: none;
+    transition: color 160ms var(--ease-standard);
+  }
+
+  .byline-name a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+    text-decoration-thickness: 1px;
+  }
+
+  .byline-role {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .byline-tagline {
+    margin: 0.125rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.65;
+  }
+</style>

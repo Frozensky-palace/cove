@@ -5,6 +5,7 @@
  */
 import { render } from 'astro:content';
 import ContentLayout from '@/layouts/ContentLayout.astro';
+import AuthorByline from '@/components/content/AuthorByline.astro';
 import ArticleListItem from '@/components/content/ArticleListItem.astro';
 import {
   formatDate,
@@ -84,7 +85,9 @@ const linkLabel: Record<string, string> = {
       }
     </div>
 
-    <div class="prose">
+    <AuthorByline authorKey={project.data.author} />
+
+    <div class="prose byline-gap">
       <Content />
     </div>
 
@@ -123,6 +126,9 @@ const linkLabel: Record<string, string> = {
 
 <style>
   .preview-banner {
+    /* 与居中的正文列同宽（IMPL-053） */
+    max-width: 46rem;
+    margin-inline: auto;
     margin-bottom: 1.5rem;
     padding: 0.625rem 1.5rem;
     border-radius: var(--radius-control);
@@ -134,6 +140,7 @@ const linkLabel: Record<string, string> = {
 
   .project-article {
     max-width: 46rem;
+    margin-inline: auto;
   }
 
   .project-facts {
@@ -170,6 +177,11 @@ const linkLabel: Record<string, string> = {
   .fact-stack {
     font-family: var(--font-mono);
     font-size: 0.8125rem;
+  }
+
+  /* 值守者署名与正文之间（署名块自身无边距） */
+  .byline-gap {
+    margin-top: 2rem;
   }
 
   .links-title {

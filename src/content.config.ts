@@ -2,6 +2,7 @@ import { defineCollection } from 'astro:content';
 import { z } from 'zod';
 import { glob } from 'astro/loaders';
 import { categoryKeys } from '@/data/taxonomy';
+import { authorKeys } from '@/data/authors';
 
 /**
  * 内容 schema（指南 11 内容模型）。
@@ -40,6 +41,8 @@ const posts = defineCollection({
         publishedAt: dateString,
         updatedAt: dateString.optional(),
         category: z.enum(categoryKeys),
+        /** 值守者署名（IMPL-052）：缺省为站长，历史文章无需回填 */
+        author: z.enum(authorKeys).default('wen-wanan'),
         tags: z.array(z.string().min(1).max(30)).min(1).max(8),
         draft: z.boolean().default(true),
         featured: z.boolean().default(false),
@@ -64,6 +67,8 @@ const notes = defineCollection({
       title: z.string().min(1).optional(),
       publishedAt: dateString,
       updatedAt: dateString.optional(),
+      /** 值守者署名（IMPL-052）：小记默认由沿岸记录员发布 */
+      author: z.enum(authorKeys).default('xu-zhaoxi'),
       tags: z.array(z.string().min(1).max(30)).max(5).default([]),
       draft: z.boolean().default(true),
       lang: z.enum(['zh-CN', 'en']).default('zh-CN'),
@@ -83,6 +88,8 @@ const projects = defineCollection({
         title: z.string().min(1),
         summary: z.string().min(4).max(120),
         status: z.enum(['active', 'completed', 'archived']),
+        /** 值守者署名（IMPL-052）：项目默认由船坞管理员记录 */
+        author: z.enum(authorKeys).default('shen-yuzhou'),
         startedAt: dateString.optional(),
         completedAt: dateString.optional(),
         stack: z.array(z.string().min(1)).max(12).default([]),
@@ -110,4 +117,30 @@ const projects = defineCollection({
       ),
 });
 
-export const collections = { posts, notes, projects };
+/**
+ * 值守者档案（IMPL-052）：三类内容的作者字典，可在 CMS 增改。
+ * key = 文件名 = /character/<key>/ 的 slug，发布后视为冻结；
+ * name/role/order 由 src/data/authors.ts 同步派生（z.enum 与卡片），
+ * avatar/正文（设定文）供 /character/[key]/ 档案页与署名组件使用。
+ */
+const authors = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/authors' }),
+  schema: ({ image }) =>
+    z
+      .object({
+        key: z.string().min(1),
+        name: z.string().min(1),
+        role: z.string().min(1),
+        tagline: z.string().min(1).max(120),
+        avatar: image(),
+        symbol: z.string().min(1),
+        colors: z
+          .array(z.object({ name: z.string().min(1), value: z.string().min(1) }).strict())
+          .max(3)
+          .default([]),
+        order: z.number().int().default(99),
+      })
+      .strict(),
+});
+
+export const collections = { posts, notes, projects, authors };

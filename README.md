@@ -58,15 +58,15 @@ cove/
 ├── docs/                    # 开发指南、提案、决策记录、内容清单
 ├── public/                  # 静态资源（favicon、og-default.png、site.webmanifest 等）
 ├── src/
-│   ├── assets/              # 品牌、插画、文章与项目媒体
+│   ├── assets/              # 品牌、插画、文章/项目媒体与值守者立绘（characters/）
 │   ├── components/
 │   │   ├── base/            # Button、IconButton、Tag、Divider 等视觉原语
-│   │   ├── content/         # ArticleCard、Prose、TOC 等
+│   │   ├── content/         # ArticleCard、AuthorByline、KeeperPanels、TOC 等
 │   │   ├── home/            # 首页专用区块
 │   │   ├── islands/         # Vue Island 组件
 │   │   ├── integrations/    # Giscus、Analytics 边界组件
 │   │   └── navigation/      # SiteHeader、SiteFooter、MobileNav
-│   ├── content/             # posts / notes / projects（Content Collections）
+│   ├── content/             # posts / notes / projects / authors / categories（Content Collections）
 │   ├── data/site.ts         # 站点名称、作者、社交链接等
 │   ├── layouts/             # BaseLayout、ContentLayout、ArticleLayout
 │   ├── lib/                 # content、seo、search、urls 等
