@@ -161,7 +161,7 @@ const hasContent =
       /* 裁切后插画不再自带四周底色（IMPL-036），内收一点避免贴住版心右缘 */
       margin-inline-end: clamp(0rem, 1.5vw, 1rem);
       /* 入场：淡入 + 上浮（用户点名动效；reduced-motion 下由全局规则关闭） */
-      animation: brand-in 560ms ease-out both;
+      animation: brand-in 560ms var(--ease-out) both;
     }
 
     .hero-brand img {
@@ -176,8 +176,8 @@ const hasContent =
       /* 缓慢上下漂浮；scale 用独立属性与 transform 动画叠加互不干扰 */
       animation: brand-float 7s ease-in-out infinite alternate;
       transition:
-        scale 240ms ease,
-        filter 240ms ease;
+        scale 240ms var(--ease-standard),
+        filter 240ms var(--ease-standard);
     }
 
     .hero-brand:hover img {

@@ -60,8 +60,8 @@ const hasCover = Boolean(post.data.cover);
     border-radius: var(--radius-overlay);
     background-color: var(--surface);
     transition:
-      transform 180ms ease,
-      border-color 180ms ease;
+      transform 200ms var(--ease-standard),
+      border-color 200ms var(--ease-standard);
   }
 
   /* 悬停：2px 上浮 + 品牌色描边（指南 8.6 悬停反馈白名单：位移 ≤2px、颜色） */

@@ -1,8 +1,10 @@
 ---
 /**
  * 文章详情布局（指南 9.4）：
- * 分类面包屑 → 标题/描述 → 元信息 → 可选封面 → 正文 + 桌面粘性目录 →
- * 标签/转载说明 → 上一篇/下一篇 → 相关文章。
+ * 分类面包屑 → 标题/描述 → 元信息 → 值守者署名 → 可选封面 → 正文 +
+ * 桌面右侧粘性目录（IMPL-020）→ 标签/转载说明 → 上一篇/下一篇 → 相关文章。
+ * 署名统一置于正文上方（与笔记/项目详情一致，IMPL-053 三轮）；
+ * ≥1280px 三栏真居中：阅读列为容器正中，目录占右侧 1fr 列。
  * 阅读进度为顶部 2px 细线；代码复制为原生脚本渐进增强；
  * 正文容器标注 data-pagefind-body（Phase 4 搜索索引）。
  */
@@ -11,6 +13,7 @@ import { Image } from 'astro:assets';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ArticleTOC from '@/components/content/ArticleTOC.astro';
 import PostMeta from '@/components/content/PostMeta.astro';
+import AuthorByline from '@/components/content/AuthorByline.astro';
 import TagList from '@/components/content/TagList.astro';
 import PrevNextNav from '@/components/content/PrevNextNav.astro';
 import RelatedPosts from '@/components/content/RelatedPosts.astro';
@@ -74,9 +77,10 @@ const ogMetadata = {
 
   <div class="cove-container article-page">
     <article class="article" data-pagefind-body data-pagefind-filter="类型:文章">
-      {/* 双栏骨架（指南 8.7 / 9.4，IMPL-020）：页头、正文与上下篇同在内容列（45rem，
-          与 .prose 行宽 720px 对齐）；ArticleTOC 片段展开为两个兄弟元素——
-          .toc-mobile（<1200px 正文前折叠目录）与 .toc-aside（≥1200px 右侧粘性栏）。 */}
+      {/* 三栏骨架（指南 8.7 / 9.4，IMPL-053 三轮）：页头、正文与上下篇固定在
+          中列（45rem，与 .prose 行宽 720px 对齐，≥1280px 时恰为容器正中）；
+          ArticleTOC 片段展开为两个兄弟元素——.toc-mobile（<1280px 正文前折叠
+          目录）与 .toc-aside（≥1280px 右侧 1fr 列，自身粘性）。 */}
       <div class="article-columns">
         <header class="article-header">
           <nav class="article-breadcrumb" aria-label="面包屑">
@@ -89,7 +93,8 @@ const ogMetadata = {
 
           <h1 class="article-title" data-pagefind-meta="title">{post.data.title}</h1>
           <p class="article-description">{post.data.description}</p>
-          <PostMeta post={post} pagefind />
+          <PostMeta post={post} pagefind showAuthor={false} />
+          <AuthorByline authorKey={post.data.author} />
 
           {
             post.data.cover && (
@@ -107,6 +112,8 @@ const ogMetadata = {
           }
         </header>
 
+        {/* 目录（IMPL-020 / IMPL-053 三轮）：署名已回页头（与笔记/项目详情统一），
+            此处只剩目录；<1280px 为正文前折叠目录，≥1280px 落入网格右列。 */}
         <ArticleTOC headings={headings} />
 
         <div class="article-main">
@@ -148,7 +155,12 @@ const ogMetadata = {
 
 <style>
   .preview-banner {
+    /* 与居中的内容列同宽（IMPL-053） */
+    max-width: 45rem;
+    margin-inline: auto;
+    margin-bottom: 1.5rem;
     padding: 0.625rem 1.5rem;
+    border-radius: var(--radius-control);
     background-color: var(--shell-pink-soft);
     color: var(--text);
     font-size: 0.875rem;
@@ -212,47 +224,48 @@ const ogMetadata = {
     height: auto;
   }
 
-  /* 双栏：内容列 + 右侧粘性目录栏（≥1200px，指南 8.7 / 9.4，IMPL-020）。
-     <1200px 为纵向文档流：页头 → 折叠目录 → 正文 → 标签 → 上下篇。
-     内容列 45rem 与 .prose 行宽 720px 对齐：页头、正文、上下篇左缘一致；
-     目录栏 15rem 贯穿三行，目录自身在 ArticleTOC 内 sticky。 */
+  /* 三栏真居中（≥1280px，IMPL-053 三轮）：1fr | 45rem | 1fr——阅读列恰为容器
+     正中，消除旧「内容+右栏」整块居中带来的整体偏左感；目录占右侧 1fr 列
+     （自身 sticky / 限高由组件维护），跨页头/正文/上下篇三行放置。
+     <1280px 为纵向文档流：页头（含署名卡）→ 折叠目录 → 正文 → 上下篇。 */
   .article-columns {
     display: flex;
     flex-direction: column;
   }
 
-  @media (min-width: 1200px) {
+  @media (min-width: 1280px) {
     .article-columns {
       display: grid;
-      grid-template-columns: minmax(0, 45rem) 15rem;
-      grid-template-areas:
-        'head toc'
-        'main toc'
-        'nav toc';
-      column-gap: 3rem;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 45rem) minmax(0, 1fr);
+      grid-template-rows: auto auto auto;
       row-gap: 2.5rem;
-      justify-content: center;
       align-items: start;
-      max-width: 63rem;
-      margin-inline: auto;
     }
 
     .article-header {
-      grid-area: head;
+      grid-column: 2;
+      grid-row: 1;
       margin-bottom: 0;
     }
 
-    .article-columns :global(.toc-aside) {
-      grid-area: toc;
-    }
-
     .article-main {
-      grid-area: main;
+      grid-column: 2;
+      grid-row: 2;
     }
 
     .article-nav-area {
-      grid-area: nav;
+      grid-column: 2;
+      grid-row: 3;
       margin-top: 0;
+    }
+
+    /* 目录落入右列（容器 1200px 减 45rem 中列后两侧各约 13.5rem，
+       margin-left 与中列留出呼吸）；组件自身 sticky（top 96px 避让吸顶页头）
+       在跨三行的网格区域内全程跟随 */
+    .article-columns :global(.toc-aside) {
+      grid-column: 3;
+      grid-row: 1 / span 3;
+      margin-left: 2.5rem;
     }
   }
 

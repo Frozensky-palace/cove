@@ -39,6 +39,8 @@ const { title, description, path, heading, intro, noindex = false, jsonLd = [] }
 
   .page-header {
     max-width: 46rem;
+    /* 内容列在 1200px 容器内水平居中（IMPL-053）：仅设 max-width 会贴左缘 */
+    margin-inline: auto;
     margin-bottom: 2.5rem;
   }
 

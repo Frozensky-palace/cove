@@ -79,6 +79,9 @@ const label = categoryLabel(key);
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem 1.5rem;
+    /* 与居中的页头/列表同列（IMPL-053） */
+    max-width: 46rem;
+    margin-inline: auto;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border);
@@ -135,5 +138,6 @@ const label = categoryLabel(key);
 
   .category-list {
     max-width: 46rem;
+    margin-inline: auto;
   }
 </style>

@@ -58,6 +58,47 @@
     text-underline-offset: 0.2em;
   }
 
+  /* 背景层次（IMPL-053 ⑦，用户反馈「背景有点空荡荡」；⑧ 加强到可感知）：
+     固定视口的双色水洗层——顶部海蓝光晕自页面顶端漫下、右下角一抹贝壳粉
+     回声，颜色取自主题令牌按透明度混合，浅深色模式各自成趣；
+     ::before 负 z-index 垫在画布背景之上、内容之下（body 背景色传播到
+     根画布，负 z 子层不与之争抢），fixed 定位滚动时水洗恒定不随页面
+     漂移；⑦ 的 10%/8% 用户反馈「没感觉到」，⑧ 提到 15%/12% 并放大
+     光晕范围，保证「可辨」但仍属留白里的层次而非背景图 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        72rem 38rem at 50% -12rem,
+        color-mix(in srgb, var(--cove-blue) 15%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        52rem 30rem at 92% calc(100% + 10rem),
+        color-mix(in srgb, var(--shell-pink) 12%, transparent),
+        transparent 72%
+      );
+  }
+
+  /* 深色模式整体上抬（⑧）：深底吸光，同等透明度在深色下更难察觉 */
+  .dark body::before {
+    background:
+      radial-gradient(
+        72rem 38rem at 50% -12rem,
+        color-mix(in srgb, var(--cove-blue) 18%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        52rem 30rem at 92% calc(100% + 10rem),
+        color-mix(in srgb, var(--shell-pink) 14%, transparent),
+        transparent 72%
+      );
+  }
+
   main {
     flex: 1;
     width: 100%;
@@ -179,7 +220,7 @@ html[data-theme='dark'] .theme-icon-dark {
 
 html.theme-vt:not([data-theme='dark']) .theme-icon-light,
 html.theme-vt[data-theme='dark'] .theme-icon-dark {
-  animation: theme-icon-in 360ms cubic-bezier(0.33, 0, 0.2, 1);
+  animation: theme-icon-in 360ms var(--ease-out);
 }
 
 /*
@@ -201,7 +242,7 @@ html.theme-vt[data-theme='dark'] .theme-icon-dark {
   place-items: center;
   background-color: var(--background);
   opacity: 1;
-  transition: opacity 200ms ease;
+  transition: opacity 200ms var(--ease-standard);
 }
 
 html.splash-on .app-splash {
@@ -211,7 +252,7 @@ html.splash-on .app-splash {
 /* 入场（IMPL-050）：内容一次性淡入 + 2px 上浮，指南 8.6 档位内；
    backwards 填充——动画结束后不驻留样式，退场过渡才能接管同名属性 */
 html.splash-on .app-splash-inner {
-  animation: splash-in 220ms ease-out backwards;
+  animation: splash-in 220ms var(--ease-out) backwards;
 }
 
 @keyframes splash-in {
@@ -235,8 +276,8 @@ html.splash-on .app-splash-inner {
   transform: translateY(-2px);
   opacity: 0;
   transition:
-    transform 200ms ease,
-    opacity 200ms ease;
+    transform 200ms var(--ease-standard),
+    opacity 200ms var(--ease-standard);
 }
 
 .app-splash-inner {
@@ -311,7 +352,9 @@ html.splash-on .app-splash-inner {
   animation: none;
   transform: scaleX(1);
   opacity: 0;
-  transition: transform 160ms ease, opacity 240ms ease 80ms;
+  transition:
+    transform 160ms var(--ease-standard),
+    opacity 240ms var(--ease-standard) 80ms;
 }
 
 @keyframes route-crawl {

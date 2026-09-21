@@ -31,6 +31,14 @@
 
   /* 阴影：只用于浮层、菜单和少量重点内容（指南 8.4） */
   --shadow-overlay: 0 8px 24px rgb(2 32 44 / 0.1);
+
+  /* 动效令牌（IMPL-053，指南 8.6 档位内选用）：
+     --ease-standard 通用缓动（Material 标准 curve），用于颜色/边框等小变化；
+     --ease-out 减速曲线（easeOutQuint 系），用于入场与大面积位移的收尾——
+     起步快、减速长，是主流设计系统（Material/Radix/shadcn）共同的“自然感”来源。
+     时长沿用指南 8.6：悬停 120–220ms；展示型位移 400–600ms。 */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dark {
