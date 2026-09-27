@@ -7,7 +7,7 @@ tags:
   - Astro
   - 内容管理
   - 系列测试
-draft: false
+draft: true
 lang: zh-CN
 series: Astro 从零到一
 ---
