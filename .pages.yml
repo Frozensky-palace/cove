@@ -385,3 +385,32 @@ content:
         list: true
         description: 填写文章 ID（文件名去掉 .md），如 hello-cove；构建期校验其存在
       - { name: body, label: 详情, type: rich-text }
+
+  # ── 站点大事记（about 溯源时间线，IMPL-054） ────────────────
+  # schema：src/content.config.ts → milestones。每个节点一个小文件，
+  # 文件名建议日期前缀（如 2026-09-20-keepers-arrive.md）；页面按
+  # date 升序展示（由远及近），集合为空时 about 整节隐藏。
+  - name: milestones
+    label: 站点大事记
+    type: collection
+    path: src/content/milestones
+    format: yaml-frontmatter
+    filename:
+      template: "{primary}.md"
+      field: true
+    view:
+      primary: title
+      fields: [title, date, description]
+      sort: [date, title]
+      default:
+        sort: date
+        order: asc
+    fields:
+      - { name: title, label: 标题, type: string, required: true }
+      - name: date
+        label: 日期
+        type: date
+        required: true
+        options:
+          format: yyyy-MM-dd
+      - { name: description, label: 一句话说明, type: text, description: 200 字以内，可省略 }

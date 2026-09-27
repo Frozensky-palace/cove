@@ -14,26 +14,35 @@
  * - pathname 映射：URL 即讨论标识（指南 19 Phase 6）。
  *
  * 配置见 src/data/integrations.ts；四项 Giscus 标识任一为空则整块不渲染。
- * 挂载：ArticleLayout（仅文章详情页，指南 9.4 / 6.1）。
+ * 挂载：ArticleLayout（仅文章详情页，指南 9.4 / 6.1）、about 页「留言板」
+ * 区块（IMPL-057 由独立 /guestbook/ 页收敛而来，title="留言" 复用同一组件）。
  */
 import { giscusConfig } from '@/data/integrations';
 
+interface Props {
+  /** 区块标题（文章页默认「评论」；about 留言区块传「留言」） */
+  title?: string;
+  /** 无障碍区块名，默认与 title 一致 */
+  ariaLabel?: string;
+}
+
+const { title = '评论', ariaLabel = title } = Astro.props;
 const { repo, repoId, category, categoryId } = giscusConfig;
 const enabled = Boolean(repo && repoId && category && categoryId);
 ---
 
 {
   enabled && (
-    <section class="comments" aria-label="评论" data-pagefind-ignore>
-      <h2 class="comments-title">评论</h2>
+    <section class="comments" aria-label={ariaLabel} data-pagefind-ignore>
+      <h2 class="comments-title">{title}</h2>
       <div class="comments-host" data-comments-host>
-        <p class="comments-loading">评论加载中……</p>
+        <p class="comments-loading">{title}加载中……</p>
         <p class="comments-fallback" data-comments-fallback hidden>
-          评论区加载失败或被浏览器扩展拦截。阅读不受影响；如想反馈，可通过页脚的联系方式找到我，
+          {title}区加载失败或被浏览器扩展拦截。阅读不受影响；如想反馈，可通过页脚的联系方式找到我，
           或 <button type="button" class="comments-retry" data-comments-retry>重试加载</button>。
         </p>
         <noscript>
-          <p class="comments-fallback">评论区需要 JavaScript；此时正文阅读不受影响。</p>
+          <p class="comments-fallback">{title}区需要 JavaScript；此时阅读不受影响。</p>
         </noscript>
       </div>
     </section>

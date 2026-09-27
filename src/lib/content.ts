@@ -171,6 +171,16 @@ export async function getContentByAuthor(key: string): Promise<{
   };
 }
 
+/* ------------------------------- milestones -------------------------------- */
+
+export type Milestone = CollectionEntry<'milestones'>;
+
+/** 站点大事记（IMPL-054）：date 升序（时间线自上而下即由远及近）。 */
+export async function getSortedMilestones(): Promise<Milestone[]> {
+  const milestones = await getCollection('milestones');
+  return milestones.sort((a, b) => a.data.date.localeCompare(b.data.date));
+}
+
 /* ------------------------------ 聚合与派生数据 ------------------------------ */
 
 export interface TagStat {

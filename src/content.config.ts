@@ -143,4 +143,19 @@ const authors = defineCollection({
       .strict(),
 });
 
-export const collections = { posts, notes, projects, authors };
+/**
+ * 站点里程碑（IMPL-054）：about「站点大事记」时间线的数据源，可在 CMS
+ * 增改。date 沿用全站 YYYY-MM-DD 字符串约定；按 date 升序展示即溯源方向。
+ */
+const milestones = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/milestones' }),
+  schema: z
+    .object({
+      title: z.string().min(1),
+      date: dateString,
+      description: z.string().max(200).optional(),
+    })
+    .strict(),
+});
+
+export const collections = { posts, notes, projects, authors, milestones };

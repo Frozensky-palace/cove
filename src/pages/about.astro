@@ -8,17 +8,41 @@
  * ProfilePage JSON-LD（经 ContentLayout 新增的 jsonLd 透传）。
  * IMPL-052（用户需求）：三位值守者叙事与百叶窗展示——站点并非由三位
  * 现实作者运营，而是由三种观察方式共同维护；站长温晚安整合发出全部内容。
+ * IMPL-054（用户选定提案 about ①④）：站点大事记时间线（milestones
+ * 集合驱动，可在 CMS 增改，空集合整节隐藏）+ 长期主题三项线性小图标。
+ * IMPL-055（用户需求）：联系区重做为三张图标卡片（RSS/邮箱/GitHub），
+ * GitHub 入站即 siteConfig.social 数据驱动（JSON-LD sameAs 自动带上）。
+ * IMPL-057（用户反馈）：留言板从独立 /guestbook/ 页收敛为本页「联系与订阅」
+ * 之后的区块；独立 /uses/ 装备页删除（构建方式已在本页「这个站点如何运转」简述）。
  */
 import ContentLayout from '@/layouts/ContentLayout.astro';
 import KeeperPanels from '@/components/content/KeeperPanels.astro';
+import CommentProvider from '@/components/integrations/CommentProvider.astro';
 import { siteConfig } from '@/data/site';
 import { categoryUrl, characterUrl, postUrl } from '@/lib/urls';
-import { formatDate, getAllAuthors, getPublishedPosts } from '@/lib/content';
+import {
+  formatDate,
+  getAllAuthors,
+  getPublishedPosts,
+  getSortedMilestones,
+} from '@/lib/content';
 import { profilePageJsonLd } from '@/lib/seo';
 import RssIcon from '@/components/base/icons/RssIcon.astro';
+import MailIcon from '@/components/base/icons/MailIcon.astro';
+import GithubIcon from '@/components/base/icons/GithubIcon.astro';
 
 const recentPosts = (await getPublishedPosts()).slice(0, 3);
 const authors = await getAllAuthors();
+const milestones = await getSortedMilestones();
+
+/** 联系卡片图标映射（SocialIcon 联合类型逐一对应） */
+const CONTACT_ICONS = { rss: RssIcon, email: MailIcon, github: GithubIcon };
+
+/** 卡片展示值：mailto 取明文地址，个人主页取 @账号（URL 末段） */
+const contactValue = (href: string) =>
+  href.startsWith('mailto:')
+    ? href.replace(/^mailto:/, '')
+    : `@${href.replace(/\/+$/, '').split('/').pop()}`;
 ---
 
 <ContentLayout
@@ -53,15 +77,62 @@ const authors = await getAllAuthors();
 
     <h2>长期主题</h2>
     <p>我关注的方向会随时间慢慢生长，目前主要包括：</p>
-    <ul>
+    <ul class="about-topics">
       <li>
-        <a href={categoryUrl('engineering')}>前端工程与类型系统</a>：把复杂问题拆成可维护的结构；
+        <a href={categoryUrl('engineering')}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M9.8 21 10.7 9h2.6l.9 12" />
+            <path d="M8 21h8" />
+            <path d="M10.2 9V6.8h3.6V9" />
+            <path d="M12 3.2v1.4" />
+            <path d="m6.8 4.6 1.9 1.5" />
+            <path d="m17.2 4.6-1.9 1.5" />
+          </svg>前端工程与类型系统</a
+        >：把复杂问题拆成可维护的结构；
       </li>
       <li>
-        <a href={categoryUrl('web-dev')}>静态站点与内容工程</a>：以 Git 为源、构建即发布的工作流；
+        <a href={categoryUrl('web-dev')}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 15.5h14l-1.8 3.5H6.8Z" />
+            <path d="M12 15.5V4" />
+            <path d="M12 4.5c3.2 1.8 5.2 4.4 6 8H12" />
+            <path d="M3.5 21c1.4-.9 2.9-.9 4.3 0 1.4.9 2.9.9 4.2 0 1.4-.9 2.9-.9 4.3 0 1.4.9 2.9.9 4.2 0" />
+          </svg>静态站点与内容工程</a
+        >：以 Git 为源、构建即发布的工作流；
       </li>
       <li>
-        <a href={categoryUrl('reading')}>技术写作与知识整理</a>：让笔记真正被自己再次读到。
+        <a href={categoryUrl('reading')}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 20.5C7.6 17 5 13.6 5 10.2a7 7 0 0 1 14 0c0 3.4-2.6 6.8-7 10.3Z" />
+            <path d="M12 20V3.5" />
+            <path d="M12 20 6.6 6.4" />
+            <path d="m12 20 5.4-13.6" />
+          </svg>技术写作与知识整理</a
+        >：让笔记真正被自己再次读到。
       </li>
     </ul>
 
@@ -76,36 +147,84 @@ const authors = await getAllAuthors();
             </li>
           ))}
         </ul>
+        <p class="about-now-note">
+          更即时的状态快照（正在做什么、关注什么）见<a href="/now/">「现在」</a>页。
+        </p>
       </>
     )}
 
     <h2>这个站点如何运转</h2>
     <p>
       Cove 由 <a href="https://astro.build/">Astro</a> 静态构建，内容以 Markdown
-      存放在 Git 仓库中，部署在 Cloudflare 上。没有追踪脚本，没有行为广告；
-      搜索在浏览器本地完成。你可以在
-      <a href="/archive/">归档</a> 里按年份回看全部内容。
+      存放在 Git 仓库中，部署在 Cloudflare 上。不做广告画像与跨站追踪，仅用
+      Cloudflare Web Analytics 了解匿名访问量与真实用户性能，具体见
+      <a href="/privacy/">隐私说明</a>；没有行为广告；搜索在浏览器本地完成。
+      你可以在 <a href="/archive/">归档</a> 里按年份回看全部内容。
     </p>
+
+    {milestones.length > 0 && (
+      <>
+        <h2>站点大事记</h2>
+        <ol class="about-timeline">
+          {milestones.map((milestone) => (
+            <li>
+              <span class="about-timeline-date">{milestone.data.date}</span>
+              <div class="about-timeline-body">
+                <p class="about-timeline-title">{milestone.data.title}</p>
+                {milestone.data.description && (
+                  <p class="about-timeline-desc">{milestone.data.description}</p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </>
+    )}
 
     <h2>联系与订阅</h2>
     <p>欢迎通过以下方式找到我，或订阅 RSS 及时获取新文章。</p>
-    <ul class="about-links">
+    <ul class="about-contact">
       <li>
-        <a href="/rss.xml">
-          <RssIcon />
-          RSS 订阅
+        <a class="contact-card" href="/rss.xml">
+          <span class="contact-icon" aria-hidden="true"><RssIcon /></span>
+          <span class="contact-text">
+            <span class="contact-label">RSS 订阅</span>
+            <span class="contact-value">在阅读器中关注本站更新</span>
+          </span>
         </a>
       </li>
       {
-        siteConfig.social.map((link) => (
-          <li>
-            <a href={link.href} rel="me noopener">
-              {link.href.startsWith('mailto:') ? link.href.replace(/^mailto:/, '') : link.label}
-            </a>
-          </li>
-        ))
+        siteConfig.social.map((link) => {
+          const Icon = CONTACT_ICONS[link.icon];
+          return (
+            <li>
+              <a class="contact-card" href={link.href} rel="me noopener">
+                <span class="contact-icon" aria-hidden="true">
+                  <Icon />
+                </span>
+                <span class="contact-text">
+                  <span class="contact-label">{link.label}</span>
+                  <span class="contact-value">{contactValue(link.href)}</span>
+                </span>
+              </a>
+            </li>
+          );
+        })
       }
     </ul>
+
+    <h2>留言板</h2>
+    <p>
+      路过就想打个招呼？在下面留言即可——留言存在
+      <a
+        href="https://github.com/Frozensky-palace/cove/discussions"
+        rel="noopener">GitHub Discussions</a
+      >
+      里，需要一个 GitHub 账号；不方便的话，用上面的邮箱写信也一样。
+    </p>
+    <div class="about-comments">
+      <CommentProvider title="留言" />
+    </div>
   </div>
 </ContentLayout>
 
@@ -126,8 +245,8 @@ const authors = await getAllAuthors();
     padding-bottom: 0.05em;
   }
 
-  /* 「最近在写」条目：题左日期右；hover 语言与下方 about-links 一致；
-     键盘焦点环由 global.css 全局 :focus-visible 提供，不在此重复 */
+  /* 「最近在写」条目：题左日期右；hover 语言与下方联系卡片一致（160ms
+     颜色过渡）；键盘焦点环由 global.css 全局 :focus-visible 提供，不在此重复 */
   .about-recent {
     list-style: none;
     padding: 0;
@@ -153,40 +272,171 @@ const authors = await getAllAuthors();
     font-size: 0.875rem;
   }
 
-  .about-links {
+  /* 「现在」页入口（IMPL-056）：弱化的小字备注行，链接走全站链接样式 */
+  .about-now-note {
+    margin-top: 0.875rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  /* 联系卡片（IMPL-055）：RSS/邮箱/GitHub 三张等宽卡片，auto-fit 窄屏
+     自动换行成单列；图标座以 cove-blue 淡染（color-mix 同 body::before），
+     hover 边框与图标座加深，160ms 与全站控件一致 */
+  .about-contact {
     list-style: none;
     padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13.75rem, 1fr));
+    gap: 0.75rem;
   }
 
-  .about-links a {
+  .contact-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 100%;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background-color: var(--surface);
+    color: var(--text);
+    text-decoration-line: none;
+    transition:
+      border-color 160ms var(--ease-standard),
+      background-color 160ms var(--ease-standard);
+  }
+
+  .contact-card:hover {
+    border-color: var(--cove-blue);
+  }
+
+  .contact-icon {
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    width: 2.375rem;
+    height: 2.375rem;
+    border-radius: var(--radius-control);
+    background-color: color-mix(in oklab, var(--cove-blue) 12%, transparent);
     color: var(--cove-blue-strong);
+    transition: background-color 160ms var(--ease-standard);
   }
 
-  .about-links a :global(svg) {
-    width: 1em;
-    height: 1em;
+  .contact-card:hover .contact-icon {
+    background-color: color-mix(in oklab, var(--cove-blue) 20%, transparent);
   }
 
-  /* 链接 hover 抛光（IMPL-051）：下划线提示可点，160ms 颜色过渡
-     与全站控件一致；不变更到低对比颜色 */
-  .about-links a,
+  .contact-text {
+    display: grid;
+    gap: 0.0625rem;
+    min-width: 0;
+  }
+
+  .contact-label {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .contact-value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  /* 「最近在写」hover 抛光（IMPL-051）：下划线提示可点 + 变主题蓝；
+     不变更到低对比颜色 */
   .about-recent a {
     transition: color 160ms var(--ease-standard);
   }
 
-  .about-links a:hover,
   .about-recent a:hover {
     text-decoration: underline;
     text-underline-offset: 0.2em;
+    color: var(--cove-blue-strong);
   }
 
-  .about-recent a:hover {
-    color: var(--cove-blue-strong);
+  /* 长期主题线性小图标（IMPL-054）：装饰（aria-hidden），约 1em 随文字
+     缩放、主题蓝着色；单处使用，内联于本页不建独立图标组件 */
+  .about .about-topics a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+  }
+
+  .about .about-topics a svg {
+    width: 1.05em;
+    height: 1.05em;
+    flex-shrink: 0;
+    color: var(--cove-blue);
+  }
+
+  /* 站点大事记时间线（IMPL-054，milestones 集合驱动）：1px 轨道线贯穿、
+     cove-blue 圆点节点以背景色环压线；左列日期 tabular-nums 对齐，
+     右列标题 + 一句话说明；集合为空时整节不渲染 */
+  .about .about-timeline {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    position: relative;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .about .about-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.1875rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 1px;
+    background-color: var(--border);
+  }
+
+  .about .about-timeline li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 0.875rem;
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+
+  .about .about-timeline li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5em;
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background-color: var(--cove-blue);
+    box-shadow: 0 0 0 3px var(--background);
+  }
+
+  .about .about-timeline-date {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.9;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .about .about-timeline-title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .about .about-timeline-desc {
+    margin: 0.125rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  /* 留言区（IMPL-057）：与上方联系卡片留出呼吸；CommentProvider 自带
+     border-top 标题与 data-pagefind-ignore（不污染搜索索引） */
+  .about-comments {
+    margin-top: 1.75rem;
   }
 </style>

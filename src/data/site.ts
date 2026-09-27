@@ -47,12 +47,23 @@ export const siteConfig = {
     { label: '关于', href: '/about/' },
   ] satisfies NavItem[],
 
-  /** 页脚“发现与订阅”入口（指南 7.1：分类、标签、归档在页脚提供入口） */
+  /** 页脚“发现与订阅”入口（指南 7.1：分类、标签、归档在页脚提供入口；
+      IMPL-056：补系列/标签总览/隐私说明，任意内容 3 次点击内可达；
+      「现在」页为状态快照，不在主导航，经页脚与 about 可达；
+      IMPL-057：装备与留言板独立页删除，留言功能改挂 about 区块） */
   footerNav: [
+    { label: '现在', href: '/now/' },
     { label: '归档', href: '/archive/' },
+    { label: '系列', href: '/series/' },
+    { label: '标签', href: '/tags/' },
     { label: 'RSS', href: '/rss.xml' },
+    { label: '隐私说明', href: '/privacy/' },
   ] satisfies NavItem[],
 
-  /** 社交与联系入口（IMPL-047：邮箱）；mailto 链接在 JSON-LD 中走 Person.email（seo.ts） */
-  social: [{ label: '邮箱', href: 'mailto:wananwen7@gmail.com', icon: 'email' }] as SocialLink[],
+  /** 社交与联系入口（IMPL-047：邮箱；IMPL-055：GitHub 主页，账号取自
+      仓库 remote）；mailto 在 JSON-LD 中走 Person.email，其余进 sameAs（seo.ts） */
+  social: [
+    { label: '邮箱', href: 'mailto:wananwen7@gmail.com', icon: 'email' },
+    { label: 'GitHub', href: 'https://github.com/Frozensky-palace', icon: 'github' },
+  ] as SocialLink[],
 } as const;
