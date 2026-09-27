@@ -30,7 +30,7 @@ import {
 } from '@/lib/content';
 import { categoryLabel } from '@/data/taxonomy';
 import { categoryUrl, postUrl } from '@/lib/urls';
-import { articleBreadcrumb, blogPostingJsonLd, DEFAULT_OG_IMAGE, resolveSiteURL } from '@/lib/seo';
+import { articleBreadcrumb, blogPostingJsonLd, resolveSiteURL } from '@/lib/seo';
 
 interface Props {
   post: Post;
@@ -47,17 +47,22 @@ const seriesGroup = post.data.series ? await getSeriesGroup(post.data.series) : 
 const showSeriesCard =
   seriesGroup !== null && seriesGroup.posts.some((entry) => entry.id === post.id);
 
-/* 社交分享图：封面为位图时用封面（SVG 封面多数平台不识别，回退默认图） */
-const cover = post.data.cover;
-const ogImageProps =
-  cover && cover.format !== 'svg'
-    ? { imagePath: cover.src, imageWidth: cover.width, imageHeight: cover.height }
-    : {};
-const ogImageURL = resolveSiteURL(ogImageProps.imagePath ?? DEFAULT_OG_IMAGE.path);
+/* 社交分享图（IMPL-056，评审 4.10）：统一用构建期生成的 1200×630 品牌卡
+   （scripts/generate-og-images.mjs 输出 dist/og/posts/<id>.png），不再直连
+   原始封面位图——分享卡带标题与品牌信息，且尺寸/体积可控 */
+const OG_IMAGE_PATH = `/og/posts/${post.id}.png`;
+const ogImageURL = resolveSiteURL(OG_IMAGE_PATH);
 const ogMetadata = {
-  ...ogImageProps,
+  imagePath: OG_IMAGE_PATH,
+  imageWidth: 1200,
+  imageHeight: 630,
+  imageAlt: post.data.title,
   ogType: 'article' as const,
   publishedTime: shanghaiDate(post.data.publishedAt).toISOString(),
+  /* article:* meta（评审报告 4.11）：更新时间、分类实值与标签列表 */
+  modifiedTime: shanghaiDate(post.data.updatedAt ?? post.data.publishedAt).toISOString(),
+  articleSection: categoryLabel(post.data.category),
+  articleTags: post.data.tags,
 };
 ---
 

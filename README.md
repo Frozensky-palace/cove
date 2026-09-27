@@ -42,13 +42,18 @@ pnpm dev                 # 本地开发预览 http://localhost:4321
 | `pnpm check` | 类型与内容检查（`astro check`） |
 | `pnpm build:site` | 生产构建（输出 `dist/`） |
 | `pnpm build:search` | 单独运行 Pagefind 索引（已包含在 `build` 链中） |
-| `pnpm build` | 检查 + 生产构建 + Pagefind 索引 |
+| `pnpm build` | 检查 + 生产构建 + Pagefind 索引 + 质量守卫（内容 / 产物 / 内链） |
 | `pnpm preview` | 本地预览生产构建 |
+| `pnpm guard:content` | 单独运行内容守卫：测试/验收内容不得进入生产（可单独调试） |
+| `pnpm guard:dist` | 单独运行产物守卫：草稿与计划发布内容不得出现在 `dist/` |
+| `pnpm guard:links` | 单独运行内链守卫：`dist/` 页面站内链接无断链 |
 
 ## 运营与发布
 
 推送 `main` 即自动构建发布（Cloudflare Workers Builds，约 2–3 分钟生效；非 `main`
-分支构建产物自动 noindex）。写作发文、发布验证、回滚、季度恢复演练与依赖更新的
+分支构建产物自动 noindex）。GitHub Actions（`.github/workflows/ci.yml`）在推送
+`main` 与所有 PR 上独立跑同一套「检查 + 构建守卫链」，作为合并前质量门禁。
+写作发文、发布验证、回滚、季度恢复演练与依赖更新的
 完整操作说明见 [`docs/OPERATIONS.md`](docs/OPERATIONS.md)。
 
 ## 项目结构
@@ -97,8 +102,9 @@ cove/
 | `CLAUDE.md` | AI 协作工作流约定 | Claude Code，每次会话自动读取 |
 | `.pages.yml` | Pages CMS 三类内容（文章/笔记/项目）与媒体源编辑配置，字段对齐 `src/content.config.ts` | Pages CMS，强制仓库根目录 |
 | `wrangler.jsonc` | Workers Static Assets 部署配置：静态资源目录 `dist/`、404 回退（`not_found_handling`）、兼容日期 | Wrangler / Workers Builds，按根目录约定查找 |
+| `public/_headers` | 安全响应头（CSP、nosniff、Referrer/Permissions Policy）与 `/_astro/*` 一年 immutable 缓存；其余资产走平台默认短缓存 + ETag 再验证 | Cloudflare Workers Static Assets，`public/` 内容构建时原样拷贝进 `dist/` |
 | `giscus.json` | Giscus 评论域名 allowlist（仅生产域名与本地开发可加载评论，其余来源拒绝加载） | giscus，从仓库默认分支根目录读取 |
-| `.github/workflows/`（Phase 7） | CI/CD 质量门禁工作流 | GitHub Actions，路径固定 |
+| `.github/workflows/ci.yml` | CI 质量门禁：推送 `main` 与 PR 上运行检查 + 完整构建守卫链（不负责部署） | GitHub Actions，路径固定 |
 
 ## 阶段进度
 
