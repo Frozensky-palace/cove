@@ -29,12 +29,15 @@ const hasCover = Boolean(post.data.cover);
         tabindex="-1"
         aria-hidden="true"
       >
+        {/* IMPL-056（评审报告 4.9）：仅首屏主精选 eager + 高优先级，
+            其余封面懒加载，避免与 Hero 插画争抢带宽 */}
         <Image
           src={post.data.cover}
           alt={post.data.coverAlt ?? ''}
           widths={emphasis ? [640, 960, 1280] : [400, 640]}
           sizes={emphasis ? '(min-width: 640px) 620px, 100vw' : '320px'}
-          loading="eager"
+          loading={emphasis ? 'eager' : 'lazy'}
+          decoding="async"
           {...(emphasis ? { fetchpriority: 'high' as const } : {})}
         />
       </a>

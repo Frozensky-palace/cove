@@ -2,8 +2,11 @@
 /**
  * 页头搜索对话框（指南 9.7 / 10，IMPL-008）：
  * reka-ui Dialog 承担焦点圈定与 Escape；Ctrl/Cmd+K 与 “/” 全局唤起；
- * 输入框聚焦时不重复触发 “/”。client:idle 水合，未加载 JS 时
- * 触发按钮降级为指向 /search/ 的普通链接（渐进增强，见 SiteHeader）。
+ * 输入框聚焦时不重复触发 “/”。
+ * IMPL-056（评审报告 4.8）：不再 client:idle 水合，改由 SiteHeader 的
+ * 启动脚本在首次交互时动态挂载（见 mountSearchDialog.ts）；启动前的
+ * 搜索入口是指向 /search/ 的普通链接（渐进增强）。挂载完成后 Vue 接管
+ * 全部快捷键；`cove:search-open` 自定义事件用于「启动即打开」。
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
@@ -60,12 +63,19 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
+/** 「启动即打开」：首次交互触发动态挂载后，由启动脚本转发打开意图 */
+function onOpenRequest(): void {
+  open.value = true;
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onKeydown);
+  window.addEventListener('cove:search-open', onOpenRequest);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown);
+  window.removeEventListener('cove:search-open', onOpenRequest);
 });
 
 function onInputKeydown(event: KeyboardEvent) {

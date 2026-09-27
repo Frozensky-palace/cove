@@ -2,10 +2,12 @@
 /**
  * /search/ 页内联搜索面板（指南 9.7）：可直达、可链接分享的完整搜索页。
  * 与页头 SearchDialog 共用 useSearch；本组件聚焦后直接展示结果。
+ * IMPL-056（评审报告 4.6）：q/type 同步到 URL（replaceState），刷新、
+ * 复制链接与前进后退均可恢复；autofocus 仅在精确指针（桌面）设备
+ * 生效，避免手机打开搜索页直接弹键盘；结果数经 aria-live 播报。
  */
-import { ref } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useSearch, type TypeFilter } from '@/lib/useSearch';
-import { computed } from 'vue';
 
 const query = ref('');
 const type = ref<TypeFilter>('全部');
@@ -13,6 +15,46 @@ const { results, loading, unavailable } = useSearch(query, type);
 
 const filters: TypeFilter[] = ['全部', '文章', '笔记', '项目'];
 const hasQuery = computed(() => query.value.trim().length > 0);
+const inputEl = ref<HTMLInputElement | null>(null);
+
+/** 从 URL 恢复查询条件（刷新 / 分享链接 / 前进后退） */
+function readUrl(): void {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get('q');
+  if (q !== null) query.value = q;
+  const t = params.get('type') as TypeFilter | null;
+  if (t && filters.includes(t)) type.value = t;
+}
+
+/** 查询条件写入 URL（replaceState：不污染历史，URL 即可分享） */
+function writeUrl(): void {
+  const params = new URLSearchParams(window.location.search);
+  const q = query.value.trim();
+  if (q) params.set('q', q);
+  else params.delete('q');
+  if (type.value !== '全部') params.set('type', type.value);
+  else params.delete('type');
+  const qs = params.toString();
+  window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+}
+
+/* 初始化时由 readUrl 写入的值不应立刻回写 URL */
+let hydrating = true;
+watch([query, type], () => {
+  if (!hydrating) writeUrl();
+});
+
+onMounted(() => {
+  readUrl();
+  hydrating = false;
+  window.addEventListener('popstate', readUrl);
+  /* 仅桌面（精确指针）自动聚焦；触屏设备不打断滚动、不弹键盘 */
+  if (window.matchMedia('(pointer: fine)').matches) inputEl.value?.focus();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('popstate', readUrl);
+});
 </script>
 
 <template>
@@ -23,6 +65,7 @@ const hasQuery = computed(() => query.value.trim().length > 0);
         <path d="M13.5 13.5 17 17" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
       </svg>
       <input
+        ref="inputEl"
         v-model="query"
         type="search"
         class="panel-input"
@@ -30,9 +73,19 @@ const hasQuery = computed(() => query.value.trim().length > 0);
         aria-label="搜索关键词"
         autocomplete="off"
         spellcheck="false"
-        autofocus
       />
     </div>
+
+    <!-- 结果数播报（评审报告 4.6）：加载与数量状态对读屏稳定可达 -->
+    <p class="sr-only" role="status" aria-live="polite">
+      {{
+        loading
+          ? '正在搜索…'
+          : hasQuery
+            ? `共 ${results.length} 条结果`
+            : ''
+      }}
+    </p>
 
     <div class="panel-filters" role="group" aria-label="内容类型筛选">
       <button
@@ -84,6 +137,19 @@ const hasQuery = computed(() => query.value.trim().length > 0);
 <style scoped>
   .search-panel {
     max-width: 42rem;
+  }
+
+  /* 仅读屏可见（结果数 aria-live 播报） */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .panel-input-row {

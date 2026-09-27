@@ -8,11 +8,14 @@ interface Props {
   /** 「查看全部」目标路径；缺省时不渲染入口 */
   moreHref?: string;
   moreLabel?: string;
+  /** 链接的无障碍名称（评审报告 4.4：多个「查看全部」需可区分），
+      缺省回退 moreLabel */
+  moreAriaLabel?: string;
   /** 无障碍区块标签，缺省用 title */
   label?: string;
 }
 
-const { title, moreHref, moreLabel = '查看全部', label } = Astro.props;
+const { title, moreHref, moreLabel = '查看全部', moreAriaLabel, label } = Astro.props;
 ---
 
 <section class="home-section" aria-label={label ?? title}>
@@ -20,7 +23,7 @@ const { title, moreHref, moreLabel = '查看全部', label } = Astro.props;
     <h2 class="section-title">{title}</h2>
     {
       moreHref && (
-        <a class="section-more" href={moreHref}>
+        <a class="section-more" href={moreHref} aria-label={moreAriaLabel ?? moreLabel}>
           {moreLabel}
           <span aria-hidden="true">→</span>
         </a>

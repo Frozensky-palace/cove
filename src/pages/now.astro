@@ -1,0 +1,171 @@
+---
+/**
+ * 「现在」页（IMPL-056，评审报告 P2 建议之一）：/now/
+ * nownownow.com 传统上的 now page——一段时期内的状态快照：正在做什么、
+ * 关注什么。与「站点大事记」（about，完整回溯）互补：这页只回答
+ * 「此刻」。
+ *
+ * 数据：手写清单（本文件内维护，更新时改列表并翻 LAST_UPDATED）+
+ * milestones 集合倒序前 5 条（复用 about 时间线视觉，IMPL-054）。
+ * 不进主导航，入口在页脚「发现与订阅」与 about「最近在写」。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import { formatDate, getSortedMilestones } from '@/lib/content';
+
+/** 手动维护：每次更新本页内容时改成当天（YYYY-MM-DD） */
+const LAST_UPDATED = '2026-09-24';
+
+const milestones = (await getSortedMilestones()).reverse().slice(0, 5);
+---
+
+<ContentLayout
+  title="现在"
+  description="温晚安最近在做什么：进行中的事与站点的最新变化，随状态更新。"
+  path="/now/"
+  heading="现在"
+  intro="这页是当前状态的快照：正在做的事、正在关注的方向。世界在变，这页也会变。"
+>
+  <div class="now prose">
+    <ul class="now-list">
+      <li>
+        <strong>补厚内容库</strong>——几篇长文复盘在草稿箱里慢慢成形：为什么从零用
+        Astro 搭博客、动效系统的取舍、本地搜索的实践、内容模型的设计；
+      </li>
+      <li>
+        <strong>打磨站点本身</strong>——按评审清单迭代：标签总览、全文 RSS、
+        搜索按需加载这一轮刚落地，分享图与留言板在路上；
+      </li>
+      <li>
+        <strong>跑通写作节奏</strong>——长文讲透一件事，笔记留住一个念头，
+        让写下的东西真的能被再次读到。
+      </li>
+    </ul>
+
+    <h2>最近的变化</h2>
+    <p>来自<a href="/about/#站点大事记">站点大事记</a>的最新几条：</p>
+    {
+      milestones.length > 0 && (
+        <ol class="now-timeline">
+          {milestones.map((milestone) => (
+            <li>
+              <span class="now-timeline-date">{milestone.data.date}</span>
+              <div class="now-timeline-body">
+                <p class="now-timeline-title">{milestone.data.title}</p>
+                {milestone.data.description && (
+                  <p class="now-timeline-desc">{milestone.data.description}</p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      )
+    }
+
+    <p class="now-updated">
+      最后更新于 {formatDate(LAST_UPDATED)}。灵感来自
+      <a href="https://nownownow.com/" rel="noopener">nownownow</a>
+      ——用一页回答「你现在在做什么」。
+    </p>
+  </div>
+</ContentLayout>
+
+<style>
+  .now {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+
+  /* 进行中清单：去掉默认项目符号，条目间留呼吸；主题蓝小圆点作标记 */
+  .now-list {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.875rem;
+  }
+
+  .now-list li {
+    position: relative;
+    padding-left: 1.375rem;
+    line-height: 1.85;
+  }
+
+  .now-list li::before {
+    content: '';
+    position: absolute;
+    left: 0.125rem;
+    top: 0.72em;
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background-color: var(--cove-blue);
+  }
+
+  /* 里程碑时间线（复用 about IMPL-054 视觉，作用域改 .now-timeline）：
+     1px 轨道线 + cove-blue 圆点节点 + 左列日期 */
+  .now .now-timeline {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    position: relative;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .now .now-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.1875rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 1px;
+    background-color: var(--border);
+  }
+
+  .now .now-timeline li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 0.875rem;
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+
+  .now .now-timeline li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5em;
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background-color: var(--cove-blue);
+    box-shadow: 0 0 0 3px var(--background);
+  }
+
+  .now .now-timeline-date {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.9;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .now .now-timeline-title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .now .now-timeline-desc {
+    margin: 0.125rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  .now-updated {
+    margin-top: 2.5rem;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+</style>

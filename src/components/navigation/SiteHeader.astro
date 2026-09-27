@@ -4,12 +4,14 @@
  * 桌面高度 68px（指南区间 64–72px），吸顶 + 实色背景；当前页以细线与文字色表达。
  * 窄屏（≤899px）：原生链接隐藏，MobileNav（Vue Sheet，client:media）接管；
  * JS 不可用时（html.no-js）回退为可换行的原生链接列表（渐进增强，IMPL-009）。
+ * IMPL-056（评审报告 4.8）：搜索弹窗不再 client:idle 全站预载——搜索入口
+ * 是服务器渲染的普通链接（指向 /search/），首次交互（点击 / Ctrl+K / “/”）
+ * 才动态挂载 Vue 弹窗；无 JS 环境链接原样可用，是完整的渐进增强。
  */
 import Logo from '@/components/base/Logo.astro';
 import ThemeToggle from '@/components/base/ThemeToggle.astro';
 import SearchIcon from '@/components/base/icons/SearchIcon.astro';
 import MobileNav from '@/components/islands/MobileNav.vue';
-import SearchDialog from '@/components/islands/SearchDialog.vue';
 import { siteConfig } from '@/data/site';
 
 const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
@@ -51,17 +53,18 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     </nav>
 
     <div class="header-actions">
-      {/* 搜索对话框（IMPL-008 落地）：client:idle 水合，Ctrl/Cmd+K 与 / 唤起 */}
-      <SearchDialog client:idle />
-      {/* JS 不可用时的降级入口：直达 /search/ 完整页。
-          放入 noscript 而非 CSS 切换：无 JS 时浏览器渲染，有 JS 时根本不进渲染树，
-          不依赖任何样式竞争（IMPL-019）。 */}
-      <noscript>
-        <a class="search-entry search-fallback" href="/search/" aria-label="搜索（前往搜索页）">
-          <SearchIcon size={18} />
-          <span aria-hidden="true">搜索</span>
-        </a>
-      </noscript>
+      {/* 搜索入口（IMPL-056 按需加载）：启动前是普通链接（data-search-fallback），
+          首次交互后由此脚本动态挂载 SearchDialog 并替换为弹窗触发按钮 */}
+      <a
+        class="search-entry"
+        href="/search/"
+        data-search-fallback
+        aria-label="搜索（前往搜索页，或按 Ctrl K 唤起）"
+      >
+        <SearchIcon size={18} />
+        <span aria-hidden="true">搜索</span>
+      </a>
+      <span class="search-host" data-search-host></span>
       <ThemeToggle />
       <MobileNav
         client:media="(max-width: 899px)"
@@ -71,6 +74,63 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     </div>
   </div>
 </header>
+
+<script>
+  /**
+   * 搜索弹窗按需启动（IMPL-056，评审报告 4.8）：Vue/Reka 运行时不再随
+   * 首屏（原 client:idle）加载；首次交互（点击搜索入口、Ctrl/Cmd+K、“/”）
+   * 才动态 import 挂载模块。启动前入口是指向 /search/ 的普通链接——
+   * 无 JS 与「启动前」两个阶段都完整可用。已启动后快捷键与开合由
+   * SearchDialog 自身的 keydown 处理（含 Ctrl+K 再按关闭）。
+   */
+  let booted = false;
+  let app: { unmount: () => void } | null = null;
+
+  async function boot(openNow: boolean): Promise<void> {
+    if (booted) {
+      if (openNow) window.dispatchEvent(new CustomEvent('cove:search-open'));
+      return;
+    }
+    const host = document.querySelector<HTMLElement>('[data-search-host]');
+    if (!host) return;
+    booted = true;
+    /* ClientRouter 换页重挂载时清掉旧实例，避免泄漏 window 监听 */
+    app?.unmount();
+    const { mountSearchDialog } = await import('@/components/islands/mountSearchDialog');
+    app = mountSearchDialog(host);
+    document.querySelector('[data-search-fallback]')?.remove();
+    if (openNow) window.dispatchEvent(new CustomEvent('cove:search-open'));
+  }
+
+  function isTyping(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null;
+    return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest?.('[data-search-fallback]')) {
+      event.preventDefault();
+      void boot(true);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (booted) return;
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      void boot(true);
+    } else if (event.key === '/' && !isTyping(event.target)) {
+      event.preventDefault();
+      void boot(true);
+    }
+  });
+
+  /* ClientRouter 换页：header 整体重建，已启动过则在新的 host 上重挂载 */
+  document.addEventListener('astro:page-load', () => {
+    if (booted) void boot(false);
+  });
+</script>
 
 <style>
   .site-header {
@@ -142,6 +202,11 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     gap: 0.5rem;
   }
 
+  /* 搜索弹窗挂载点：不参与布局，Vue 触发按钮直接与相邻元素并排 */
+  .search-host {
+    display: contents;
+  }
+
   .search-entry {
     display: inline-flex;
     align-items: center;
@@ -173,10 +238,9 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
 </style>
 
 <style is:global>
-  /* JS 不可用：隐藏岛屿触发器（点击无响应），保留可换行的原生链接导航；
-      搜索回退链接已改由 noscript 提供（IMPL-019），无需样式切换 */
-  html.no-js .mobile-nav-trigger,
-  html.no-js .search-trigger {
+  /* JS 不可用：隐藏移动端岛屿触发器（点击无响应），保留可换行的原生链接导航；
+      搜索入口本就是服务器渲染的普通链接（IMPL-056），无需按 JS 状态切换 */
+  html.no-js .mobile-nav-trigger {
     display: none !important;
   }
 </style>

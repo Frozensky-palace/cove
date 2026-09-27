@@ -1,0 +1,42 @@
+# CI 质量门禁（评审报告 4.5，IMPL-056）：
+# 推送 main 与所有 PR 均先过「安装 → 类型检查 → 生产构建（内含内容守卫、
+# Pagefind 索引、noindex 注入、产物守卫、内链守卫）」，任何一步失败即挡下。
+# 部署本身仍由 Cloudflare Workers Builds 负责（推 main 自动发布），本工作流
+# 不部署，只做合并前的独立验证，两道门禁互为备份。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: 检查与构建门禁
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 版本取 package.json 的 packageManager 字段（pnpm@10.20.0）
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖（锁文件冻结）
+        run: pnpm install --frozen-lockfile
+
+      - name: 类型与内容检查
+        run: pnpm check
+
+      # 构建链（package.json build）：astro check → content-guard →
+      # astro build → pagefind → noindex-preview → dist-guard → link-check
+      - name: 生产构建与产物守卫
+        run: pnpm build

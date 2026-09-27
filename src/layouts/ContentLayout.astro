@@ -14,14 +14,42 @@ interface Props {
   /** 页头说明文字 */
   intro?: string;
   noindex?: boolean;
+  /** 社交分享图（IMPL-056）：站内构建产物路径（如 /og/projects/<id>.png），
+      缺省回落 BaseLayout 的默认分享图 */
+  imagePath?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageAlt?: string;
   /** 页面级结构化数据（透传 BaseLayout，Person 全站输出不在此传；IMPL-051） */
   jsonLd?: Record<string, unknown>[];
 }
 
-const { title, description, path, heading, intro, noindex = false, jsonLd = [] } = Astro.props;
+const {
+  title,
+  description,
+  path,
+  heading,
+  intro,
+  noindex = false,
+  imagePath,
+  imageWidth,
+  imageHeight,
+  imageAlt,
+  jsonLd = [],
+} = Astro.props;
 ---
 
-<BaseLayout title={title} description={description} path={path} noindex={noindex} jsonLd={jsonLd}>
+<BaseLayout
+  title={title}
+  description={description}
+  path={path}
+  noindex={noindex}
+  imagePath={imagePath}
+  imageWidth={imageWidth}
+  imageHeight={imageHeight}
+  imageAlt={imageAlt}
+  jsonLd={jsonLd}
+>
   <div class="cove-container content-page">
     <header class="page-header">
       <h1 class="page-title"><slot name="heading">{heading ?? title}</slot></h1>

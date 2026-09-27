@@ -1,8 +1,10 @@
 ---
 /**
  * 首页（指南 9.2）：作者是谁、写什么、从哪里开始读。
- * 结构：Hero（360–440px）→ 精选文章（1 重点 + 2 条目）→ 最新文章 →
- * 最近笔记 → 代表项目。区块无内容时整体隐藏，全部为空时给空状态。
+ * 结构：Hero（360–440px）→ 从这里开始（编辑策划，空则隐藏）→
+ * 精选文章（1 重点 + 2 条目）→ 最新文章 → 最近笔记 → 代表项目。
+ * 区块无内容时整体隐藏，全部为空时给空状态。IMPL-056：条目精简
+ * 与「查看全部」无障碍名、Hero 定位语句（评审报告 4.4）。
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Button from '@/components/base/Button.astro';
@@ -24,12 +26,25 @@ const featured = await getFeaturedPosts(3);
 const featuredMain = featured[0];
 const featuredRest = featured.slice(1, 3);
 
-// 最新文章排除已在精选区出现的条目，避免首页重复
+// 最新文章排除已在精选区出现的条目，避免首页重复。
+// IMPL-056：5 → 4 篇（评审报告 4.4：首页是编辑过的首页，不是内容数据库）
 const featuredIds = new Set(featured.map((post) => post.id));
-const latestPosts = (await getPublishedPosts()).filter((post) => !featuredIds.has(post.id)).slice(0, 5);
+const latestPosts = (await getPublishedPosts()).filter((post) => !featuredIds.has(post.id)).slice(0, 4);
 
 const recentNotes = (await getPublishedNotes()).slice(0, 3);
 const featuredProjects = (await getPublishedProjects()).slice(0, 2);
+
+/**
+ * 「从这里开始」（评审报告 4.4 → IMPL-056）：最能代表作者的 3 篇内容。
+ * 填文章 id（src/content/posts/ 下的文件名去扩展名），留空则整节隐藏——
+ * 不用测试内容凑数，等真实定稿文章就位后由站长编辑本列表。
+ */
+const START_HERE_IDS: string[] = [];
+
+const allPosts = await getPublishedPosts();
+const startHere = START_HERE_IDS.map((id) => allPosts.find((post) => post.id === id)).filter(
+  (post): post is NonNullable<typeof post> => Boolean(post),
+);
 
 const hasContent =
   featured.length > 0 || latestPosts.length > 0 || recentNotes.length > 0 || featuredProjects.length > 0;
@@ -41,7 +56,11 @@ const hasContent =
       <div class="hero-copy">
         <!-- Display 层级：全站最多一处（指南 8.3） -->
         <h1 class="hero-title">你好，这里是 <span class="hero-name">Cove</span></h1>
-        <p class="hero-description">{siteConfig.description}</p>
+        <!-- 定位语句（IMPL-056 草稿，与 about 长期主题一致；措辞待站长定稿） -->
+        <p class="hero-description">
+          {siteConfig.description}记录自己的学习心得，思考过程与实践复盘，
+          也记录把写作当工具的方法——长文讲透一件事，笔记留住一个念头。
+        </p>
         <div class="hero-actions">
           <Button href="/posts/" variant="primary">阅读文章</Button>
           <Button href="/about/" variant="secondary">了解 Cove</Button>
@@ -66,8 +85,18 @@ const hasContent =
     {
       hasContent ? (
         <>
+          {startHere.length > 0 && (
+            <HomeSection title="从这里开始" label="从这里开始">
+              <div class="latest-list">
+                {startHere.map((post) => (
+                  <ArticleListItem post={post} />
+                ))}
+              </div>
+            </HomeSection>
+          )}
+
           {featured.length > 0 && (
-            <HomeSection title="精选文章" moreHref="/posts/">
+            <HomeSection title="精选文章" moreHref="/posts/" moreAriaLabel="查看全部文章">
               <div class="featured-grid">
                 {featuredMain && <ArticleCard post={featuredMain} emphasis />}
                 {featuredRest.length > 0 && (
@@ -82,7 +111,7 @@ const hasContent =
           )}
 
           {latestPosts.length > 0 && (
-            <HomeSection title="最新文章" moreHref="/posts/">
+            <HomeSection title="最新文章" moreHref="/posts/" moreAriaLabel="查看全部文章">
               <div class="latest-list">
                 {latestPosts.map((post) => (
                   <ArticleListItem post={post} />
@@ -92,7 +121,7 @@ const hasContent =
           )}
 
           {recentNotes.length > 0 && (
-            <HomeSection title="最近笔记" moreHref="/notes/">
+            <HomeSection title="最近笔记" moreHref="/notes/" moreAriaLabel="查看全部笔记">
               <div class="notes-list">
                 {recentNotes.map((note) => (
                   <NoteListItem note={note} />
@@ -102,7 +131,7 @@ const hasContent =
           )}
 
           {featuredProjects.length > 0 && (
-            <HomeSection title="代表项目" moreHref="/projects/">
+            <HomeSection title="代表项目" moreHref="/projects/" moreAriaLabel="查看全部项目">
               <div class="projects-list">
                 {featuredProjects.map((project) => (
                   <ProjectCard project={project} />

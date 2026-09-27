@@ -33,7 +33,16 @@ const description =
 const previewOnly = showPreviewContent && isPreviewOnly(note);
 ---
 
-<BaseLayout title={title} description={description} path={noteUrl(note.id)} noindex={previewOnly}>
+<BaseLayout
+  title={title}
+  description={description}
+  path={noteUrl(note.id)}
+  noindex={previewOnly}
+  imagePath={`/og/notes/${note.id}.png`}
+  imageWidth={1200}
+  imageHeight={630}
+  imageAlt={title}
+>
   {
     previewOnly && (
       <div class="preview-banner" role="note">

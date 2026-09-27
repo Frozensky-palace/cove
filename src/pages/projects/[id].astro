@@ -51,6 +51,10 @@ const linkLabel: Record<string, string> = {
   description={project.data.summary}
   path={projectUrl(project.id)}
   noindex={previewOnly}
+  imagePath={`/og/projects/${project.id}.png`}
+  imageWidth={1200}
+  imageHeight={630}
+  imageAlt={project.data.title}
 >
   {
     previewOnly && (

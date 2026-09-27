@@ -4,6 +4,9 @@
  * 立绘（兼 og:image 分享卡，用户决策）、象征物与代表色、设定文正文、
  * 名下已发布内容列表（文章 / 小记 / 项目）。
  * 数据来自 authors content collection；key = 文件名，发布后冻结。
+ * IMPL-056（评审报告 4.11，用户决策「加虚构声明 + 保留收录」）：页面
+ * 明示值守者是虚构内容角色，结构化数据改用独立于真实站长的
+ * ProfilePage/Person 节点（characterJsonLd），避免人物语义混淆。
  */
 import { render } from 'astro:content';
 import { Image } from 'astro:assets';
@@ -13,6 +16,8 @@ import NoteListItem from '@/components/content/NoteListItem.astro';
 import ProjectCard from '@/components/content/ProjectCard.astro';
 import { getAllAuthors, getContentByAuthor, type Author } from '@/lib/content';
 import { characterUrl } from '@/lib/urls';
+import { characterJsonLd } from '@/lib/seo';
+import { siteConfig } from '@/data/site';
 
 export async function getStaticPaths() {
   const authors = await getAllAuthors();
@@ -36,14 +41,24 @@ const shownNotes = notes.slice(0, 8);
 const shownProjects = projects.slice(0, 6);
 ---
 
+<!-- 分享卡（IMPL-056）：用构建期生成的品牌卡（1200×630），不再把
+     2~3MB 的立绘原图直接交给社交平台抓取 -->
 <BaseLayout
   title={`${name} · ${role}`}
   description={tagline}
   path={characterUrl(author.data.key)}
-  imagePath={avatar.src}
-  imageWidth={avatar.width}
-  imageHeight={avatar.height}
-  imageAlt={`${name}的立绘`}
+  imagePath={`/og/character/${author.data.key}.png`}
+  imageWidth={1200}
+  imageHeight={630}
+  imageAlt={`${name}的分享卡`}
+  jsonLd={[
+    characterJsonLd({
+      name,
+      role,
+      tagline,
+      path: characterUrl(author.data.key),
+    }),
+  ]}
 >
   <div class="cove-container character-page">
     <article
@@ -67,6 +82,10 @@ const shownProjects = projects.slice(0, 6);
           <h1 class="character-name">{name}</h1>
           <p class="character-role">{role}</p>
           <p class="character-tagline">{tagline}</p>
+          <p class="character-fiction">
+            {name}是本站的虚构内容角色，由站长
+            <a href="/about/">{siteConfig.author.name}</a>创作——署名为她的文章，都出自这双眼睛的观察。
+          </p>
           {
             colors.length > 0 && (
               <ul class="character-colors" aria-label="代表色">
@@ -202,6 +221,22 @@ const shownProjects = projects.slice(0, 6);
     margin: 0.75rem 0 0;
     color: var(--text-muted);
     line-height: 1.85;
+  }
+
+  /* 虚构角色声明（IMPL-056）：比 tagline 更小更淡，链接到 about 说明全貌 */
+  .character-fiction {
+    margin: 0.875rem 0 0;
+    padding: 0.625rem 0.875rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-control);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.8;
+  }
+
+  .character-fiction a {
+    color: var(--cove-blue-strong);
+    text-underline-offset: 0.25em;
   }
 
   .character-colors {
