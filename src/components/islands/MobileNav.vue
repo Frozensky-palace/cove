@@ -14,6 +14,7 @@ import {
   DialogDescription,
   DialogClose,
 } from 'reka-ui';
+import { onMounted } from 'vue';
 
 interface NavItem {
   label: string;
@@ -25,6 +26,16 @@ defineProps<{
   items: NavItem[];
   secondary?: NavItem[];
 }>();
+
+/**
+ * 评审 D08：以「导航组件已可用」而非「JS 可执行」作为隐藏 SSR 原生导航
+ * 的条件。本类在岛屿真正挂载后才添加；ClientRouter 换页把 <html> 重置回
+ * 服务端渲染态（类消失），本岛重新水合时再次添加——「岛屿加载慢/失败、
+ * 禁 JS」三种情况下原生链接导航始终可用。
+ */
+onMounted(() => {
+  document.documentElement.classList.add('mobile-nav-ready');
+});
 </script>
 
 <template>
@@ -108,7 +119,7 @@ defineProps<{
     background-color: transparent;
     color: var(--text-muted);
     cursor: pointer;
-    transition: color 150ms ease, border-color 150ms ease;
+    transition: color var(--motion-fast) ease, border-color var(--motion-fast) ease;
   }
 
   .mobile-nav-trigger:hover {
@@ -135,9 +146,14 @@ defineProps<{
     inset: 0;
     z-index: 90;
     background-color: color-mix(in srgb, var(--text) 32%, transparent);
-    animation: sheet-fade 180ms ease;
+    animation: sheet-fade var(--motion-overlay) ease;
   }
 
+  /* 评审 L02：内容超出视口（横屏 667×375 实测 scrollHeight ≈ 421px）时必须有
+     内部滚动路径，否则底部二级入口不可达。以 100dvh 约束最大高度（动态视口，
+     浏览器工具栏收缩时仍不溢出），overflow-y 提供滚动；内容不溢出时
+     .sheet-secondary 的 margin-top:auto 照常把二级入口压向底部，溢出时
+     auto 边距归零、入口紧随主导航，两种状态均可滚到。 */
   .sheet-content {
     position: fixed;
     inset-block: 0;
@@ -147,10 +163,19 @@ defineProps<{
     flex-direction: column;
     gap: 1rem;
     width: min(320px, 85vw);
+    max-height: 100vh;
     padding: 1.25rem 1.25rem 2rem;
     border-right: 1px solid var(--border);
     background-color: var(--background);
-    animation: sheet-in 200ms ease;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    animation: sheet-in var(--motion-overlay) ease;
+  }
+
+  @supports (max-height: 100dvh) {
+    .sheet-content {
+      max-height: 100dvh;
+    }
   }
 
   .sheet-head {
@@ -185,7 +210,7 @@ defineProps<{
     background-color: transparent;
     color: var(--text-muted);
     cursor: pointer;
-    transition: color 150ms ease, background-color 150ms ease;
+    transition: color var(--motion-fast) ease, background-color var(--motion-fast) ease;
   }
 
   .sheet-close:hover {
@@ -210,7 +235,7 @@ defineProps<{
     color: var(--text);
     font-size: 1rem;
     text-decoration-line: none;
-    transition: background-color 150ms ease;
+    transition: background-color var(--motion-fast) ease;
   }
 
   .sheet-link:hover {

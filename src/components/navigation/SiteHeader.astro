@@ -77,29 +77,74 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
 
 <script>
   /**
-   * 搜索弹窗按需启动（IMPL-056，评审报告 4.8）：Vue/Reka 运行时不再随
-   * 首屏（原 client:idle）加载；首次交互（点击搜索入口、Ctrl/Cmd+K、“/”）
-   * 才动态 import 挂载模块。启动前入口是指向 /search/ 的普通链接——
-   * 无 JS 与「启动前」两个阶段都完整可用。已启动后快捷键与开合由
-   * SearchDialog 自身的 keydown 处理（含 Ctrl+K 再按关闭）。
+   * 搜索弹窗按需启动（IMPL-056；评审 F01/F04 整改）：
+   * 「模块已加载」与「实例已挂在当前页 host」是两个独立状态——不能共用
+   * 一个布尔值。ClientRouter 换页会整体重建页头 DOM，旧 Vue 实例随旧
+   * host 失效：before-swap 时卸载回收监听，page-load 后在新 host 重挂；
+   * 动态 import 的模块本身可以缓存复用。模块加载失败（chunk 被拦截、
+   * 网络错误）时不再吞掉点击——放行原生导航到 /search/，完整搜索页
+   * 不依赖弹窗模块；模块缓存一并清除，下次交互可重试。
    */
-  let booted = false;
-  let app: { unmount: () => void } | null = null;
+  type SearchApp = { unmount: () => void };
+  type MountModule = typeof import('@/components/islands/mountSearchDialog');
 
-  async function boot(openNow: boolean): Promise<void> {
-    if (booted) {
-      if (openNow) window.dispatchEvent(new CustomEvent('cove:search-open'));
-      return;
-    }
-    const host = document.querySelector<HTMLElement>('[data-search-host]');
-    if (!host) return;
-    booted = true;
-    /* ClientRouter 换页重挂载时清掉旧实例，避免泄漏 window 监听 */
+  let modulePromise: Promise<MountModule> | null = null;
+  let app: SearchApp | null = null;
+  /** 当前实例挂载的 host；与页面上现存 host 不一致即视为过期 */
+  let mountedHost: HTMLElement | null = null;
+  /** 并发保护：同一次挂载进行中的 Promise（评审 F01） */
+  let mounting: Promise<boolean> | null = null;
+
+  function currentHost(): HTMLElement | null {
+    return document.querySelector<HTMLElement>('[data-search-host]');
+  }
+
+  function isReady(): boolean {
+    const host = currentHost();
+    return !!app && !!mountedHost && mountedHost === host;
+  }
+
+  /** 确保弹窗已挂在当前页的 host 上；false = 挂载失败（调用方回退导航） */
+  function ensureMounted(): Promise<boolean> {
+    const host = currentHost();
+    if (!host) return Promise.resolve(false);
+    if (isReady()) return Promise.resolve(true);
+
+    /* 过期实例（上一页的 host）：立即卸载，回收其 window 监听 */
     app?.unmount();
-    const { mountSearchDialog } = await import('@/components/islands/mountSearchDialog');
-    app = mountSearchDialog(host);
-    document.querySelector('[data-search-fallback]')?.remove();
-    if (openNow) window.dispatchEvent(new CustomEvent('cove:search-open'));
+    app = null;
+    mountedHost = null;
+
+    if (!mounting) {
+      modulePromise ??= import('@/components/islands/mountSearchDialog');
+      mounting = modulePromise
+        .then(({ mountSearchDialog }) => {
+          /* import 期间可能又发生换页：以解析时刻的 host 为准 */
+          const target = currentHost();
+          if (!target) return false;
+          app = mountSearchDialog(target);
+          mountedHost = target;
+          document.querySelector('[data-search-fallback]')?.remove();
+          return true;
+        })
+        .catch(() => {
+          /* 失败不缓存模块 Promise：下次交互重新加载（评审 F04） */
+          modulePromise = null;
+          return false;
+        })
+        .finally(() => {
+          mounting = null;
+        });
+    }
+    return mounting;
+  }
+
+  /** 挂载成功即打开弹窗；失败回退为普通导航到 /search/ */
+  function openOrNavigate(fallbackHref: string): void {
+    void ensureMounted().then((ok) => {
+      if (ok) window.dispatchEvent(new CustomEvent('cove:search-open'));
+      else window.location.assign(fallbackHref);
+    });
   }
 
   function isTyping(target: EventTarget | null): boolean {
@@ -109,26 +154,42 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
 
   document.addEventListener('click', (event) => {
     const target = event.target as HTMLElement | null;
-    if (target?.closest?.('[data-search-fallback]')) {
-      event.preventDefault();
-      void boot(true);
+    const entry = target?.closest?.('a[data-search-fallback]');
+    if (!entry || event.defaultPrevented) return;
+    /* 保留修饰键点击的原生行为（新标签页、下载等） */
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
     }
+    event.preventDefault();
+    openOrNavigate(entry.getAttribute('href') ?? '/search/');
   });
 
   document.addEventListener('keydown', (event) => {
-    if (booted) return;
+    /* 已挂在当前页：Ctrl/Cmd+K 与 “/” 由 SearchDialog 自身处理（含再按关闭） */
+    if (isReady()) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      void boot(true);
+      openOrNavigate('/search/');
     } else if (event.key === '/' && !isTyping(event.target)) {
       event.preventDefault();
-      void boot(true);
+      openOrNavigate('/search/');
     }
   });
 
-  /* ClientRouter 换页：header 整体重建，已启动过则在新的 host 上重挂载 */
+  /* ClientRouter 生命周期（评审 F01）：页面交换前卸载旧实例——旧 host
+     随旧文档废弃，卸载回收 window 监听；新页面在 page-load 后按需重挂。
+     仅当模块此前已加载（用户用过搜索，modulePromise 非空）才自动重挂，
+     保持 IMPL-056 的按需启动：未用过搜索的页面仍是指向 /search/ 的
+     普通链接，不随换页预载 Vue chunk。加载失败的 chunk 已清除缓存，
+     同样保持按需，由下次交互重试。 */
+  document.addEventListener('astro:before-swap', () => {
+    app?.unmount();
+    app = null;
+    mountedHost = null;
+  });
+
   document.addEventListener('astro:page-load', () => {
-    if (booted) void boot(false);
+    if (modulePromise) void ensureMounted();
   });
 </script>
 
@@ -178,8 +239,8 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     font-size: 15px;
     text-decoration: none;
     transition:
-      color 150ms ease,
-      background-color 150ms ease;
+      color var(--motion-fast) ease,
+      background-color var(--motion-fast) ease;
   }
 
   .nav-link:hover {
@@ -220,8 +281,8 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     font-size: 14px;
     text-decoration: none;
     transition:
-      color 150ms ease,
-      border-color 150ms ease;
+      color var(--motion-fast) ease,
+      border-color var(--motion-fast) ease;
   }
 
   .search-entry:hover {
@@ -229,9 +290,31 @@ const mobileNavItems = siteConfig.nav.map((item) => ({
     border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
   }
 
-  /* 窄屏交给 MobileNav 岛；仅当 JS 可用（no-js 已被移除）时隐藏原生链接 */
+  /* 窄屏交给 MobileNav 岛：仅当岛屿成功挂载（html.mobile-nav-ready，
+     MobileNav onMounted 添加）时隐藏原生链接——覆盖「JS 可执行但岛屿
+     未就绪/加载失败」的中间态，期间原生导航始终可用（评审 D08） */
   @media (max-width: 899px) {
-    :global(html:not(.no-js)) .main-nav {
+    :global(html.mobile-nav-ready) .main-nav {
+      display: none;
+    }
+  }
+
+  /* 评审 L01：320px 级窄屏页头保持单行——隐藏搜索入口的可见文字
+     （aria-label 保留完整语义），并收紧容器与操作区间距 */
+  @media (max-width: 479px) {
+    .header-inner {
+      gap: 0.5rem;
+    }
+
+    .header-actions {
+      gap: 0.375rem;
+    }
+
+    .search-entry {
+      padding-inline: 0.625rem;
+    }
+
+    .search-entry span {
       display: none;
     }
   }

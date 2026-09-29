@@ -18,6 +18,7 @@
  * 区块（IMPL-057 由独立 /guestbook/ 页收敛而来，title="留言" 复用同一组件）。
  */
 import { giscusConfig } from '@/data/integrations';
+import { siteConfig } from '@/data/site';
 
 interface Props {
   /** 区块标题（文章页默认「评论」；about 留言区块传「留言」） */
@@ -29,6 +30,9 @@ interface Props {
 const { title = '评论', ariaLabel = title } = Astro.props;
 const { repo, repoId, category, categoryId } = giscusConfig;
 const enabled = Boolean(repo && repoId && category && categoryId);
+
+/** 失败占位中的直接反馈入口（评审 F02：不让读者去页脚找联系方式） */
+const feedbackEmail = siteConfig.social.find((entry) => entry.href.startsWith('mailto:'))?.href;
 ---
 
 {
@@ -38,8 +42,16 @@ const enabled = Boolean(repo && repoId && category && categoryId);
       <div class="comments-host" data-comments-host>
         <p class="comments-loading">{title}加载中……</p>
         <p class="comments-fallback" data-comments-fallback hidden>
-          {title}区加载失败或被浏览器扩展拦截。阅读不受影响；如想反馈，可通过页脚的联系方式找到我，
-          或 <button type="button" class="comments-retry" data-comments-retry>重试加载</button>。
+          {title}区加载失败或被浏览器扩展拦截，阅读不受影响。可
+          <button type="button" class="comments-retry" data-comments-retry>
+            重试加载
+          </button>；如想直接反馈，
+          {feedbackEmail ? (
+            <a href={feedbackEmail}>给我写邮件</a>
+          ) : (
+            <span>可通过页脚的联系方式找到我</span>
+          )}
+          。
         </p>
         <noscript>
           <p class="comments-fallback">{title}区需要 JavaScript；此时阅读不受影响。</p>
@@ -100,7 +112,8 @@ const enabled = Boolean(repo && repoId && category && categoryId);
     text-align: center;
   }
 
-  .comments-retry {
+  .comments-retry,
+  .comments-fallback a {
     padding: 0;
     border: none;
     background: none;
@@ -116,12 +129,20 @@ const enabled = Boolean(repo && repoId && category && categoryId);
   /**
    * ClientRouter 环境（IMPL-017）：挂 astro:page-load，首次加载与每次
    * 换页后执行；评论 host 随页面内容整体替换，按元素幂等守卫。
+   *
+   * 评审 F02 整改：以 loading/ready/error 显式状态取代「脚本存在」判断——
+   * 失败后重试会清除旧脚本、旧 iframe 与旧计时器后重新注入，真正发起新
+   * 请求；成功判定只认 giscus iframe。离开页面（host 脱离文档）时轮询
+   * 自停；换页重绑时断开上一页的主题观察器（D12 生命周期的一部分）。
    */
   import { giscusConfig } from '@/data/integrations';
 
   const GISCUS_ORIGIN = 'https://giscus.app';
   /** 脚本注入后等待 iframe 出现的超时；被拦截时以此兜底显示占位 */
   const IFRAME_TIMEOUT_MS = 10_000;
+
+  /** 同一时刻页面只有一个评论 host；换页重绑时断开上一页的观察器 */
+  let activeThemeObserver: MutationObserver | null = null;
 
   function giscusTheme(): string {
     // transparent_dark：iframe 背景透明，页面深色背景透出——giscus 内置
@@ -135,18 +156,28 @@ const enabled = Boolean(repo && repoId && category && categoryId);
     if (!host || host.dataset.commentsBound === 'true') return;
     host.dataset.commentsBound = 'true';
     const fallback = host.querySelector<HTMLElement>('[data-comments-fallback]');
+    const loading = host.querySelector<HTMLElement>('.comments-loading');
 
     let pollTimer = 0;
+    let timeoutTimer = 0;
 
-    const clearPoll = () => {
+    const clearTimers = (): void => {
       window.clearInterval(pollTimer);
+      window.clearTimeout(timeoutTimer);
       pollTimer = 0;
+      timeoutTimer = 0;
     };
 
-    const showFallback = () => {
-      clearPoll();
-      if (fallback) fallback.hidden = false;
-      host.querySelector<HTMLElement>('.comments-loading')?.setAttribute('hidden', '');
+    const setState = (state: 'loading' | 'ready' | 'error'): void => {
+      loading?.toggleAttribute('hidden', state !== 'loading');
+      fallback?.toggleAttribute('hidden', state !== 'error');
+    };
+
+    /** 重试前清理失败残留：旧脚本、旧 iframe、旧计时器（评审 F02） */
+    const clearFailedAttempt = (): void => {
+      clearTimers();
+      host.querySelector('script[data-giscus-script]')?.remove();
+      host.querySelectorAll('iframe.giscus-frame').forEach((frame) => frame.remove());
     };
 
     /** 主题同步：向既有 iframe 转发当前主题（iframe 未就绪时静默跳过） */
@@ -158,14 +189,15 @@ const enabled = Boolean(repo && repoId && category && categoryId);
       );
     };
 
+    activeThemeObserver?.disconnect();
     const themeObserver = new MutationObserver(postTheme);
     themeObserver.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-theme'],
     });
+    activeThemeObserver = themeObserver;
 
-    const load = () => {
-      if (host.querySelector('script[data-giscus-script]')) return;
+    const load = (): void => {
       const script = document.createElement('script');
       script.src = `${GISCUS_ORIGIN}/client.js`;
       script.async = true;
@@ -182,28 +214,34 @@ const enabled = Boolean(repo && repoId && category && categoryId);
       script.setAttribute('data-input-position', 'top');
       script.setAttribute('data-theme', giscusTheme());
       script.setAttribute('data-lang', giscusConfig.lang);
-      script.addEventListener('error', showFallback);
+      script.addEventListener('error', () => setState('error'));
       host.appendChild(script);
 
-      /* 成功判定：giscus 注入 iframe（class giscus-frame）后撤掉加载文案 */
+      /* 成功判定只认 iframe（脚本存在不是成功——重试总会重新注入） */
       pollTimer = window.setInterval(() => {
         if (!host.isConnected) {
-          clearPoll();
+          /* 换页旧 host：停止观察与计时（评审 F02 验收项） */
+          clearTimers();
           return;
         }
-        if (host.querySelector('iframe.giscus-frame')) {
-          clearPoll();
-          host.querySelector<HTMLElement>('.comments-loading')?.setAttribute('hidden', '');
+        const frames = host.querySelectorAll('iframe.giscus-frame');
+        if (frames.length > 0) {
+          /* 防御重复注入：只保留第一个评论框 */
+          frames.forEach((frame, index) => {
+            if (index > 0) frame.remove();
+          });
+          clearTimers();
+          setState('ready');
         }
       }, 500);
-      window.setTimeout(() => {
-        if (!host.querySelector('iframe.giscus-frame')) showFallback();
+      timeoutTimer = window.setTimeout(() => {
+        if (host.isConnected && !host.querySelector('iframe.giscus-frame')) setState('error');
       }, IFRAME_TIMEOUT_MS);
     };
 
     host.querySelector('[data-comments-retry]')?.addEventListener('click', () => {
-      if (fallback) fallback.hidden = true;
-      host.querySelector<HTMLElement>('.comments-loading')?.removeAttribute('hidden');
+      clearFailedAttempt();
+      setState('loading');
       load();
     });
 

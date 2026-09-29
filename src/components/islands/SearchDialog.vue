@@ -23,13 +23,26 @@ import { useSearch, type TypeFilter } from '@/lib/useSearch';
 const open = ref(false);
 const query = ref('');
 const type = ref<TypeFilter>('全部');
-const { results, loading, unavailable } = useSearch(query, type);
+const { results, total, loading, unavailable, retry, dispose } = useSearch(query, type);
+
+/* 评审 F04：失败提示面向读者；pnpm build/preview 说明仅开发环境展示 */
+const isDev = import.meta.env.DEV;
 
 const inputEl = ref<HTMLInputElement | null>(null);
 const activeIndex = ref(0);
 
 const filters: TypeFilter[] = ['全部', '文章', '笔记', '项目'];
 const hasQuery = computed(() => query.value.trim().length > 0);
+
+/** 「在完整搜索页查看全部」入口：携带当前 q/type（评审 F03） */
+const fullSearchUrl = computed(() => {
+  const params = new URLSearchParams();
+  const q = query.value.trim();
+  if (q) params.set('q', q);
+  if (type.value !== '全部') params.set('type', type.value);
+  const qs = params.toString();
+  return `/search/${qs ? `?${qs}` : ''}`;
+});
 
 watch(open, async (value) => {
   if (value) {
@@ -45,6 +58,8 @@ watch(results, () => {
 });
 
 function onKeydown(event: KeyboardEvent) {
+  /* 中文输入法合成期间不抢导航快捷键（评审 F05） */
+  if (event.isComposing) return;
   const target = event.target as HTMLElement | null;
   const typing =
     !!target &&
@@ -76,9 +91,13 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown);
   window.removeEventListener('cove:search-open', onOpenRequest);
+  /* 卸载时清理防抖计时器并作废在途响应（评审 F05/D12） */
+  dispose();
 });
 
 function onInputKeydown(event: KeyboardEvent) {
+  /* 中文输入法合成期间：方向键与回车属于选词操作，搜索不得抢占（评审 F05） */
+  if (event.isComposing) return;
   if (event.key === 'ArrowDown') {
     event.preventDefault();
     if (results.value.length > 0) {
@@ -90,6 +109,8 @@ function onInputKeydown(event: KeyboardEvent) {
       activeIndex.value = (activeIndex.value - 1 + results.value.length) % results.value.length;
     }
   } else if (event.key === 'Enter') {
+    /* 候选结果未就绪（新查询仍在加载）时不执行跳转，防止进入旧关键词的条目（评审 F05） */
+    if (loading.value) return;
     const item = results.value[activeIndex.value];
     if (item) {
       event.preventDefault();
@@ -160,13 +181,18 @@ function onInputKeydown(event: KeyboardEvent) {
         </div>
 
         <div class="dialog-body">
-          <p v-if="unavailable" class="dialog-hint">
-            搜索索引尚未生成：本地执行 <code>pnpm build</code> 后再运行 <code>pnpm preview</code>
-            即可体验搜索。
+          <p v-if="unavailable" class="dialog-hint" role="status">
+            搜索暂时不可用，可能是网络原因。
+            <button type="button" class="retry-link" @click="retry">重试</button>，
+            或从<a href="/posts/">文章</a>、<a href="/archive/">归档</a>继续浏览。
+            <template v-if="isDev">
+              本地开发需先生成索引：执行 <code>pnpm build</code> 后运行
+              <code>pnpm preview</code>。
+            </template>
           </p>
 
           <template v-else-if="!hasQuery">
-            <p class="dialog-hint">输入关键词开始搜索，或从这些入口浏览：</p>
+            <p class="dialog-hint">输入关键词，或从这些入口浏览：</p>
             <ul class="dialog-entries">
               <li><a href="/posts/">全部文章</a></li>
               <li><a href="/notes/">笔记</a></li>
@@ -180,23 +206,29 @@ function onInputKeydown(event: KeyboardEvent) {
             <a href="/archive/">归档</a>与<a href="/posts/">全部文章</a>。
           </p>
 
-          <ul v-else class="dialog-results" role="listbox" aria-label="搜索结果">
-            <li
-              v-for="(item, index) in results"
-              :key="item.id"
-              role="option"
-              :aria-selected="index === activeIndex"
-              :class="{ 'result-active': index === activeIndex }"
-            >
-              <a :href="item.url" class="result-link">
-                <span class="result-type">{{ item.type ?? '页面' }}</span>
-                <span class="result-title">{{ item.title }}</span>
-                <span v-if="item.date" class="result-date">{{ item.date }}</span>
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <span class="result-excerpt" v-html="item.excerpt"></span>
-              </a>
-            </li>
-          </ul>
+          <template v-else>
+            <ul class="dialog-results" role="listbox" aria-label="搜索结果">
+              <li
+                v-for="(item, index) in results"
+                :key="item.id"
+                role="option"
+                :aria-selected="index === activeIndex"
+                :class="{ 'result-active': index === activeIndex }"
+              >
+                <a :href="item.url" class="result-link">
+                  <span class="result-type">{{ item.type ?? '页面' }}</span>
+                  <span class="result-title">{{ item.title }}</span>
+                  <span v-if="item.date" class="result-date">{{ item.date }}</span>
+                  <!-- eslint-disable-next-line vue/no-v-html -->
+                  <span class="result-excerpt" v-html="item.excerpt"></span>
+                </a>
+              </li>
+            </ul>
+            <!-- 弹窗只保留第一页结果；其余结果在完整搜索页可达（评审 F03） -->
+            <p v-if="!loading && total > 0" class="dialog-more">
+              <a :href="fullSearchUrl">在完整搜索页查看全部 {{ total }} 条结果</a>
+            </p>
+          </template>
         </div>
       </DialogContent>
     </DialogPortal>
@@ -217,7 +249,7 @@ function onInputKeydown(event: KeyboardEvent) {
     color: var(--text-muted);
     font-size: 14px;
     cursor: pointer;
-    transition: color 150ms ease, border-color 150ms ease;
+    transition: color var(--motion-fast) ease, border-color var(--motion-fast) ease;
   }
 
   .search-trigger:hover {
@@ -248,7 +280,7 @@ function onInputKeydown(event: KeyboardEvent) {
     inset: 0;
     z-index: 100;
     background-color: color-mix(in srgb, var(--text) 32%, transparent);
-    animation: search-fade 150ms ease;
+    animation: search-fade var(--motion-overlay) ease;
   }
 
   .search-dialog {
@@ -266,7 +298,7 @@ function onInputKeydown(event: KeyboardEvent) {
     background-color: var(--background);
     box-shadow: 0 18px 50px -20px rgb(0 0 0 / 0.35);
     transform: translateX(-50%);
-    animation: search-pop 160ms ease;
+    animation: search-pop var(--motion-overlay) ease;
   }
 
   .dialog-input-row {
@@ -311,7 +343,7 @@ function onInputKeydown(event: KeyboardEvent) {
   }
 
   .filter-chip {
-    min-height: 32px;
+    min-height: 36px;
     padding-inline: 0.75rem;
     border: 1px solid var(--border);
     border-radius: 999px;
@@ -319,11 +351,23 @@ function onInputKeydown(event: KeyboardEvent) {
     color: var(--text-muted);
     font-size: 0.8125rem;
     cursor: pointer;
-    transition: color 120ms ease, border-color 120ms ease;
+    transition: color var(--motion-fast) ease, border-color var(--motion-fast) ease;
   }
 
   .filter-chip:hover {
     color: var(--text);
+  }
+
+  /* 触屏（粗指针）：高频筛选的触控目标提升到 44px 并加大间距（评审 L03）；
+     桌面精确指针维持紧凑视觉，不放大 */
+  @media (pointer: coarse) {
+    .dialog-filters {
+      gap: 0.5rem;
+    }
+
+    .filter-chip {
+      min-height: 44px;
+    }
   }
 
   .filter-active {
@@ -365,6 +409,30 @@ function onInputKeydown(event: KeyboardEvent) {
     text-underline-offset: 0.3em;
   }
 
+  /* 重试动作：链接样式的按钮（评审 F04——失败提示需可直接操作） */
+  .retry-link {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--cove-blue-strong);
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+    cursor: pointer;
+  }
+
+  .dialog-more {
+    margin: 0.75rem 0 0.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.875rem;
+  }
+
+  .dialog-more a {
+    color: var(--cove-blue-strong);
+    text-underline-offset: 0.3em;
+  }
+
   .dialog-entries {
     display: flex;
     flex-wrap: wrap;
@@ -397,7 +465,7 @@ function onInputKeydown(event: KeyboardEvent) {
 
   .result-link {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 0.25rem 0.625rem;
     align-items: baseline;
     padding: 0.625rem 0.625rem;
@@ -429,6 +497,18 @@ function onInputKeydown(event: KeyboardEvent) {
     color: var(--text-muted);
     font-size: 0.75rem;
     white-space: nowrap;
+  }
+
+  /* 评审 L03：窄屏日期移到标题次行，标题占主要列——「类型/标题/日期」
+     三列在 ~480px 以下互相挤压，标题是读者要读的主信息 */
+  @media (max-width: 479px) {
+    .result-link {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .result-date {
+      grid-column: 2;
+    }
   }
 
   .result-excerpt {
