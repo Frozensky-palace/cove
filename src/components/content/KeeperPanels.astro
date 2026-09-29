@@ -5,6 +5,8 @@
  * 触屏与窄屏退化为纵向堆叠（整面即链接，点按前往档案页）。
  * 展开动效超出指南 8.6 悬停白名单（≤2px / 120–220ms），属用户点名的
  * 展示型动效，沿用 IMPL-044 先例记录于 decision-log。
+ * IMPL-067：整体节奏按用户要求「尽量慢速」放缓——展开 850→1600ms、
+ * 收拢 180→600ms、立绘缩放同幅放缓、简介浮现 320+200ms→560+480ms。
  * 立绘为装饰（alt 空）：面板文字（名字/身份）已承载全部信息。
  */
 import { Image } from 'astro:assets';
@@ -63,10 +65,11 @@ const { authors } = Astro.props;
     border: 1px solid var(--border);
     background-color: var(--surface-muted);
     text-decoration-line: none;
-    /* 非对称节奏（IMPL-053 ⑦/⑧）：基础态承担「收拢」——180ms standard
-       快速归位、利落让位；展开的目标态过渡见下方悬停块（850ms easeOutBack）。
-       仅过渡 flex-grow，立绘 object-fit: cover 随宽度重裁，不缩放不变形 */
-    transition: flex-grow 180ms var(--ease-standard);
+    /* 基础态承担「收拢」（IMPL-067 放缓）：600ms standard 徐徐归位
+       （原 180ms 利落收拢按用户要求放缓）；展开的目标态过渡见下方悬停块
+       （1600ms easeOutBack）。仅过渡 flex-grow，立绘 object-fit: cover
+       随宽度重裁，不缩放不变形 */
+    transition: flex-grow 600ms var(--ease-standard);
   }
 
   /* 百叶窗展开（IMPL-053 重做）：桌面整条定高，悬停只改变宽度分配——
@@ -82,14 +85,15 @@ const { authors } = Astro.props;
       height: 100%;
     }
 
-    /* 展开（IMPL-053 ⑧ 加大到「非常明显」）：850ms + easeOutBack 过冲
-       （y1=1.56，末段越过目标约 12% 再回落），展开行程同步加大
-       （flex-grow 1.9→2.1，悬停面板约拿走 52% 宽度）；与收拢的 180ms
-       拉开近 5 倍时长差，慢—过冲回落—快收拢的节奏无需留意也能察觉 */
+    /* 展开（IMPL-067 放缓到「尽量慢速」）：1600ms + easeOutBack 过冲
+       （y1=1.56，末段越过目标约 12% 再回落）——慢速展开下过冲回落
+       像海面涌动收平，成为可欣赏的收尾细节；展开行程 flex-grow 2.1
+       （悬停面板约拿走 52% 宽度）；与 600ms 收拢仍保持
+       「展开慢、收拢快」的方向性对比（约 2.7:1） */
     .keeper-panel:hover,
     .keeper-panel:focus-visible {
       flex-grow: 2.1;
-      transition: flex-grow 850ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: flex-grow 1600ms cubic-bezier(0.34, 1.56, 0.64, 1);
     }
   }
 
@@ -100,18 +104,18 @@ const { authors } = Astro.props;
     height: 100%;
     object-fit: cover;
     object-position: top;
-    /* 立绘微缩放（IMPL-053 ⑦/⑧）：展开时 1.09 倍轻推，取景锚点在人物
-       头部（object-position: top 同源），收拢快速复位；与宽度展开同节奏 */
+    /* 立绘微缩放（IMPL-067 同幅放缓）：展开时 1.09 倍轻推，取景锚点在
+       人物头部（object-position: top 同源），收拢徐徐复位；与宽度展开同节奏 */
     transform-origin: 50% 15%;
     transform: scale(1);
-    transition: transform 180ms var(--ease-standard);
+    transition: transform 600ms var(--ease-standard);
   }
 
   @media (hover: hover) and (min-width: 720px) {
     .keeper-panel:hover .keeper-photo,
     .keeper-panel:focus-visible .keeper-photo {
       transform: scale(1.09);
-      transition: transform 850ms var(--ease-out);
+      transition: transform 1600ms var(--ease-out);
     }
   }
 
@@ -178,8 +182,9 @@ const { authors } = Astro.props;
 
   /* 简介仅在展开态露出（触屏/窄屏常显，见下方媒体查询）；
      opacity 不移出无障碍树，屏幕阅读器始终可读。
-     出场延迟 200ms——等面板展开过半再浮现，动效有编排感；
-     收场不延迟，鼠标移出立即让位 */
+     出场延迟 480ms——等面板展开近半再浮现（IMPL-067 随整体放缓，
+     延迟约为展开时长的 30%，与原 200/850 同比例）；
+     收场不延迟，鼠标移出即让位（320ms 徐落） */
   .keeper-tagline {
     margin-top: 0.375rem;
     font-size: 0.8125rem;
@@ -187,8 +192,8 @@ const { authors } = Astro.props;
     opacity: 0;
     transform: translateY(4px);
     transition:
-      opacity 160ms var(--ease-standard),
-      transform 160ms var(--ease-standard);
+      opacity 320ms var(--ease-standard),
+      transform 320ms var(--ease-standard);
   }
 
   @media (hover: hover) and (min-width: 720px) {
@@ -197,8 +202,8 @@ const { authors } = Astro.props;
       opacity: 0.95;
       transform: translateY(0);
       transition:
-        opacity 320ms var(--ease-out) 200ms,
-        transform 320ms var(--ease-out) 200ms;
+        opacity 560ms var(--ease-out) 480ms,
+        transform 560ms var(--ease-out) 480ms;
     }
   }
 

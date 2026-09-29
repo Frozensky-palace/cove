@@ -1,16 +1,28 @@
 ---
 /**
- * 首次进入品牌加载页（IMPL-017；IMPL-050 修复退场与动效抛光）：
- * - 会话内仅首次进入显示（sessionStorage `cove:splash-shown`）
+ * 首次进入品牌加载页（IMPL-017；IMPL-050 修复退场与动效抛光；
+ * IMPL-062 评审 M01 重定展示策略）：
+ * - 仅「首页 + 会话首访」展示（sessionStorage `cove:splash-shown`）：
+   文章/其他深链直达内容，不再盖加载层——外部链接进站的读者立即可读；
+   非首页首访消耗掉本次会话的展示机会，软导航回首页不补播
+ * - 系统「减少动态效果」时直接展示内容：原实现仅停掉波浪动画，
+   600ms 最小展示等待仍在（评审 M01 明确指出这一缺口）
+ * - 页面就绪即启动退场，但不早于最小展示时长 1600ms（IMPL-066 两轮
+   验收后用户定值「要能看见」：480ms 编排对齐后总时长 ~720ms 封顶，
+   对人眼仍只是一闪而过）；双 rAF
+   保证至少一帧真实绘制后再淡出，2500ms 兜底防事件异常卡死
  * - 显示逻辑由紧随标记的内联脚本在解析期同步执行，先于首绘、无闪现；
    无 JS 时 html 不携带 splash-on，加载页永不出现（渐进增强）
- * - astro:page-load 或 2500ms 兜底后淡出移除；ClientRouter 环境下
-   首次加载同样触发 astro:page-load
  * - IMPL-050 修复：退场先加 .app-splash-out 播完 200ms 淡出，再移除
    splash-on 与节点——原实现先移除 splash-on，display 立即回 none，
    opacity 过渡从未渲染，实际是硬切消失；入场/退场动效见 global.css
  * - 视觉复用 Logo 品牌语言（渐变标志 + 波浪）；reduced-motion 下
    波浪动画由 global.css 全局规则关闭，静态呈现后正常退出
+ * - IMPL-066 设计升级：标志渐变端点与内描线、字标渐变全部改走主题
+   令牌（深色主题不再套用浅色硬编码值）；字标用文字安全蓝粉（V02
+   口径）；单条滚动蓝波升级为蓝粉双波视差漂移（呼应页脚双波语言）；
+   入场改为 标志→字标→波浪/标语 错峰编排（最长项 420ms；退场不早于
+   最小展示时长 1600ms，总时长 ~1.85s 封顶）
  */
 ---
 
@@ -18,35 +30,36 @@
   <div class="app-splash-inner">
     <svg class="app-splash-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <defs>
+        <!-- 渐变端点走主题令牌：深色主题用其独立校准的蓝粉（描线取色在 global.css） -->
         <linearGradient id="cove-splash-gradient" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#6799bd"></stop>
-          <stop offset="1" stop-color="#dea0af"></stop>
+          <stop offset="0" style="stop-color: var(--cove-blue)"></stop>
+          <stop offset="1" style="stop-color: var(--shell-pink)"></stop>
         </linearGradient>
       </defs>
       <rect width="24" height="24" rx="6" fill="url(#cove-splash-gradient)"></rect>
       <path
+        class="mark-line-a"
         d="M5 13.2c2.33-2.4 4.67-2.4 7 0s4.67 2.4 7 0"
-        stroke="#f8fbfc"
         stroke-width="1.75"
         stroke-linecap="round"
       ></path>
       <path
+        class="mark-line-b"
         d="M7 16.8c1.83-1.8 3.67-1.8 5.5 0s3.67 1.8 5.5 0"
-        stroke="#f7e8ec"
-        stroke-opacity="0.75"
         stroke-width="1.5"
         stroke-linecap="round"
       ></path>
     </svg>
     <p class="app-splash-name">Cove</p>
     <div class="app-splash-wave">
-      <svg viewBox="0 0 360 24" preserveAspectRatio="none" aria-hidden="true">
+      <svg class="wave-track wave-track-a" viewBox="0 0 360 24" preserveAspectRatio="none" aria-hidden="true">
         <path
           d="M0 12 Q15 2 30 12 T60 12 T90 12 T120 12 T150 12 T180 12 T210 12 T240 12 T270 12 T300 12 T330 12 T360 12"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
+        ></path>
+      </svg>
+      <svg class="wave-track wave-track-b" viewBox="0 0 360 24" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          d="M0 16 Q15 9 30 16 T60 16 T90 16 T120 16 T150 16 T180 16 T210 16 T240 16 T270 16 T300 16 T330 16 T360 16"
         ></path>
       </svg>
     </div>
@@ -57,39 +70,57 @@
 <!-- 解析期同步决定是否显示：先于首绘，避免内容闪现后再盖加载页 -->
 <script is:inline>
   (function () {
-    var show = false;
+    /* 仅「首页 + 会话首访」展示（评审 M01）：文章等深链直达内容不盖加载层；
+       非首页首访同样消耗本次会话的展示机会（标记已展示），
+       之后软导航回首页不补播品牌动画。 */
+    var home = window.location.pathname === '/' || window.location.pathname === '/index.html';
+    var shown = false;
     try {
-      show = !sessionStorage.getItem('cove:splash-shown');
+      shown = sessionStorage.getItem('cove:splash-shown') === '1';
     } catch (e) {
-      /* 隐私模式等场景：宁可少见，不重复打扰 */
-      show = false;
+      /* 存储不可用（隐私模式等）：宁可少见，不重复打扰 */
+      shown = true;
     }
-    if (show) document.documentElement.classList.add('splash-on');
+    if (shown || !home) {
+      try {
+        sessionStorage.setItem('cove:splash-shown', '1');
+      } catch (e) {
+        /* 同上：仅影响会话内去重，可接受 */
+      }
+      return;
+    }
+    /* 系统「减少动态效果」：直接展示内容，不播放品牌动效（评审 M01）——
+       原实现只停掉波浪动画，600ms 最小展示等待仍然存在 */
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      try {
+        sessionStorage.setItem('cove:splash-shown', '1');
+      } catch (e) {
+        /* 可接受 */
+      }
+      return;
+    }
+    document.documentElement.classList.add('splash-on');
+    /* 展示起点（IMPL-066）：退场以此计算最小展示时长（1600ms）——
+       页面就绪早于该时点时等满再淡出，避免就绪极快（本地 dev 缓存）
+       时加载页被拦腰截断成一次闪烁 */
+    document.documentElement.dataset.splashStart = String(Date.now());
   })();
 </script>
 
-<!-- 退出：astro:page-load 优先，2500ms 兜底（防事件异常卡死加载页）。
-     已展示过的会话直接跳过（ClientRouter 换页会重执行本内联脚本）。
-     最小展示 600ms + 双 rAF：astro:page-load 在本地静态页可能先于首绘触发，
-     不设下限会导致加载页从未被看见即开始淡出。 -->
+<!-- 退出：页面就绪即启动退场，但不早于最小展示时长（IMPL-066，
+     1600ms——两轮验收后用户定值「要能看见」，480ms 编排对齐仍一闪而过）。
+     astro:page-load 优先，2500ms 兜底防事件异常卡死加载页；
+     双 rAF 保证至少一帧真实绘制后才开始淡出。仅在 splash 实际展示时挂监听，
+     已展示过的会话（ClientRouter 换页会重执行本内联脚本）直接跳过。 -->
 <script is:inline>
   (function () {
-    var alreadyShown = false;
-    try {
-      alreadyShown = sessionStorage.getItem('cove:splash-shown') === '1';
-    } catch (e) {
-      alreadyShown = true;
-    }
-    if (alreadyShown) return;
-
-    var start = Date.now();
-    var MIN_SHOW_MS = 600;
+    if (!document.documentElement.classList.contains('splash-on')) return;
 
     var done = false;
     function dismiss() {
       if (done) return;
       done = true;
-      document.removeEventListener('astro:page-load', maybeDismiss);
+      document.removeEventListener('astro:page-load', paintThenDismiss);
       try {
         sessionStorage.setItem('cove:splash-shown', '1');
       } catch (e) {
@@ -100,14 +131,24 @@
         document.documentElement.classList.remove('splash-on');
         return;
       }
-      /* IMPL-050：保持 splash-on 维持 display:grid，先播 200ms 淡出，
-         过渡结束后再移除标记与节点——原实现先移除 splash-on，
-         display 立即回 none，opacity 过渡从未渲染（硬切消失） */
-      splash.classList.add('app-splash-out');
+      /* IMPL-066：最小展示时长 1600ms（两轮验收定值——480ms 编排对齐后
+         用户仍反馈「看不到」，总时长 ~720ms 封顶对人眼只是一闪而过；
+         每会话仅首页首访展示一次，值得让双波漂移停留可感的时长）。
+         就绪早于 1600ms 等满再淡出，就绪晚于则立即退场不等；
+         深链、减少动效、二访本就不展示，无任何额外等待 */
+      var start = Number(document.documentElement.dataset.splashStart) || Date.now();
+      var grace = Math.max(0, 1600 - (Date.now() - start));
       setTimeout(function () {
-        document.documentElement.classList.remove('splash-on');
-        splash.remove();
-      }, 240);
+        /* IMPL-050：保持 splash-on 维持 display:grid，先播 200ms 淡出，
+           过渡结束后再移除标记与节点——原实现先移除 splash-on，
+           display 立即回 none，opacity 过渡从未渲染（硬切消失） */
+        splash.classList.add('app-splash-out');
+        setTimeout(function () {
+          document.documentElement.classList.remove('splash-on');
+          delete document.documentElement.dataset.splashStart;
+          splash.remove();
+        }, 240);
+      }, grace);
     }
 
     /* 双 rAF：等到至少一帧真实绘制完成后再淡出 */
@@ -117,13 +158,7 @@
       });
     }
 
-    function maybeDismiss() {
-      var wait = MIN_SHOW_MS - (Date.now() - start);
-      if (wait > 0) setTimeout(paintThenDismiss, wait);
-      else paintThenDismiss();
-    }
-
-    document.addEventListener('astro:page-load', maybeDismiss);
-    setTimeout(maybeDismiss, 2500);
+    document.addEventListener('astro:page-load', paintThenDismiss);
+    setTimeout(paintThenDismiss, 2500);
   })();
 </script>
