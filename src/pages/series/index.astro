@@ -63,7 +63,7 @@ const seriesList = await getAllSeries();
     margin-inline: -0.75rem;
     border-radius: var(--radius-control);
     text-decoration-line: none;
-    transition: background-color 150ms ease;
+    transition: background-color var(--motion-fast) ease;
   }
 
   .si-item + .si-item {
@@ -79,7 +79,7 @@ const seriesList = await getAllSeries();
     font-size: 1.0625rem;
     font-weight: 600;
     line-height: 1.5;
-    transition: color 120ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   .si-item:hover .si-name {
@@ -97,7 +97,7 @@ const seriesList = await getAllSeries();
   .si-arrow {
     margin-left: auto;
     color: var(--text-muted);
-    transition: transform 150ms ease, color 150ms ease;
+    transition: transform var(--motion-fast) ease, color var(--motion-fast) ease;
   }
 
   .si-item:hover .si-arrow {

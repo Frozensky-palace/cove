@@ -126,7 +126,7 @@ const single = series.posts.length === 1;
     color: var(--text);
     font-size: 0.9375rem;
     font-weight: 600;
-    transition: color 150ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   .series-progress {
@@ -142,8 +142,8 @@ const single = series.posts.length === 1;
     align-self: center;
     color: var(--text-muted);
     transition:
-      transform 150ms ease,
-      color 150ms ease;
+      transform var(--motion-fast) ease,
+      color var(--motion-fast) ease;
   }
 
   /* 悬停暗示可点：仅颜色变化（指南 8.6） */
@@ -189,7 +189,7 @@ const single = series.posts.length === 1;
     margin-inline: -0.5rem;
     border-radius: var(--radius-control);
     text-decoration-line: none;
-    transition: background-color 150ms ease;
+    transition: background-color var(--motion-fast) ease;
   }
 
   .si-num {
@@ -197,14 +197,14 @@ const single = series.posts.length === 1;
     font-family: var(--font-mono);
     font-size: 0.8125rem;
     font-variant-numeric: tabular-nums;
-    transition: color 150ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   .si-title {
     color: var(--text-muted);
     font-size: 0.875rem;
     line-height: 1.6;
-    transition: color 120ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   a.series-item:hover {

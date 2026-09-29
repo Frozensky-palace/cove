@@ -34,15 +34,18 @@ const { post } = Astro.props;
     padding-inline: 0.75rem;
     margin-inline: -0.75rem;
     border-radius: var(--radius-control);
-    transition: background-color 150ms ease;
+    transition: background-color var(--motion-fast) ease;
   }
 
   .article-item + .article-item {
     border-top: 1px solid var(--border);
   }
 
-  /* 悬停：品牌色淡底（指南 8.6：仅颜色变化，无位移） */
-  .article-item:hover {
+  /* 悬停：品牌色淡底（指南 8.6：仅颜色变化，无位移）。
+     键盘路径同款整行反馈（评审 V04）：焦点进入行内链接时整行染色，
+     与鼠标路径对等；:has(:focus-visible) 只认键盘焦点，链接自身焦点环保留 */
+  .article-item:hover,
+  .article-item:has(:focus-visible) {
     background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
   }
 

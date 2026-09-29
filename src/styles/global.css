@@ -65,6 +65,12 @@
      根画布，负 z 子层不与之争抢），fixed 定位滚动时水洗恒定不随页面
      漂移；⑦ 的 10%/8% 用户反馈「没感觉到」，⑧ 提到 15%/12% 并放大
      光晕范围，保证「可辨」但仍属留白里的层次而非背景图 */
+  /* 波浪纹理层（IMPL-063，用户再次反馈「还是有点空」）：水洗已加强过一轮
+     仍显空，说明缺的是「质地」而非更多光晕——追加 240×160 平铺的细描边
+     波浪 SVG（data URI，多重背景末位=最底层，垫在两片水洗之下）；
+     描边色取 --cove-blue 浅/深实值硬编码（data URI 内不可用 CSS 变量），
+     透明度 .06/.045（深色 .05/.04，深底吸光略提）；与水洗同为 fixed
+     视口层，滚动时纹理恒定，不随内容漂移 */
   body::before {
     content: '';
     position: fixed;
@@ -81,10 +87,12 @@
         52rem 30rem at 92% calc(100% + 10rem),
         color-mix(in srgb, var(--shell-pink) 12%, transparent),
         transparent 72%
-      );
+      ),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='160' viewBox='0 0 240 160'%3E%3Cg fill='none' stroke='%236799bd' stroke-width='1.25'%3E%3Cpath d='M0 40 Q30 24 60 40 T120 40 T180 40 T240 40' stroke-opacity='.06'/%3E%3Cpath d='M0 120 Q30 136 60 120 T120 120 T180 120 T240 120' stroke-opacity='.045'/%3E%3C/g%3E%3C/svg%3E");
   }
 
-  /* 深色模式整体上抬（⑧）：深底吸光，同等透明度在深色下更难察觉 */
+  /* 深色模式整体上抬（⑧）：深底吸光，同等透明度在深色下更难察觉；
+     纹理层同步换深色蓝描边（IMPL-063） */
   .dark body::before {
     background:
       radial-gradient(
@@ -96,7 +104,8 @@
         52rem 30rem at 92% calc(100% + 10rem),
         color-mix(in srgb, var(--shell-pink) 14%, transparent),
         transparent 72%
-      );
+      ),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='160' viewBox='0 0 240 160'%3E%3Cg fill='none' stroke='%2382b4d2' stroke-width='1.25'%3E%3Cpath d='M0 40 Q30 24 60 40 T120 40 T180 40 T240 40' stroke-opacity='.05'/%3E%3Cpath d='M0 120 Q30 136 60 120 T120 120 T180 120 T240 120' stroke-opacity='.04'/%3E%3C/g%3E%3C/svg%3E");
   }
 
   main {
@@ -220,7 +229,7 @@ html[data-theme='dark'] .theme-icon-dark {
 
 html.theme-vt:not([data-theme='dark']) .theme-icon-light,
 html.theme-vt[data-theme='dark'] .theme-icon-dark {
-  animation: theme-icon-in 360ms var(--ease-out);
+  animation: theme-icon-in var(--motion-emphasis) var(--ease-out);
 }
 
 /*
@@ -228,8 +237,8 @@ html.theme-vt[data-theme='dark'] .theme-icon-dark {
  * 刻意放在所有 @layer 之外：
  * - #route-progress 由脚本在运行时创建，scoped/分层选择器不可靠；
  * - 与主题图标规则同理，未分层可抵御组件样式干扰。
- * 动效约束（指南 8.6）：波浪与进度动画均为功能性加载指示，
- * 时长 120–220ms 档位；reduced-motion 下由上方全局规则关闭，
+ * 动效约束（指南 8.6）：波浪漂移与进度条为功能性加载指示；
+ * 入场编排与漂移循环在 reduced-motion 下由上方全局规则冻结，
  * 加载页退化为静态品牌画面后正常退出。
  */
 
@@ -242,27 +251,60 @@ html.theme-vt[data-theme='dark'] .theme-icon-dark {
   place-items: center;
   background-color: var(--background);
   opacity: 1;
-  transition: opacity 200ms var(--ease-standard);
+  transition: opacity var(--motion-overlay) var(--ease-standard);
 }
 
 html.splash-on .app-splash {
   display: grid;
 }
 
-/* 入场（IMPL-050）：内容一次性淡入 + 2px 上浮，指南 8.6 档位内；
-   backwards 填充——动画结束后不驻留样式，退场过渡才能接管同名属性 */
-html.splash-on .app-splash-inner {
-  animation: splash-in 220ms var(--ease-out) backwards;
+/* 入场编排（IMPL-066）：标志 → 字标 → 波浪/标语 错峰入场，最长项 420ms
+   ——退场不早于最小展示时长 1600ms（见 AppSplash 退场脚本），编排必然
+   完整呈现；backwards 填充保证 delay 期间停留在起始帧，无内容闪现 */
+html.splash-on .app-splash-mark {
+  animation: splash-mark-in var(--motion-emphasis) var(--ease-out) backwards;
 }
 
-@keyframes splash-in {
+html.splash-on .app-splash-name {
+  animation: splash-rise-in var(--motion-emphasis) var(--ease-out) 60ms backwards;
+}
+
+html.splash-on .app-splash-wave {
+  animation: splash-fade-in var(--motion-overlay) ease 120ms backwards;
+}
+
+html.splash-on .app-splash-tagline {
+  animation: splash-fade-in var(--motion-overlay) ease 180ms backwards;
+}
+
+@keyframes splash-mark-in {
   from {
     opacity: 0;
-    transform: translateY(2px);
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes splash-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes splash-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -276,58 +318,109 @@ html.splash-on .app-splash-inner {
   transform: translateY(-2px);
   opacity: 0;
   transition:
-    transform 200ms var(--ease-standard),
-    opacity 200ms var(--ease-standard);
+    transform var(--motion-overlay) var(--ease-standard),
+    opacity var(--motion-overlay) var(--ease-standard);
 }
 
+/* 分组间距（IMPL-066）：标志-字标为品牌一组（近距），波浪-标语为
+   海面一组（标语是波浪的说明，近距成组），组间留白更大 */
 .app-splash-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
 }
 
 .app-splash-mark {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
+}
+
+/* 标志内波浪描线随主题取色（IMPL-066）：主线用页面底色，深浅主题都在
+   渐变面上保持对比；副线用柔和粉面色的深色版 */
+.mark-line-a {
+  stroke: var(--background);
+}
+
+.mark-line-b {
+  stroke: var(--shell-pink-soft);
+  stroke-opacity: 0.8;
 }
 
 .app-splash-name {
-  margin: 0;
-  font-size: 2rem;
+  margin: 0.875rem 0 0;
+  font-size: 2.25rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--text);
+  /* 字标渐变用文字安全令牌（V02 口径：装饰粉不作文字色，
+     粉端 #a34b61 对浅底 5.62:1）；两端点深浅主题各自校准 */
+  background: linear-gradient(135deg, var(--cove-blue-strong), var(--shell-pink-text));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
+/* 双波漂移（IMPL-066）：呼应页脚双波语言——蓝主波 + 粉辅波，
+   透明度对齐页脚（0.5 / 0.45）；两层以不同周期水平漂移形成缓视差，
+   周期比 ≈ 2:3。波浪是加载期间唯一的活动指示（M01：非进度条）。
+   两条波均以 60 单位为周期铺满 360 宽 viewBox，translateX(-50%)
+   恰好移动 3 个整周期，接缝无跳变 */
 .app-splash-wave {
+  position: relative;
   width: 168px;
-  height: 24px;
+  height: 28px;
+  margin-top: 1.375rem;
   overflow: hidden;
-  color: var(--cove-blue);
 }
 
-.app-splash-wave svg {
-  display: block;
+.wave-track {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 200%;
   height: 100%;
-  animation: splash-wave 1.8s linear infinite;
 }
 
-.app-splash-tagline {
-  margin: 0;
-  font-size: 0.875rem;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
+.wave-track path {
+  fill: none;
+  stroke-linecap: round;
 }
 
-@keyframes splash-wave {
+.wave-track-a {
+  color: var(--cove-blue);
+  animation: splash-drift 2.8s linear infinite;
+}
+
+.wave-track-a path {
+  stroke: currentColor;
+  stroke-width: 2;
+  opacity: 0.5;
+}
+
+.wave-track-b {
+  color: var(--shell-pink);
+  animation: splash-drift 4.2s linear infinite;
+}
+
+.wave-track-b path {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  opacity: 0.45;
+}
+
+@keyframes splash-drift {
   from {
     transform: translateX(0);
   }
   to {
     transform: translateX(-50%);
   }
+}
+
+.app-splash-tagline {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
 }
 
 /* 站内导航顶部进度条：与文章页阅读进度同一视觉语言（2px 实色细线） */
@@ -353,7 +446,7 @@ html.splash-on .app-splash-inner {
   transform: scaleX(1);
   opacity: 0;
   transition:
-    transform 160ms var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard),
     opacity 240ms var(--ease-standard) 80ms;
 }
 

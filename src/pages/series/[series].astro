@@ -59,7 +59,7 @@ const { series } = Astro.props;
     color: var(--text-muted);
     font-size: 0.875rem;
     text-decoration-line: none;
-    transition: color 150ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   .all-series:hover {
@@ -84,10 +84,13 @@ const { series } = Astro.props;
     padding: 1.5rem 0.75rem;
     margin-inline: -0.75rem;
     border-radius: var(--radius-control);
-    transition: background-color 150ms ease;
+    transition: background-color var(--motion-fast) ease;
   }
 
-  .series-post:hover {
+  /* 悬停：品牌色淡底。键盘路径同款整行反馈（评审 V04），
+     说明同 ArticleListItem */
+  .series-post:hover,
+  .series-post:has(:focus-visible) {
     background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
   }
 

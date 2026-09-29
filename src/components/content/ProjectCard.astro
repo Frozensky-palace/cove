@@ -69,12 +69,14 @@ const year = project.data.startedAt?.slice(0, 4) ?? '';
     border-radius: var(--radius-overlay);
     background-color: var(--surface);
     transition:
-      transform 200ms var(--ease-standard),
-      border-color 200ms var(--ease-standard);
+      transform var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard);
   }
 
-  /* 悬停：2px 上浮 + 品牌色描边（指南 8.6） */
-  .project-card:hover {
+  /* 悬停：2px 上浮 + 品牌色描边（指南 8.6）。
+     键盘路径同款整卡反馈（评审 V04），说明同 ArticleCard */
+  .project-card:hover,
+  .project-card:has(:focus-visible) {
     transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
   }
@@ -124,9 +126,10 @@ const year = project.data.startedAt?.slice(0, 4) ?? '';
     color: var(--cove-blue-strong);
   }
 
+  /* 评审 V02：文字用深粉语义令牌（白卡 5.62:1），描边保持装饰粉 */
   .status-completed {
     border-color: var(--shell-pink);
-    color: var(--shell-pink);
+    color: var(--shell-pink-text);
   }
 
   .project-summary {

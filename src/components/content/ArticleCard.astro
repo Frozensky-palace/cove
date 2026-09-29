@@ -63,12 +63,15 @@ const hasCover = Boolean(post.data.cover);
     border-radius: var(--radius-overlay);
     background-color: var(--surface);
     transition:
-      transform 200ms var(--ease-standard),
-      border-color 200ms var(--ease-standard);
+      transform var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard);
   }
 
-  /* 悬停：2px 上浮 + 品牌色描边（指南 8.6 悬停反馈白名单：位移 ≤2px、颜色） */
-  .article-card:hover {
+  /* 悬停：2px 上浮 + 品牌色描边（指南 8.6 悬停反馈白名单：位移 ≤2px、颜色）。
+     键盘路径同款整卡反馈（评审 V04）：:has(:focus-visible) 只认键盘焦点，
+     鼠标点击链接产生的焦点不悬挂整卡反馈；链接自身的全局焦点环保留 */
+  .article-card:hover,
+  .article-card:has(:focus-visible) {
     transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
   }

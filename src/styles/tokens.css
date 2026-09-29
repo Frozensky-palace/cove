@@ -17,11 +17,17 @@
   --surface: #ffffff;
   --surface-muted: #edf4f7;
   --text: #243746;
-  --text-muted: #687b87;
+  /* 评审 V01：#687b87 对白卡 4.40 / 页面底 4.23 / 浅灰蓝面 3.96 均低于普通文字
+     4.5:1；调深后为 5.13 / 4.94 / 4.62，三种底色全部留出余量。 */
+  --text-muted: #5e707d;
   --border: #dce7ec;
   --cove-blue: #6799bd;
   --cove-blue-strong: #3f789f;
   --shell-pink: #dea0af;
+  /* 评审 V02：状态小字的深粉语义令牌——装饰粉 #dea0af 对白卡仅 2.15:1，
+     不可作文字色（文件头注「贝壳粉不直接用于小号正文文字」的落地）；
+     #a34b61 对白卡 5.62 / 页面底 5.40 / 浅灰蓝面 5.05。 */
+  --shell-pink-text: #a34b61;
   --shell-pink-soft: #f7e8ec;
   --focus: #2f78aa;
 
@@ -39,6 +45,16 @@
      时长沿用指南 8.6：悬停 120–220ms；展示型位移 400–600ms。 */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* 时长令牌（IMPL-065，评审 M03：统一全站动效节奏，防后续迭代漂移；
+     只收敛用途明确的档位，编排对与功能循环仍用字面值并在原地注明——
+     不为了令牌化把所有时长变成同一个数）：
+     --motion-fast 颜色、边框、背景与 ≤2px 位移的小反馈（统一原 120/150/160ms 散布值）；
+     --motion-overlay 抽屉、搜索弹窗等浮层与整页淡入淡出的开合；
+     --motion-emphasis 单次入场重点动效（主题图标入场、系列条目错峰入场）。 */
+  --motion-fast: 150ms;
+  --motion-overlay: 200ms;
+  --motion-emphasis: 360ms;
 }
 
 .dark {
@@ -54,6 +70,9 @@
   --cove-blue: #82b4d2;
   --cove-blue-strong: #9ac7df;
   --shell-pink: #d9a7b4;
+  /* 深色独立校准（评审 V02）：现有粉对深面 #17232b 约 7.7:1，直接达标；
+     不与浅色 #a34b61 共用（深粉在深底上不可读）。 */
+  --shell-pink-text: #d9a7b4;
   --shell-pink-soft: #382a31;
   --focus: #9ed7f4;
 
