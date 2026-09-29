@@ -1,16 +1,28 @@
 ---
 /**
- * 空状态（指南 Phase 3：所有核心空状态）：说明 + 出口链接。
+ * 空状态（指南 Phase 3：所有核心空状态）：图标座 + 说明 + 出口链接。
+ * IMPL-063：默认波浪图标座（同 about 联系卡的图标座语言），给空状态
+ * 一个视觉锚点；图标可经 icon prop 覆盖。
  */
+import WavesIcon from '@/components/base/icons/WavesIcon.astro';
+// Astro 7 不再从 'astro' 顶层导出组件类型；runtime/server 为其自身
+// content 类型模板所用的官方路径（package.json exports "./runtime/*"）
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
+
 interface Props {
   title: string;
   description: string;
+  /** 覆盖默认波浪图标的组件（可选） */
+  icon?: AstroComponentFactory;
 }
 
-const { title, description } = Astro.props;
+const { title, description, icon: Icon = WavesIcon } = Astro.props;
 ---
 
 <div class="empty-state">
+  <span class="empty-icon" aria-hidden="true">
+    <Icon size={22} />
+  </span>
   <h2 class="empty-title">{title}</h2>
   <p class="empty-description">{description}</p>
   <div class="empty-actions">
@@ -26,6 +38,19 @@ const { title, description } = Astro.props;
     gap: 0.75rem;
     padding-block: 4rem;
     text-align: center;
+  }
+
+  /* 图标座（IMPL-063）：cove-blue 淡染圆角方块，同 contact-icon 语言 */
+  .empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.25rem;
+    border-radius: var(--radius-control);
+    background-color: color-mix(in oklab, var(--cove-blue) 12%, transparent);
+    color: var(--cove-blue-strong);
   }
 
   .empty-title {
