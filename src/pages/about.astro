@@ -189,7 +189,7 @@ const contactValue = (href: string) =>
           <span class="contact-icon" aria-hidden="true"><RssIcon /></span>
           <span class="contact-text">
             <span class="contact-label">RSS 订阅</span>
-            <span class="contact-value">在阅读器中关注本站更新</span>
+            <span class="contact-value">在阅读器中订阅更新</span>
           </span>
         </a>
       </li>
@@ -245,8 +245,8 @@ const contactValue = (href: string) =>
     padding-bottom: 0.05em;
   }
 
-  /* 「最近在写」条目：题左日期右；hover 语言与下方联系卡片一致（160ms
-     颜色过渡）；键盘焦点环由 global.css 全局 :focus-visible 提供，不在此重复 */
+  /* 「最近在写」条目：题左日期右；hover 语言与下方联系卡片一致
+     （--motion-fast 颜色过渡）；键盘焦点环由 global.css 全局 :focus-visible 提供，不在此重复 */
   .about-recent {
     list-style: none;
     padding: 0;
@@ -281,7 +281,7 @@ const contactValue = (href: string) =>
 
   /* 联系卡片（IMPL-055）：RSS/邮箱/GitHub 三张等宽卡片，auto-fit 窄屏
      自动换行成单列；图标座以 cove-blue 淡染（color-mix 同 body::before），
-     hover 边框与图标座加深，160ms 与全站控件一致 */
+     hover 边框与图标座加深，--motion-fast 与全站控件一致 */
   .about-contact {
     list-style: none;
     padding: 0;
@@ -290,20 +290,25 @@ const contactValue = (href: string) =>
     gap: 0.75rem;
   }
 
+  /* IMPL-063：改竖排布局（图标在上）。横向布局下图标座 + gap 占掉约
+     50px，value 文本仅剩约 142px——20 字符邮箱（wananwen7@gmail.com）
+     在 0.875rem 下仍必折行，三卡纵向错位；字号微调治标不治本。竖排后
+     value 独占卡内整行宽（约 205px），对齐与内容长度彻底解耦 */
   .contact-card {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.625rem;
     height: 100%;
-    padding: 0.75rem 0.875rem;
+    padding: 1rem;
     border: 1px solid var(--border);
     border-radius: var(--radius-control);
     background-color: var(--surface);
     color: var(--text);
     text-decoration-line: none;
     transition:
-      border-color 160ms var(--ease-standard),
-      background-color 160ms var(--ease-standard);
+      border-color var(--motion-fast) var(--ease-standard),
+      background-color var(--motion-fast) var(--ease-standard);
   }
 
   .contact-card:hover {
@@ -320,7 +325,7 @@ const contactValue = (href: string) =>
     border-radius: var(--radius-control);
     background-color: color-mix(in oklab, var(--cove-blue) 12%, transparent);
     color: var(--cove-blue-strong);
-    transition: background-color 160ms var(--ease-standard);
+    transition: background-color var(--motion-fast) var(--ease-standard);
   }
 
   .contact-card:hover .contact-icon {
@@ -329,7 +334,7 @@ const contactValue = (href: string) =>
 
   .contact-text {
     display: grid;
-    gap: 0.0625rem;
+    gap: 0.125rem;
     min-width: 0;
   }
 
@@ -338,6 +343,9 @@ const contactValue = (href: string) =>
     font-size: 0.8125rem;
   }
 
+  /* 竖排布局下 value 独占卡内整行宽（约 205px），回升到 0.9375rem
+     （IMPL-060 曾为横向布局降到 0.875rem 仍不够）；邮箱单行放得下，
+     overflow-wrap:anywhere 仍兜底超长地址 */
   .contact-value {
     font-size: 0.9375rem;
     font-weight: 600;
@@ -347,7 +355,7 @@ const contactValue = (href: string) =>
   /* 「最近在写」hover 抛光（IMPL-051）：下划线提示可点 + 变主题蓝；
      不变更到低对比颜色 */
   .about-recent a {
-    transition: color 160ms var(--ease-standard);
+    transition: color var(--motion-fast) var(--ease-standard);
   }
 
   .about-recent a:hover {

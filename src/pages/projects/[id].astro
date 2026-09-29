@@ -2,11 +2,17 @@
 /**
  * 项目详情页（指南 9.6）：问题、角色、方法、过程与反思、链接、相关文章。
  * 正文结构由 Markdown 正文承担，结构化头部信息来自 frontmatter。
+ * 封面（若有）在署名之后、正文之前展示，与文章详情同序（评审 D06：
+ * 列表卡有封面而详情没有的不一致自此收敛）；
+ * 链接/源码为页头操作按钮行（label 主文本 + 类型小字 + 类型图标），
+ * 不再作为文末独立区块。
  */
 import { render } from 'astro:content';
+import { Image } from 'astro:assets';
 import ContentLayout from '@/layouts/ContentLayout.astro';
 import AuthorByline from '@/components/content/AuthorByline.astro';
 import ArticleListItem from '@/components/content/ArticleListItem.astro';
+import GithubIcon from '@/components/base/icons/GithubIcon.astro';
 import {
   formatDate,
   getPublishedProjects,
@@ -89,29 +95,62 @@ const linkLabel: Record<string, string> = {
       }
     </div>
 
+    {
+      project.data.links.length > 0 && (
+        <div class="project-actions" data-pagefind-ignore>
+          {project.data.links.map((link) => {
+            const typeText = linkLabel[link.type] ?? '链接';
+            /* 评审 V03：label 与类型文案相同（如「源码/源码」）时只渲染一个可见
+               标签，避免窄屏重复文案挤占横向空间；两者不同（如「复盘/在线演示」）
+               保留类型小字补足语境。 */
+            const showsType = link.label.trim() !== typeText;
+            return (
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                {link.type === 'source' ? (
+                  <GithubIcon size={16} />
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M7 17 17 7" />
+                    <path d="M8 7h9v9" />
+                  </svg>
+                )}
+                <span class="action-label">{link.label}</span>
+                {showsType && <span class="link-type">{typeText}</span>}
+              </a>
+            );
+          })}
+        </div>
+      )
+    }
+
     <AuthorByline authorKey={project.data.author} />
+
+    {
+      project.data.cover && (
+        <div class="project-cover">
+          <Image
+            src={project.data.cover}
+            alt={project.data.title}
+            widths={[640, 960, 1280]}
+            sizes="(min-width: 780px) 720px, 100vw"
+          />
+        </div>
+      )
+    }
 
     <div class="prose byline-gap">
       <Content />
     </div>
-
-    {
-      project.data.links.length > 0 && (
-        <div class="project-links" data-pagefind-ignore>
-          <h2 class="links-title">链接</h2>
-          <ul>
-            {project.data.links.map((link) => (
-              <li>
-                <a href={link.url} target="_blank" rel="noopener noreferrer">
-                  {link.label}
-                  <span class="link-type">{linkLabel[link.type] ?? '链接'}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )
-    }
 
     {
       related.length > 0 && (
@@ -155,6 +194,11 @@ const linkLabel: Record<string, string> = {
     margin-bottom: 2rem;
   }
 
+  /* 紧跟操作按钮行时收窄间距（:has 兜底为原 2rem，不影响无链接项目） */
+  .project-facts:has(+ .project-actions) {
+    margin-bottom: 1.25rem;
+  }
+
   .project-status {
     padding-inline: 0.625rem;
     border: 1px solid var(--border);
@@ -168,9 +212,10 @@ const linkLabel: Record<string, string> = {
     color: var(--cove-blue-strong);
   }
 
+  /* 评审 V02：文字用深粉语义令牌（白卡 5.62:1），描边保持装饰粉 */
   .status-completed {
     border-color: var(--shell-pink);
-    color: var(--shell-pink);
+    color: var(--shell-pink-text);
   }
 
   .fact {
@@ -183,7 +228,61 @@ const linkLabel: Record<string, string> = {
     font-size: 0.8125rem;
   }
 
-  /* 值守者署名与正文之间（署名块自身无边距） */
+  /* 链接/源码操作行：页头可见的主操作（label 主文本 + 类型小字 + 类型图标） */
+  .project-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    margin-bottom: 2rem;
+  }
+
+  .project-actions a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    min-height: 44px;
+    padding-inline: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background-color: var(--surface);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration-line: none;
+    transition:
+      border-color var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard);
+  }
+
+  .project-actions a svg {
+    flex-shrink: 0;
+    color: var(--cove-blue-strong);
+  }
+
+  .project-actions a:hover {
+    border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
+    color: var(--cove-blue-strong);
+  }
+
+  .link-type {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+  }
+
+  /* 封面（若有）：署名之后、正文之前，与文章详情同序；视觉语言同 .article-cover */
+  .project-cover {
+    margin-top: 2rem;
+    border-radius: var(--radius-overlay);
+    overflow: hidden;
+  }
+
+  .project-cover :global(img) {
+    width: 100%;
+    height: auto;
+  }
+
+  /* 值守者署名与正文之间（署名块自身无边距）；有封面时间距由封面承担 */
   .byline-gap {
     margin-top: 2rem;
   }
@@ -192,37 +291,6 @@ const linkLabel: Record<string, string> = {
     margin: 2.5rem 0 1rem;
     font-size: 1.25rem;
     font-weight: 700;
-  }
-
-  .project-links ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .project-links a {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    min-height: 44px;
-    padding-inline: 1rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-control);
-    color: var(--cove-blue-strong);
-    text-decoration-line: none;
-    transition: border-color 120ms ease;
-  }
-
-  .project-links a:hover {
-    border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
-  }
-
-  .link-type {
-    color: var(--text-muted);
-    font-size: 0.75rem;
   }
 
   .project-related {

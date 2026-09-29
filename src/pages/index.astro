@@ -14,6 +14,11 @@ import ArticleListItem from '@/components/content/ArticleListItem.astro';
 import NoteListItem from '@/components/content/NoteListItem.astro';
 import ProjectCard from '@/components/content/ProjectCard.astro';
 import EmptyState from '@/components/content/EmptyState.astro';
+import CompassIcon from '@/components/base/icons/CompassIcon.astro';
+import StarIcon from '@/components/base/icons/StarIcon.astro';
+import ClockIcon from '@/components/base/icons/ClockIcon.astro';
+import PenLineIcon from '@/components/base/icons/PenLineIcon.astro';
+import AnchorIcon from '@/components/base/icons/AnchorIcon.astro';
 import { siteConfig } from '@/data/site';
 import {
   getFeaturedPosts,
@@ -56,10 +61,10 @@ const hasContent =
       <div class="hero-copy">
         <!-- Display 层级：全站最多一处（指南 8.3） -->
         <h1 class="hero-title">你好，这里是 <span class="hero-name">Cove</span></h1>
-        <!-- 定位语句（IMPL-056 草稿，与 about 长期主题一致；措辞待站长定稿） -->
+        <!-- 定位语句（IMPL-056 草稿；评审 L01 收敛文字量——320px 下六行介绍
+             把首卡推出首屏，深入说明留给关于页；措辞待站长定稿） -->
         <p class="hero-description">
-          {siteConfig.description}记录自己的学习心得，思考过程与实践复盘，
-          也记录把写作当工具的方法——长文讲透一件事，笔记留住一个念头。
+          长文讲透一件事，笔记留住一个念头——在这里记录学习心得、思考过程与实践复盘。
         </p>
         <div class="hero-actions">
           <Button href="/posts/" variant="primary">阅读文章</Button>
@@ -86,7 +91,7 @@ const hasContent =
       hasContent ? (
         <>
           {startHere.length > 0 && (
-            <HomeSection title="从这里开始" label="从这里开始">
+            <HomeSection title="从这里开始" label="从这里开始" icon={CompassIcon}>
               <div class="latest-list">
                 {startHere.map((post) => (
                   <ArticleListItem post={post} />
@@ -96,7 +101,7 @@ const hasContent =
           )}
 
           {featured.length > 0 && (
-            <HomeSection title="精选文章" moreHref="/posts/" moreAriaLabel="查看全部文章">
+            <HomeSection title="精选文章" icon={StarIcon} moreHref="/posts/" moreAriaLabel="查看全部文章">
               <div class="featured-grid">
                 {featuredMain && <ArticleCard post={featuredMain} emphasis />}
                 {featuredRest.length > 0 && (
@@ -111,7 +116,7 @@ const hasContent =
           )}
 
           {latestPosts.length > 0 && (
-            <HomeSection title="最新文章" moreHref="/posts/" moreAriaLabel="查看全部文章">
+            <HomeSection title="最新文章" icon={ClockIcon} moreHref="/posts/" moreAriaLabel="查看全部文章">
               <div class="latest-list">
                 {latestPosts.map((post) => (
                   <ArticleListItem post={post} />
@@ -121,7 +126,7 @@ const hasContent =
           )}
 
           {recentNotes.length > 0 && (
-            <HomeSection title="最近笔记" moreHref="/notes/" moreAriaLabel="查看全部笔记">
+            <HomeSection title="最近笔记" icon={PenLineIcon} moreHref="/notes/" moreAriaLabel="查看全部笔记">
               <div class="notes-list">
                 {recentNotes.map((note) => (
                   <NoteListItem note={note} />
@@ -131,7 +136,7 @@ const hasContent =
           )}
 
           {featuredProjects.length > 0 && (
-            <HomeSection title="代表项目" moreHref="/projects/" moreAriaLabel="查看全部项目">
+            <HomeSection title="代表项目" icon={AnchorIcon} moreHref="/projects/" moreAriaLabel="查看全部项目">
               <div class="projects-list">
                 {featuredProjects.map((project) => (
                   <ProjectCard project={project} />
@@ -158,11 +163,12 @@ const hasContent =
 </BaseLayout>
 
 <style>
-  /* 首屏高度：桌面 360–440px（指南 9.2），矮视口（小手机横竖屏）按视口收缩 */
+  /* 首屏高度：桌面 360–440px（指南 9.2），矮视口（小手机横竖屏）按视口收缩；
+     下限 320→280（评审 L01）：短屏上不为「居中感」垫高空区 */
   .hero {
     display: flex;
     align-items: center;
-    min-height: clamp(320px, 52vh, 440px);
+    min-height: clamp(280px, 52vh, 440px);
     padding-block: 3rem;
   }
 
@@ -202,8 +208,9 @@ const hasContent =
          且原图卡片底部是 squircle 曲线，几何圆角无法贴合 */
       filter: drop-shadow(0 24px 32px color-mix(in srgb, var(--cove-blue-strong) 32%, transparent))
         drop-shadow(0 8px 14px color-mix(in srgb, var(--cove-blue-strong) 22%, transparent));
-      /* 缓慢上下漂浮；scale 用独立属性与 transform 动画叠加互不干扰 */
-      animation: brand-float 7s ease-in-out infinite alternate;
+      /* 评审 M02：常驻漂浮收敛——保留悬停反馈与入场（见 .hero-brand），
+         移除 7s 循环上下漂浮：阅读为主的页面，文字旁的持续运动是
+         常驻注意力竞争者；若日后证实品牌需要，再以更轻的幅度回归 */
       transition:
         scale 240ms var(--ease-standard),
         filter 240ms var(--ease-standard);
@@ -234,16 +241,6 @@ const hasContent =
     to {
       opacity: 1;
       transform: none;
-    }
-  }
-
-  @keyframes brand-float {
-    from {
-      transform: translateY(-4px);
-    }
-
-    to {
-      transform: translateY(4px);
     }
   }
 
@@ -282,6 +279,24 @@ const hasContent =
     flex-wrap: wrap;
     gap: 0.875rem;
     margin-top: 2rem;
+  }
+
+  /* 评审 L01：窄屏收敛 Hero 纵向节奏——padding 与间距收窄、描述字号随全站
+     窄屏 16px 基准（行高保持宽松不压缩），让「精选文章」与首卡更早进入首屏 */
+  @media (max-width: 767px) {
+    .hero {
+      padding-block: 2rem;
+    }
+
+    .hero-description {
+      margin-top: 1rem;
+      font-size: 16px;
+      line-height: 1.85;
+    }
+
+    .hero-actions {
+      margin-top: 1.5rem;
+    }
   }
 
   /* 精选：重点卡片 + 两个紧凑条目；窄屏纵向堆叠。
