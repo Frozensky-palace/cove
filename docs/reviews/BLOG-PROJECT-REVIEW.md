@@ -128,7 +128,7 @@ Cove 已经具备优秀个人博客的大部分技术基础：品牌统一、静
 发现的具体问题：
 
 - `src/content/projects/cove-site.md` 仍包含 `https://github.com/cove/example-repo` 占位链接。
-- `docs/content-checklist.md` 仍把正式域名、站点简介和 favicon 标记为待确认/待替换，与当前代码事实不一致。
+- `docs/phases/content-checklist.md` 仍把正式域名、站点简介和 favicon 标记为待确认/待替换，与当前代码事实不一致。
 - README 宣称 Phase 7 已完成，并在根目录配置表中列出 `.github/workflows/`，但当前仓库没有 `.github` 目录。
 - `about.astro` 写着“没有追踪脚本”，但生产配置已启用 Cloudflare Web Analytics。
 

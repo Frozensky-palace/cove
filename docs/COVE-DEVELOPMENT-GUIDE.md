@@ -9,7 +9,7 @@
 
 本文档是 Cove 个人博客的后续开发指南。它将产品目标、页面设计、技术架构、内容模型、组件边界、开发顺序和验收标准放在同一个基线中，避免开发过程中出现视觉方向漂移、功能重复或架构过度扩张。
 
-本文档基于 `docs/personal-blog-project-proposal-v2.html`，并结合已经确认的品牌方向：
+本文档基于 `docs/archive/personal-blog-project-proposal-v2.html`，并结合已经确认的品牌方向：
 
 - 网站名称为 **Cove**。
 - 内容以文字记录、项目介绍和技术分享为主。
@@ -164,10 +164,17 @@ shadcn-vue 仅用于需要完整键盘操作、焦点管理或弹层行为的 Vu
 cove/
 ├── .github/
 │   └── workflows/
-│       └── quality.yml
-├── docs/
-│   ├── personal-blog-project-proposal-v2.html
-│   └── COVE-DEVELOPMENT-GUIDE.md
+│       └── ci.yml                # CI 质量门禁（IMPL-056，实际文件名）
+├── docs/                         # 文档索引见 docs/README.md（IMPL-071：历史文件按 reviews/ phases/ archive/ 归类）
+│   ├── COVE-DEVELOPMENT-GUIDE.md
+│   ├── decision-log.md
+│   ├── OPERATIONS.md
+│   ├── PAGES-CMS-GUIDE.md
+│   ├── README.md
+│   ├── reviews/                  # 评审报告（历史快照）
+│   ├── phases/                   # 阶段验收与交付清单（历史）
+│   └── archive/                  # 立项提案等原始存档
+├── scripts/                      # 构建守卫与 OG 分享图生成（IMPL-056）
 ├── public/
 │   ├── _headers
 │   ├── favicon.svg
@@ -227,6 +234,28 @@ cove/
 ├── tsconfig.json
 └── wrangler.jsonc
 ```
+
+### 6.1 根目录配置速查表
+
+> 新增根目录配置文件时同步更新此表（约定记录于 `CLAUDE.md`）。
+> 这些文件的位置均为工具强制约定，不可移入子文件夹统一管理。
+
+| 文件 | 职责 | 所属工具 / 位置约束 |
+| --- | --- | --- |
+| `package.json` | 依赖声明与脚本命令 | pnpm，必须在根目录 |
+| `pnpm-lock.yaml` | 依赖锁文件，冻结安装（必须提交） | pnpm，必须在根目录 |
+| `tsconfig.json` | TypeScript strict 配置与 `@/*` 路径别名 | TypeScript / `astro check`，按根目录查找 |
+| `astro.config.mjs` | Astro 站点配置：`site`、统一端口 4321、Vue 与 Tailwind 集成 | Astro CLI 自动发现，仅认根目录 |
+| `components.json` | shadcn-vue 初始化配置（样式与别名） | shadcn-vue CLI，只认根目录 |
+| `.gitignore` | Git 忽略规则（构建产物、依赖、环境变量等） | Git，仓库根目录生效 |
+| `.editorconfig` | 编辑器基础格式约定（UTF-8、LF、2 空格缩进） | EditorConfig，从文件向上查找 |
+| `.vscode/extensions.json` | 推荐安装的 VS Code 扩展 | VS Code |
+| `CLAUDE.md` | AI 协作工作流约定 | Claude Code，每次会话自动读取 |
+| `.pages.yml` | Pages CMS 三类内容（文章/笔记/项目）与媒体源编辑配置，字段对齐 `src/content.config.ts` | Pages CMS，强制仓库根目录 |
+| `wrangler.jsonc` | Workers Static Assets 部署配置：静态资源目录 `dist/`、404 回退（`not_found_handling`）、兼容日期 | Wrangler / Workers Builds，按根目录约定查找 |
+| `public/_headers` | 安全响应头（CSP、nosniff、Referrer/Permissions Policy）与 `/_astro/*` 一年 immutable 缓存；其余资产走平台默认短缓存 + ETag 再验证 | Cloudflare Workers Static Assets，`public/` 内容构建时原样拷贝进 `dist/` |
+| `giscus.json` | Giscus 评论域名 allowlist（仅生产域名与本地开发可加载评论，其余来源拒绝加载） | giscus，从仓库默认分支根目录读取 |
+| `.github/workflows/ci.yml` | CI 质量门禁：推送 `main` 与 PR 上运行检查 + 完整构建守卫链（不负责部署） | GitHub Actions，路径固定 |
 
 ## 7. 信息架构与路由
 
@@ -546,7 +575,7 @@ Cove 的视觉关键词是：**海雾、浅湾、晨光、纸面、呼吸感**�
 - 日期在内容中写为 `YYYY-MM-DD`，站点按 `Asia/Shanghai` 解释与展示；实现时避免直接用 UTC 序列化导致日期偏移。
 - `updatedAt` 不得早于 `publishedAt`。未来发布日期视为计划发布内容，与草稿一样从生产输出中排除。
 - `draft: true` 或未来发布的内容不得进入生产路由、首页、搜索、RSS 或 Sitemap；本地开发和非生产预览可以通过统一环境开关显示。
-- 封面是可选项；页面必须为无封面状态设计。
+- 封面是可选项；页面必须为无封面状态设计。例外：`featured: true` 的文章必须有 `cover`——首页精选区是全站唯一封面展示位，无封面进入精选会造成主卡弱于副卡的层级倒挂，schema 构建期校验拦截，配好封面前不得标精选。
 - 内容类型分别建 collection，避免一个 schema 包含大量条件字段。
 - 阅读时长、标题锚点和相关文章属于构建期派生数据，不写入 frontmatter。
 - 分类使用集中维护的稳定 key 与中文 label 映射。标签通过同一 helper 规范化并检查 URL 碰撞，页面不得各自实现 slugify。
@@ -563,7 +592,7 @@ Cove 的视觉关键词是：**海雾、浅湾、晨光、纸面、呼吸感**�
 | `category` | string | 是 | 单一主分类 |
 | `tags` | string[] | 是 | 建议 1–5 个，最大 8 个 |
 | `draft` | boolean | 是 | 默认 true |
-| `featured` | boolean | 否 | 首页精选，默认 false |
+| `featured` | boolean | 否 | 首页精选，默认 false；为 `true` 时必须提供 `cover`（见 11.1） |
 | `lang` | enum | 是 | `zh-CN` 或 `en` |
 | `cover` | image | 否 | 本地图片 |
 | `coverAlt` | string | 条件必填 | 有信息含义的封面需要填写 |
@@ -818,7 +847,7 @@ Pagefind 必须作为 `astro build` 之后的同一条发布命令执行，并�
 - 格式化、lint 和 `astro check` 无错误。
 - 生产构建成功。
 - 所有内容 schema 通过。
-- 内容不变量通过：ID/URL 唯一，taxonomy 无碰撞，日期顺序正确，有封面时具备 `coverAlt`，canonical 合法，关联内容 ID 存在。
+- 内容不变量通过：ID/URL 唯一，taxonomy 无碰撞，日期顺序正确，有封面时具备 `coverAlt`，`featured` 文章具备 `cover`，canonical 合法，关联内容 ID 存在。
 - 草稿和未来内容未进入生产路由与索引。
 - `astro build` 后 Pagefind 成功，且 `dist/pagefind/` 存在。
 - 新增内部链接有效。
@@ -1056,6 +1085,12 @@ Pagefind 必须作为 `astro build` 之后的同一条发布命令执行，并�
 
 **目标**：依据真实内容和使用情况调整产品。
 
+**进展（2026-09-29）**：Phase 8.1「页面优化」按三轮评审报告完成代码侧整改——项目
+评审（IMPL-056：质量守卫链、CI、内容发现、动态 OG 分享图）、前端评审（IMPL-059 起：
+搜索与评论可靠性、换页生命周期）、视觉评审（IMPL-061–065：对比度令牌、320px 首屏、
+动效时长令牌）；另有 IMPL-066–070 加载页品牌展示多轮用户验收迭代。各 IMPL 条目标注
+的浏览器复验项仍待 `pnpm preview` 逐项确认，确认后 Phase 8.1 关闭。
+
 上线后 2–4 周观察：
 
 - 哪些入口真正带来文章阅读。
@@ -1161,7 +1196,7 @@ Pull Request 中说明：
 
 ## 24. 参考基线
 
-- `docs/personal-blog-project-proposal-v2.html`
+- `docs/archive/personal-blog-project-proposal-v2.html`
 - [Astro Content Collections](https://docs.astro.build/en/guides/content-collections/)
 - [Astro Vue Integration](https://docs.astro.build/en/guides/integrations-guide/vue/)
 - [shadcn-vue Astro 安装](https://www.shadcn-vue.com/docs/installation/astro)

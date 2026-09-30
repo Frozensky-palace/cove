@@ -1,7 +1,7 @@
 # Cove 博客项目第二轮评审：功能完整性与前端设计
 
 > 评审日期：2026-09-27  
-> 对照报告：`docs/BLOG-PROJECT-REVIEW.md`（2026-09-23）  
+> 对照报告：`docs/reviews/BLOG-PROJECT-REVIEW.md`（2026-09-23）
 > 本地基线：提交 `3ec27ff`，本轮写报告前工作区无项目改动。  
 > 评审范围：上一轮整改、前端功能、浏览路径、交互可靠性、响应式与质量保障。**不评价文章选题、写作质量、数量或更新频率。**
 
@@ -96,7 +96,7 @@
 
 **状态：静态逻辑缺陷，高置信度。**
 
-证据：[SiteHeader.astro:86](D:/zhj/vscode/cove/src/components/navigation/SiteHeader.astro:86)。
+证据：[SiteHeader.astro:86](../../src/components/navigation/SiteHeader.astro:86)。
 
 首次启动把 `booted` 设为 `true`；随后 `boot()` 一看到该值就返回。`astro:page-load` 虽调用 `boot(false)`，却同样被提前返回。页头没有持久化旧 host，换页后的新 host 无法获得 Vue 实例，旧实例也没有按计划卸载。
 
@@ -115,7 +115,7 @@
 
 **状态：静态逻辑缺陷，高置信度。**
 
-证据：[CommentProvider.astro:168](D:/zhj/vscode/cove/src/components/integrations/CommentProvider.astro:168)、[重试处理:204](D:/zhj/vscode/cove/src/components/integrations/CommentProvider.astro:204)。
+证据：[CommentProvider.astro:168](../../src/components/integrations/CommentProvider.astro:168)、[重试处理:204](../../src/components/integrations/CommentProvider.astro:204)。
 
 加载失败后原 `script[data-giscus-script]` 仍在。点击重试隐藏错误文案、重新显示“加载中”，但 `load()` 因脚本存在直接返回，没有新请求和新的有效等待流程。
 
@@ -127,7 +127,7 @@
 
 **状态：已核验的功能缺口。**
 
-证据：[search.ts:67](D:/zhj/vscode/cove/src/lib/search.ts:67)、[SearchPanel.vue:90](D:/zhj/vscode/cove/src/components/islands/SearchPanel.vue:90)。
+证据：[search.ts:67](../../src/lib/search.ts:67)、[SearchPanel.vue:90](../../src/components/islands/SearchPanel.vue:90)。
 
 共用搜索封装直接 `slice(0, 12)`，返回值也不包含真实总数。弹窗少量展示合理，但完整页同样截断且没有“查看更多”。结果播报使用截断后的数组长度，超过 12 条时不能代表总匹配数。
 
@@ -139,7 +139,7 @@
 
 **状态：静态逻辑缺陷。**
 
-证据：[SiteHeader.astro:96](D:/zhj/vscode/cove/src/components/navigation/SiteHeader.astro:96)、[search.ts:40](D:/zhj/vscode/cove/src/lib/search.ts:40)、[useSearch.ts:34](D:/zhj/vscode/cove/src/lib/useSearch.ts:34)。
+证据：[SiteHeader.astro:96](../../src/components/navigation/SiteHeader.astro:96)、[search.ts:40](../../src/lib/search.ts:40)、[useSearch.ts:34](../../src/lib/useSearch.ts:34)。
 
 - 页头在动态 import 成功前就设置 `booted`，点击也已 `preventDefault`；没有捕获失败并前往 `/search/`。
 - Pagefind 加载 Promise 一旦拒绝，就一直缓存拒绝状态。
@@ -154,7 +154,7 @@
 
 **状态：静态逻辑缺陷。**
 
-证据：[useSearch.ts:20](D:/zhj/vscode/cove/src/lib/useSearch.ts:20)、[SearchDialog.vue:81](D:/zhj/vscode/cove/src/components/islands/SearchDialog.vue:81)。
+证据：[useSearch.ts:20](../../src/lib/useSearch.ts:20)、[SearchDialog.vue:81](../../src/components/islands/SearchDialog.vue:81)。
 
 请求序号在防抖结束、真正执行查询时才增加。关键词已经从 A 变成 B、但 B 还在等待防抖的 200ms 内，A 的响应仍可能被接收，让 B 输入框短暂显示 A 的结果。此时回车可能进入错误条目。
 
@@ -168,7 +168,7 @@
 
 **状态：静态逻辑缺陷 / 框架兼容性待验证。**
 
-证据：[SearchPanel.vue:21](D:/zhj/vscode/cove/src/components/islands/SearchPanel.vue:21)。
+证据：[SearchPanel.vue:21](../../src/components/islands/SearchPanel.vue:21)。
 
 `readUrl()` 只在参数存在时赋值。URL 不含 `q` 或不含合法 `type` 时，不会主动恢复为空关键词和“全部”。`replaceState(null, ...)` 还丢弃已有 `history.state`，拼接的新地址未保留 hash。不能把“监听了 popstate”就视为前进后退已全面通过。
 
@@ -180,7 +180,7 @@
 
 **状态：已核验的语义缺口；实际读屏体验待验证。**
 
-证据：[SearchDialog.vue:129](D:/zhj/vscode/cove/src/components/islands/SearchDialog.vue:129)、[结果列表:183](D:/zhj/vscode/cove/src/components/islands/SearchDialog.vue:183)。
+证据：[SearchDialog.vue:129](../../src/components/islands/SearchDialog.vue:129)、[结果列表:183](../../src/components/islands/SearchDialog.vue:183)。
 
 结果声明为 listbox/option，但上下键只改变 `activeIndex`。输入框没有与结果列表关联的 active-descendant 等机制，也没有将真实焦点转移至结果；视觉高亮不等于读屏知道当前选中哪项。当前也缺显式关闭按钮、完整页入口和选中结果滚入可视区域的处理。
 
@@ -192,7 +192,7 @@
 
 ### D01 · P1：发现入口分散，文章列表不像统一浏览中心
 
-证据：[文章列表:35](D:/zhj/vscode/cove/src/pages/posts/[...page].astro:35)、[SiteHeader.astro:24](D:/zhj/vscode/cove/src/components/navigation/SiteHeader.astro:24)、[site.ts:54](D:/zhj/vscode/cove/src/data/site.ts:54)。
+证据：[文章列表:35](../../src/pages/posts/[...page].astro:35)、[SiteHeader.astro:24](../../src/components/navigation/SiteHeader.astro:24)、[site.ts:54](../../src/data/site.ts:54)。
 
 标签、系列、归档已可从页脚到达，但桌面文章列表上还没有相应统一入口。进入标签、分类或系列页时，现有一级导航的路径匹配也不一定显示所属栏目，位置感较弱。移动抽屉已包含二级入口，因此不是“全站完全没有入口”，而是不同终端、不同页面的发现能力不一致。
 
@@ -200,7 +200,7 @@
 
 ### D02 · P1：系列模型把发布时间与章节顺序绑在一起
 
-证据：[content.ts:244](D:/zhj/vscode/cove/src/lib/content.ts:244)、[content.config.ts:54](D:/zhj/vscode/cove/src/content.config.ts:54)、[系列详情:23](D:/zhj/vscode/cove/src/pages/series/[series].astro:23)。
+证据：[content.ts:244](../../src/lib/content.ts:244)、[content.config.ts:54](../../src/content.config.ts:54)、[系列详情:23](../../src/pages/series/[series].astro:23)。
 
 当前系列来自文章上的字符串聚合，阅读顺序等于发布时间；索引主要展示名称、篇数和日期。发布补充章节、调整阅读顺序时，不能独立表达章节位置，也不能展示系列级状态、稳定标识和说明。
 
@@ -210,7 +210,7 @@
 
 ### D03 · P2：折叠系列卡混合了“展开”和“跳转”两类操作
 
-证据：[SeriesFeedCard.astro:46](D:/zhj/vscode/cove/src/components/content/SeriesFeedCard.astro:46)。
+证据：[SeriesFeedCard.astro:46](../../src/components/content/SeriesFeedCard.astro:46)。
 
 整个 summary 内含标题、说明、分类链接和标签链接。大区域表示展开，局部又表示跳转，鼠标和触屏用户容易产生操作预期差异；这是交互设计问题，不应简单宣称 HTML 必然无效。
 
@@ -218,7 +218,7 @@
 
 ### D04 · P1：作者范围内的“查看全部”会变成全站列表
 
-证据：[角色详情:39](D:/zhj/vscode/cove/src/pages/character/[key].astro:39)、[查看全部:120](D:/zhj/vscode/cove/src/pages/character/[key].astro:120)。
+证据：[角色详情:39](../../src/pages/character/[key].astro:39)、[查看全部:120](../../src/pages/character/[key].astro:120)。
 
 角色页文章/笔记/项目列表分别截断为 6/8/6 条，超过后“查看全部”链接却指向不带作者范围的全站索引。只有条目超过上限时才触发，属于规模增长后的潜在路径问题。
 
@@ -228,7 +228,7 @@
 
 ### D05 · P1：窄屏目录只能在正文开头访问
 
-证据：[ArticleTOC.astro:29](D:/zhj/vscode/cove/src/components/content/ArticleTOC.astro:29)。
+证据：[ArticleTOC.astro:29](../../src/components/content/ArticleTOC.astro:29)。
 
 1280px 以下使用正文前的折叠目录。阅读到长文中段后，要切到其他章节需回到开头；该模式也覆盖不少桌面窗口，而不仅是手机。移动目录没有桌面版的当前章节高亮。
 
@@ -236,7 +236,7 @@
 
 ### D06 · P1：笔记和项目详情的浏览闭环弱于文章
 
-证据：[笔记详情:70](D:/zhj/vscode/cove/src/pages/notes/[id].astro:70)、[项目详情:96](D:/zhj/vscode/cove/src/pages/projects/[id].astro:96)。
+证据：[笔记详情:70](../../src/pages/notes/[id].astro:70)、[项目详情:96](../../src/pages/projects/[id].astro:96)。
 
 文章已具备较完整的继续阅读路径；笔记主要在末尾展示标签，项目主要是外链和相关文章，缺明显的返回同类列表入口。项目列表能显示 `cover`，但详情模板不展示该字段，列表与详情的封面体验不一致。
 
@@ -244,7 +244,7 @@
 
 ### D07 · P1：品牌 Splash 为可读内容增加了强制等待
 
-证据：[AppSplash.astro:86](D:/zhj/vscode/cove/src/components/base/AppSplash.astro:86)。
+证据：[AppSplash.astro:86](../../src/components/base/AppSplash.astro:86)。
 
 首次会话最少展示 600ms，再等待退场移除计时约 240ms及绘制帧；即使页面已就绪，也不会立即开放阅读。这是源码计时策略，不是本次测得的 LCP。读者直接从外链进入文章时，同样要先看品牌遮罩。
 
@@ -252,7 +252,7 @@
 
 ### D08 · P1：无 JS 回退没有覆盖“部分 JS 失败”
 
-证据：[BaseLayout.astro:180](D:/zhj/vscode/cove/src/layouts/BaseLayout.astro:180)、[SiteHeader.astro:234](D:/zhj/vscode/cove/src/components/navigation/SiteHeader.astro:234)。
+证据：[BaseLayout.astro:180](../../src/layouts/BaseLayout.astro:180)、[SiteHeader.astro:234](../../src/components/navigation/SiteHeader.astro:234)。
 
 引导脚本先移除 `no-js`，窄屏原生导航立即隐藏，但 MobileNav 岛屿可能尚未成功加载。浏览器能执行少量脚本，并不代表后续模块、网络请求与水合都成功；弱网/分片失败期间可能只剩不能工作的菜单按钮。
 
@@ -282,7 +282,7 @@
 
 ### D12 · P1：跨页组件的清理与质量验证仍不完整
 
-证据：[CommentProvider.astro:161](D:/zhj/vscode/cove/src/components/integrations/CommentProvider.astro:161)、[ArticleTOC.astro:166](D:/zhj/vscode/cove/src/components/content/ArticleTOC.astro:166)、[CI](D:/zhj/vscode/cove/.github/workflows/ci.yml)、[package.json](D:/zhj/vscode/cove/package.json)。
+证据：[CommentProvider.astro:161](../../src/components/integrations/CommentProvider.astro:161)、[ArticleTOC.astro:166](../../src/components/content/ArticleTOC.astro:166)、[CI](../../.github/workflows/ci.yml)、[package.json](../../package.json)。
 
 评论主题 MutationObserver 没有对应 disconnect；目录每次初始化创建观察器，也没有显式跨页释放；搜索防抖同样缺卸载清理。这些是资源生命周期风险，不能据此声称已测得内存泄漏数值。
 
@@ -290,7 +290,7 @@
 
 ### D13 · P2：隐私页没有覆盖实际的会话存储
 
-证据：[privacy.astro:55](D:/zhj/vscode/cove/src/pages/privacy.astro:55)、[AppSplash.astro:62](D:/zhj/vscode/cove/src/components/base/AppSplash.astro:62)。
+证据：[privacy.astro:55](../../src/pages/privacy.astro:55)、[AppSplash.astro:62](../../src/components/base/AppSplash.astro:62)。
 
 隐私页说明主题 localStorage 后写“除此之外没有其他本地存储”，但 Splash 使用 `cove:splash-shown` 的 sessionStorage。应说明用途、保存位置和会话范围，或者移除 Splash 存储。这是公开说明与实现的一致性修复，不是本轮法律合规结论。
 

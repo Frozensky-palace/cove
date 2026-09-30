@@ -1,7 +1,7 @@
 # Cove 第三轮评测：前端样式、布局与动效
 
 > 评测日期：2026-09-28  
-> 对照：[上一轮前端评审](D:/zhj/vscode/cove/docs/BLOG-FRONTEND-REVIEW-2026-09-27.md)  
+> 对照：[上一轮前端评审](BLOG-FRONTEND-REVIEW-2026-09-27.md)
 > 对象：当前工作区源码，包括尚未提交的本轮改动；未修改任何业务代码。  
 > 范围：视觉系统、文字可读性、页面层级、响应式布局、组件状态与动效；不评价文章内容。
 
@@ -62,7 +62,7 @@
 
 ### V01 · P0：浅色主题辅助文字低于普通文字对比度门槛
 
-证据：[tokens.css:20](D:/zhj/vscode/cove/src/styles/tokens.css:20)、[global.css:50](D:/zhj/vscode/cove/src/styles/global.css:50)、[HomeSection.astro:59](D:/zhj/vscode/cove/src/components/home/HomeSection.astro:59)。
+证据：[tokens.css:20](../../src/styles/tokens.css:20)、[global.css:50](../../src/styles/global.css:50)、[HomeSection.astro:59](../../src/components/home/HomeSection.astro:59)。
 
 `--text-muted: #687b87` 被大量用于摘要、日期、标签、页脚链接、搜索提示和正文引语。按平面色值计算：
 
@@ -81,7 +81,7 @@
 
 ### V02 · P0：项目“已完成”粉色状态文字太淡
 
-证据：[ProjectCard.astro:127](D:/zhj/vscode/cove/src/components/content/ProjectCard.astro:127)、[项目详情:208](D:/zhj/vscode/cove/src/pages/projects/[id].astro:208)、[tokens.css:24](D:/zhj/vscode/cove/src/styles/tokens.css:24)。
+证据：[ProjectCard.astro:127](../../src/components/content/ProjectCard.astro:127)、[项目详情:208](../../src/pages/projects/[id].astro:208)、[tokens.css:24](../../src/styles/tokens.css:24)。
 
 浅色 `--shell-pink: #dea0af` 对白色卡面约 **2.15:1**，却用于 12–13px 的“已完成”状态字。在 1280px 浅色项目列表中，Tide 卡片的这枚状态字和描边确实显得很淡；浏览器读取到文字为 `rgb(222, 160, 175)`、12px。虽然另有文字而非只靠颜色区分状态，这个文字本身仍不够清晰。
 
@@ -91,7 +91,7 @@
 
 ### V03 · P1：新项目详情的操作区更醒目，但主次层级仍不清楚
 
-证据：[项目详情:95](D:/zhj/vscode/cove/src/pages/projects/[id].astro:95)、[项目操作样式:231](D:/zhj/vscode/cove/src/pages/projects/[id].astro:231)。
+证据：[项目详情:95](../../src/pages/projects/[id].astro:95)、[项目操作样式:231](../../src/pages/projects/[id].astro:231)。
 
 把源码/演示入口从文末移到页头是明显改善，也与状态、署名、正文形成更合理的浏览顺序。375px 项目详情实看时，单个按钮呈现为**“源码 源码”**：第一个来自 `link.label`，第二个来自 `linkLabel[link.type]`，重复又挤占横向空间。所有链接目前还使用同样的白底圆角药丸，没有“主要操作”和“辅助操作”区分。`type=source` 统一用 GitHub 图标，未来若来源不是 GitHub，图标含义会不准确。
 
@@ -101,7 +101,7 @@
 
 ### V04 · P1：部分可点击状态只有鼠标悬停才有“整卡反馈”
 
-证据：[ArticleCard.astro:71](D:/zhj/vscode/cove/src/components/content/ArticleCard.astro:71)、[ProjectCard.astro:77](D:/zhj/vscode/cove/src/components/content/ProjectCard.astro:77)、[global.css:108](D:/zhj/vscode/cove/src/styles/global.css:108)。
+证据：[ArticleCard.astro:71](../../src/components/content/ArticleCard.astro:71)、[ProjectCard.astro:77](../../src/components/content/ProjectCard.astro:77)、[global.css:108](../../src/styles/global.css:108)。
 
 卡片 hover 时整体上浮 2px、描边变蓝；键盘聚焦的是真实标题链接，全局 2px 焦点环仍可见，因此**不是“完全没有焦点提示”**。但整卡的视觉反馈只在鼠标路径出现，键盘路径与触屏路径层级不一致。
 
@@ -113,7 +113,7 @@
 
 ### L01 · P1：320px 手机首屏被较长 Hero 占满【已实测】
 
-证据：[首页 Hero:162](D:/zhj/vscode/cove/src/pages/index.astro:162)、[首页结构:66](D:/zhj/vscode/cove/src/pages/index.astro:66)、[HomeSection.astro:37](D:/zhj/vscode/cove/src/components/home/HomeSection.astro:37)。
+证据：[首页 Hero:162](../../src/pages/index.astro:162)、[首页结构:66](../../src/pages/index.astro:66)、[HomeSection.astro:37](../../src/components/home/HomeSection.astro:37)。
 
 Hero 最小高度 320px，上下 padding 各 3rem；手机上隐藏右侧插画，但保留标题、较长说明、两个按钮。正常挂载后的 375×812 画面中，“精选文章”标题在约 540px，第一张卡片从约 622px 才开始；375px 首屏还看得到卡片开头。稳定加载后复测 **320×568**：页头因品牌与操作区换行为 **105px**，Hero 底部约 **613px**，“精选文章”标题约 **669px**，第一张卡片约 **736px** 才开始。整个首屏看不到文章入口卡片。因此问题不是手机横向溢出，而是**小屏上页头加 Hero 占据的纵向空间过多**。开发服务缓存失效时出现过更高的多行导航，那是临时状态，不作为此处数据。
 
@@ -121,7 +121,7 @@ Hero 最小高度 320px，上下 padding 各 3rem；手机上隐藏右侧插画�
 
 ### L02 · P1：横屏移动抽屉的底部入口不可达【已实测】
 
-证据：[MobileNav.vue:152](D:/zhj/vscode/cove/src/components/islands/MobileNav.vue:152)。
+证据：[MobileNav.vue:152](../../src/components/islands/MobileNav.vue:152)。
 
 抽屉 `position:fixed; inset-block:0`，内部是纵向 flex、较多导航和底部二级入口，但 `.sheet-content` 没有自己的 `overflow-y:auto` 或专门滚动区。375×812 与 320×568 竖屏时入口仍在屏内；切到 **667×375 横屏**，抽屉自身高度约 375px、内容 `scrollHeight` 约 421px，而“隐私说明”的底边约在 **421px**，已落出视口。实测该容器 `overflow-y: visible`；遮罩和固定抽屉状态下，底部入口没有可靠的内部滚动路径。
 
@@ -131,7 +131,7 @@ Hero 最小高度 320px，上下 padding 各 3rem；手机上隐藏右侧插画�
 
 ### L03 · P1：搜索弹窗空态可用，结果三列仍待生产索引验收【部分实测】
 
-证据：[SearchDialog.vue:287](D:/zhj/vscode/cove/src/components/islands/SearchDialog.vue:287)、[结果网格:456](D:/zhj/vscode/cove/src/components/islands/SearchDialog.vue:456)、[筛选按钮:345](D:/zhj/vscode/cove/src/components/islands/SearchDialog.vue:345)。
+证据：[SearchDialog.vue:287](../../src/components/islands/SearchDialog.vue:287)、[结果网格:456](../../src/components/islands/SearchDialog.vue:456)、[筛选按钮:345](../../src/components/islands/SearchDialog.vue:345)。
 
 手机首页按快捷键能打开搜索弹窗。320×568 下空态弹窗实际宽 **288px**、高约 **239px**，搜索框、四个筛选项和推荐入口都在弹窗内；四个筛选按钮实测高度 **32px**。结果行仍是“类型 / 标题 / 日期”三列，但开发服务没有 Pagefind 索引，输入关键词只出现既定错误提示，因此**不能断言结果行实际已挤压**；软键盘弹出后可用高度还会变化，也未在真机验证。
 
@@ -149,14 +149,14 @@ Hero 最小高度 320px，上下 padding 各 3rem；手机上隐藏右侧插画�
 
 ### 做得好的部分
 
-- 悬停多数采用颜色、2px 位移，时长约 120–220ms；卡片反馈没有大幅弹跳。[ArticleCard](D:/zhj/vscode/cove/src/components/content/ArticleCard.astro:65)
-- 抽屉约 200ms、搜索约 160ms，开合速度与导航任务相称。[MobileNav](D:/zhj/vscode/cove/src/components/islands/MobileNav.vue:164)、[SearchDialog](D:/zhj/vscode/cove/src/components/islands/SearchDialog.vue:301)
-- 全局 `prefers-reduced-motion` 将 CSS 动画和过渡缩到极短，主题切换脚本也会直接切换；已经考虑减少动态效果，而非只做视觉动画。[global.css:124](D:/zhj/vscode/cove/src/styles/global.css:124)、[ThemeToggle.astro:77](D:/zhj/vscode/cove/src/components/base/ThemeToggle.astro:77)
-- 系列折叠动画不支持时回退原生 `<details>`，基本交互不依赖动画。[SeriesFeedCard.astro:322](D:/zhj/vscode/cove/src/components/content/SeriesFeedCard.astro:322)
+- 悬停多数采用颜色、2px 位移，时长约 120–220ms；卡片反馈没有大幅弹跳。[ArticleCard](../../src/components/content/ArticleCard.astro:65)
+- 抽屉约 200ms、搜索约 160ms，开合速度与导航任务相称。[MobileNav](../../src/components/islands/MobileNav.vue:164)、[SearchDialog](../../src/components/islands/SearchDialog.vue:301)
+- 全局 `prefers-reduced-motion` 将 CSS 动画和过渡缩到极短，主题切换脚本也会直接切换；已经考虑减少动态效果，而非只做视觉动画。[global.css:124](../../src/styles/global.css:124)、[ThemeToggle.astro:77](../../src/components/base/ThemeToggle.astro:77)
+- 系列折叠动画不支持时回退原生 `<details>`，基本交互不依赖动画。[SeriesFeedCard.astro:322](../../src/components/content/SeriesFeedCard.astro:322)
 
 ### M01 · P1：首次 Splash 的“必须看见”与读者“立即可读”冲突
 
-证据：[AppSplash.astro:86](D:/zhj/vscode/cove/src/components/base/AppSplash.astro:86)、[global.css:237](D:/zhj/vscode/cove/src/styles/global.css:237)。
+证据：[AppSplash.astro:86](../../src/components/base/AppSplash.astro:86)、[global.css:237](../../src/styles/global.css:237)。
 
 第一次进入会话最少展示 600ms，退场节点又约 240ms 后移除。它不是随真实加载进度消失的进度提示；即使已可读，仍会延后交互。`prefers-reduced-motion` 停掉了 CSS 波浪/淡入，但**没有取消这段等待**。这尤其影响从外部链接直接进入文章的读者。
 
@@ -164,7 +164,7 @@ Hero 最小高度 320px，上下 padding 各 3rem；手机上隐藏右侧插画�
 
 ### M02 · P2：持续漂浮动画容易成为常驻注意力竞争者
 
-证据：[首页插画:206](D:/zhj/vscode/cove/src/pages/index.astro:206)。
+证据：[首页插画:206](../../src/pages/index.astro:206)。
 
 首页插画有一次 560ms 入场，又以每程 7 秒的动画反复上下漂浮，hover 还会缩放和加深投影。单独看幅度只有几像素，并不剧烈；但博客的主任务是阅读，持续运动在文字旁边更容易被感知为干扰。加上 Splash、路由进度、主题圆形揭示和系列错峰入场，全站的“安静”气质可能被动效数量削弱。
 

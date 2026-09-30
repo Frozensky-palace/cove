@@ -1,18 +1,26 @@
 # Cove 运维手册
 
-站长的日常运营操作说明：写作与发文、发布验证、回滚、恢复演练与依赖更新。
-开发与架构细节见 [`COVE-DEVELOPMENT-GUIDE.md`](COVE-DEVELOPMENT-GUIDE.md)，实施决策见 [`decision-log.md`](decision-log.md)，CMS 编辑操作见 [`PAGES-CMS-GUIDE.md`](PAGES-CMS-GUIDE.md)。
+站长的日常运营操作说明：写作与发文、发布验证、回滚、恢复演练、依赖更新与构建守卫排查。
+开发与架构细节见 [`COVE-DEVELOPMENT-GUIDE.md`](COVE-DEVELOPMENT-GUIDE.md)，实施决策见
+[`decision-log.md`](decision-log.md)，CMS 编辑操作见 [`PAGES-CMS-GUIDE.md`](PAGES-CMS-GUIDE.md)，
+文档地图见 [`README.md`](README.md)。
 
 ## 0. 部署架构速览
 
 - 以 Git 为唯一事实源：`main` 分支即生产站点 https://cove.xin 。
-- 推送到 `main` → Cloudflare Workers Builds 自动执行 `pnpm install && pnpm build`
-  （`astro check` → `astro build` → Pagefind 索引 → `noindex-preview.mjs`）→
-  `wrangler deploy` 发布 `dist/`。构建到线上生效约 2–3 分钟。
+- 推送到 `main` → Cloudflare Workers Builds 自动执行 `pnpm install && pnpm build`：
+  `astro check`（类型与内容检查）→ `content-guard`（测试内容不进生产）→
+  `astro build` → `generate-og-images`（动态 OG 分享图）→ Pagefind 索引 →
+  `noindex-preview`（分支判断）→ `dist-guard` → `link-check` → `wrangler deploy`
+  发布 `dist/`。构建到线上生效约 2–3 分钟。
+- GitHub Actions（`.github/workflows/ci.yml`）在推送 `main` 与所有 PR 上独立跑同一套
+  「检查 + 构建守卫链」，作为合并前质量门禁；它与 Cloudflare 构建互为备份，不负责部署。
 - 非 `main` 分支的构建产物自动注入 `X-Robots-Tag: noindex`
-  （`scripts/noindex-preview.mjs`，依据 CI 注入的 `WORKERS_CI_BRANCH` 判断；分支未知一律按预览处理，失败安全）。
+  （`scripts/noindex-preview.mjs`，依据 CI 注入的 `WORKERS_CI_BRANCH` 判断；分支未知
+  一律按预览处理，失败安全）。
 - 安全响应头（CSP、HSTS 等）在 `public/_headers` 管理，构建时拷入 `dist/`。
-- 构建记录：Cloudflare 控制台 → Workers & Pages → `cove` → Deployments。
+- 构建记录：Cloudflare 控制台 → Workers & Pages → `cove` → Deployments；
+  CI 记录：GitHub 仓库 Actions 页。
 
 ## 1. 写作与发文
 
@@ -24,11 +32,14 @@
 **B. 本地写作**：在 `src/content/`（posts / notes / projects）新建或编辑 Markdown →
 `pnpm dev` 本地预览 → `pnpm check` 校验 frontmatter 与类型。
 
-### 1.2 草稿与定时发布
+### 1.2 草稿、定时发布与精选
 
 - `draft: true` 的内容不构建进站点（`src/lib/content.ts` 的 `isPublicContent`）。
 - `publishedAt` 为未来日期的内容同样不构建，到点后随下一次构建自动出现
   —— 即「定时发布」是把发布时间写进 frontmatter 后提前合入 `main`。
+- 首页精选区是全站唯一封面展示位：`featured: true` 的文章**必须先配 `cover`**，
+  否则 schema 校验直接构建失败（IMPL-069——无封面的精选主卡会弱于副卡，造成
+  层级倒挂）。配好封面再标精选。
 
 ### 1.3 发布
 
@@ -43,7 +54,9 @@
 2. `https://cove.xin/rss.xml` 已含新条目；
 3. `https://cove.xin/sitemap-index.xml` 已收录新页面；
 4. 若 404：本地 `pnpm check` 复现，检查文件名（slug）与 frontmatter 是否符合 schema；
-5. 新文章页可顺带确认评论区（giscus）正常加载。
+5. 新文章页可顺带确认评论区（giscus）正常加载；
+6. 需要分享传播的文章，可用社交平台调试工具确认 OG 分享卡（构建期自动生成于
+   `dist/og/`，无需手工做图）。
 
 ## 2. 回滚
 
@@ -78,7 +91,7 @@ git clone https://github.com/Frozensky-palace/cove.git cove-restore
 cd cove-restore
 corepack enable                # 如尚未启用 pnpm
 pnpm install --frozen-lockfile # 锁文件冻结安装
-pnpm build                     # 检查 + 构建 + Pagefind 索引
+pnpm build                     # 检查 + 构建守卫链 + Pagefind 索引 + OG 分享图
 pnpm preview                   # 本地预览 http://localhost:4321
 ```
 
@@ -108,13 +121,30 @@ pnpm preview                   # 本地预览 http://localhost:4321
   升级 Node 前先确认 Workers Builds 构建环境支持对应版本；
 - 新增依赖需在 `decision-log.md` 说明理由（指南 21.2）。
 
-## 5. 附录：运营相关文件索引
+## 5. 质量守卫链与常见构建失败排查
+
+四道守卫在 `pnpm build` 中按序执行，任何一道失败即中断构建、挡下发布（哲学：
+把「别忘了」变成「过不去」）。单独调试用 `pnpm guard:content` / `guard:dist` / `guard:links`。
+
+| 守卫 | 拦截什么 | 常见触发与处理 |
+| --- | --- | --- |
+| `content-guard`（源码层） | 文件名 / 标题 / 描述 / 标签命中测试标记的内容未转草稿 | 测试内容补 `draft: true`；豁免口径与生产过滤一致，不要为绕过守卫改豁免名单 |
+| `dist-guard`（产物层） | 仅预览内容（draft / 未来发布日期）的 id 出现在 `dist/` 路径或页面链接 | 检查 `isPublicContent` 过滤逻辑是否被改动；YAML 裸日期会先经 schema preprocess 归一化 |
+| `link-check`（产物层） | `dist/` 页面站内链接断链 | 典型场景：删除/转草稿某内容后，分类页、`relatedPosts`、页脚等处仍引用。上线首日曾抓到 39 个断链（全部分类被页脚罗列、唯一文章转草稿后分类页不再构建，见 IMPL-056）——按报错逐个修引用 |
+| `noindex-preview`（标记，不拦截） | 非 `main` 分支构建注入 `X-Robots-Tag: noindex` | 无需处理：分支未知时按预览处理是失败安全设计 |
+
+## 6. 附录：运营相关文件索引
 
 | 文件 | 作用 |
 | --- | --- |
 | `wrangler.jsonc` | Workers Static Assets 部署配置（资源目录、404 回退、兼容日期） |
+| `scripts/content-guard.mjs` | 内容守卫：测试内容不得进入生产 |
+| `scripts/generate-og-images.mjs` | 构建期生成 OG 分享卡（`dist/og/`，satori + resvg） |
 | `scripts/noindex-preview.mjs` | 非 `main` 分支构建注入 noindex |
-| `public/_headers` | 安全响应头（CSP、HSTS 等） |
+| `scripts/dist-guard.mjs` | 产物守卫：草稿与计划发布内容不出现在 `dist/` |
+| `scripts/link-check.mjs` | 内链守卫：`dist/` 页面站内链接无断链 |
+| `public/_headers` | 安全响应头（CSP、HSTS 等）与静态资源缓存策略 |
 | `giscus.json` | giscus 评论域名 allowlist（仅 `https://cove.xin` 与本地开发可加载） |
 | `.pages.yml` | Pages CMS 内容与媒体配置 |
-| `.github/workflows/` | CI/CD 质量门禁工作流 |
+| `.github/workflows/ci.yml` | CI 质量门禁（检查 + 构建守卫链，不部署） |
+| `docs/README.md` | docs 目录文件地图与阅读顺序 |
