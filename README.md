@@ -1,12 +1,65 @@
+<div align="center">
+
 # Cove
 
-个人博客与内容空间。以 Git 为唯一事实源，Astro 静态构建，部署于 Cloudflare Workers Static Assets。
+**小海湾里的文字、项目与技术分享**
 
-- 开发实施基线：[`docs/COVE-DEVELOPMENT-GUIDE.md`](docs/COVE-DEVELOPMENT-GUIDE.md)
-- 运维手册（发文 / 回滚 / 恢复 / 依赖更新）：[`docs/OPERATIONS.md`](docs/OPERATIONS.md)
-- 架构推导提案：`docs/personal-blog-project-proposal-v2.html`
-- 实施决策记录：[`docs/decision-log.md`](docs/decision-log.md)
-- 真实内容清单：[`docs/content-checklist.md`](docs/content-checklist.md)
+个人博客与内容空间 · 以 Git 为唯一事实源 · Astro 静态构建 · 部署于 Cloudflare Workers
+
+![Cove 品牌卡](public/og-default.png)
+
+[线上站点](https://cove.xin) · [文章](https://cove.xin/posts/) · [笔记](https://cove.xin/notes/) · [项目](https://cove.xin/projects/) · [关于](https://cove.xin/about/) · [文档](docs/README.md)
+
+[![CI](https://github.com/Frozensky-palace/cove/actions/workflows/ci.yml/badge.svg)](https://github.com/Frozensky-palace/cove/actions/workflows/ci.yml)
+![Astro](https://img.shields.io/badge/Astro%207-静态优先-BC52EE?logo=astro&logoColor=white)
+![Vue](https://img.shields.io/badge/Vue%203-Islands-4FC08D?logo=vuedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Cloudflare](https://img.shields.io/badge/部署-Cloudflare%20Workers-F38020?logo=cloudflare&logoColor=white)
+
+</div>
+
+## 简介
+
+Cove 是一个面向中文写作的个人博客与内容空间：文章、笔记、项目与「值守者」角色档案
+全部以 Markdown 保存在 Git 仓库中，经 Astro 构建为纯静态站点。视觉关键词是
+**海雾、浅湾、晨光、纸面、呼吸感**——蓝色为主、贝壳粉点缀，低饱和、多留白。
+
+核心取向：
+
+- **静态优先**：普通文章页零客户端框架即可完整阅读，Vue 仅用于搜索、移动导航等局部 Island；
+- **内容即代码**：Content Collections + Zod schema 在构建期校验全部 frontmatter，草稿与定时发布内容不进入任何生产路由、搜索、RSS 或 Sitemap；
+- **把「别忘了」变成「过不去」**：四道构建守卫 + GitHub Actions CI + Cloudflare 独立构建，三道门禁互为备份。
+
+## 功能特性
+
+**内容系统**
+
+- 文章 / 笔记 / 项目 / 值守者档案四类内容，schema 构建期校验（含 `featured` 必配封面、`updatedAt ≥ publishedAt` 等不变量）
+- 草稿与未来发布日期自动隔离，「定时发布」即提前合入 frontmatter
+- Pages CMS 在线写作（保存即提交仓库）与本地写作双路径，分类在 CMS 中可增删改
+
+**阅读体验**
+
+- 深浅双主题，View Transitions 圆形揭示切换，`prefers-reduced-motion` 全局降级
+- 文章目录、系列文章、上一篇 / 下一篇、相关文章、阅读时长
+- WCAG 2.2 对比度语义令牌，键盘焦点与悬停反馈对等，320px 小屏适配
+
+**发现与互动**
+
+- Pagefind 中文全文搜索：页头弹窗按需加载（不随首屏载入 Vue），独立搜索页支持 URL 状态与全结果分页
+- 分类 / 标签 / 归档时间线 / RSS / Sitemap
+- Giscus 评论（域名 allowlist、加载失败降级为邮件入口）
+
+**SEO 与分享**
+
+- Article / ProfilePage / Person / BreadcrumbList 结构化数据，虚构角色独立标注
+- 构建期自动生成 OG 品牌分享卡（satori + resvg，输出 `dist/og/`），无需手工做图
+
+**质量工程**
+
+- 构建守卫链：`content-guard`（测试内容不进生产）→ `noindex-preview`（非生产分支自动 noindex）→ `dist-guard`（草稿不泄漏）→ `link-check`（站内无断链）
+- GitHub Actions CI 在 `main` 与所有 PR 上运行同一套检查 + 构建链
+- 推送 `main` 即由 Cloudflare Workers Builds 自动发布，支持秒级控制台回滚
 
 ## 技术栈
 
@@ -18,19 +71,22 @@
 | 样式 | Tailwind CSS v4 + CSS variables 设计令牌 |
 | UI 基础 | shadcn-vue（仅复杂交互原语，按阶段添加） |
 | 图标 | Lucide（16/18/20px，描边 1.75） |
+| 搜索 | Pagefind（构建期索引） |
+| 评论 | Giscus（GitHub Discussions） |
+| CMS | Pages CMS（`.pages.yml`） |
+| OG 分享图 | satori + @resvg/resvg-js（构建期） |
+| 部署 | Cloudflare Workers Static Assets |
 | 包管理 | pnpm |
-
-## 环境要求
-
-- Node.js `>= 22`（建议当前 LTS）
-- pnpm `>= 10`（可通过 `corepack enable` 启用）
-- 依赖安装使用锁文件冻结：`pnpm install --frozen-lockfile`
 
 ## 快速开始
 
+环境要求：Node.js `>= 22`、pnpm `>= 10`（可通过 `corepack enable` 启用）。
+
 ```bash
+git clone https://github.com/Frozensky-palace/cove.git
+cd cove
 corepack enable          # 如尚未启用 pnpm
-pnpm install             # 安装依赖
+pnpm install             # 安装依赖（CI 环境用 --frozen-lockfile）
 pnpm dev                 # 本地开发预览 http://localhost:4321
 ```
 
@@ -40,84 +96,69 @@ pnpm dev                 # 本地开发预览 http://localhost:4321
 | --- | --- |
 | `pnpm dev` | 启动本地开发服务器 |
 | `pnpm check` | 类型与内容检查（`astro check`） |
-| `pnpm build:site` | 生产构建（输出 `dist/`） |
-| `pnpm build:search` | 单独运行 Pagefind 索引（已包含在 `build` 链中） |
-| `pnpm build` | 检查 + 生产构建 + Pagefind 索引 + 质量守卫（内容 / 产物 / 内链） |
+| `pnpm build` | 检查 + 生产构建 + OG 分享图 + Pagefind 索引 + 四道质量守卫 |
+| `pnpm build:site` | 仅生产构建（输出 `dist/`，不含守卫链） |
+| `pnpm build:search` | 单独运行 Pagefind 索引 |
 | `pnpm preview` | 本地预览生产构建 |
-| `pnpm guard:content` | 单独运行内容守卫：测试/验收内容不得进入生产（可单独调试） |
-| `pnpm guard:dist` | 单独运行产物守卫：草稿与计划发布内容不得出现在 `dist/` |
-| `pnpm guard:links` | 单独运行内链守卫：`dist/` 页面站内链接无断链 |
 
-## 运营与发布
-
-推送 `main` 即自动构建发布（Cloudflare Workers Builds，约 2–3 分钟生效；非 `main`
-分支构建产物自动 noindex）。GitHub Actions（`.github/workflows/ci.yml`）在推送
-`main` 与所有 PR 上独立跑同一套「检查 + 构建守卫链」，作为合并前质量门禁。
-写作发文、发布验证、回滚、季度恢复演练与依赖更新的
-完整操作说明见 [`docs/OPERATIONS.md`](docs/OPERATIONS.md)。
+构建守卫亦可单独运行（`pnpm guard:content` / `guard:dist` / `guard:links`），
+排查说明见[运维手册](docs/OPERATIONS.md)。
 
 ## 项目结构
 
 ```text
 cove/
-├── docs/                    # 开发指南、提案、决策记录、内容清单
-├── public/                  # 静态资源（favicon、og-default.png、site.webmanifest 等）
+├── .github/workflows/       # CI 质量门禁（ci.yml，不负责部署）
+├── docs/                    # 开发指南、决策记录、运维手册等（索引见 docs/README.md）
+├── public/                  # 静态资源（favicon、_headers 安全头、site.webmanifest）
+├── scripts/                 # 构建守卫与 OG 分享图生成脚本
 ├── src/
 │   ├── assets/              # 品牌、插画、文章/项目媒体与值守者立绘（characters/）
 │   ├── components/
-│   │   ├── base/            # Button、IconButton、Tag、Divider 等视觉原语
-│   │   ├── content/         # ArticleCard、AuthorByline、KeeperPanels、TOC 等
+│   │   ├── base/            # Logo、Tag、ThemeToggle、AppSplash 等视觉原语
+│   │   ├── content/         # ArticleCard、TOC、KeeperPanels、Pagination 等
 │   │   ├── home/            # 首页专用区块
-│   │   ├── islands/         # Vue Island 组件
+│   │   ├── islands/         # Vue Island（搜索弹窗/面板、移动导航）
 │   │   ├── integrations/    # Giscus、Analytics 边界组件
-│   │   └── navigation/      # SiteHeader、SiteFooter、MobileNav
-│   ├── content/             # posts / notes / projects / authors / categories（Content Collections）
-│   ├── data/site.ts         # 站点名称、作者、社交链接等
+│   │   └── navigation/      # SiteHeader、SiteFooter
+│   ├── content/             # posts / notes / projects / authors / categories / milestones
+│   ├── data/                # 站点信息、taxonomy 派生、集成配置
 │   ├── layouts/             # BaseLayout、ContentLayout、ArticleLayout
-│   ├── lib/                 # content、seo、search、urls 等
-│   ├── pages/               # 路由页面
+│   ├── lib/                 # content、seo、search、urls、useSearch
+│   ├── pages/               # 路由（见下）
 │   └── styles/              # tokens.css、global.css、prose.css
-├── scripts/                 # 工具脚本（og-default.svg 及其 PNG 生成）
 ├── astro.config.mjs
 └── package.json
 ```
 
-完整结构与各阶段任务见开发指南第 6、19 节。
+页面路由：首页、文章（分页列表 + 详情）、笔记、项目、系列、分类、标签、归档时间线、
+搜索、关于、现在（/now）、值守者档案（/character）、隐私、404、RSS、Sitemap、robots.txt；
+另有 `/dev/` 设计令牌展示页（始终 noindex，仅用于开发验收）。
 
-## 根目录配置速查表
+## 部署与质量门禁
 
-> 新增根目录配置文件时同步更新此表（约定记录于 `CLAUDE.md`）。
-> 这些文件的位置均为工具强制约定，不可移入子文件夹统一管理。
+- **生产发布**：推送 `main` → Cloudflare Workers Builds 自动执行安装与完整构建链 →
+  `wrangler deploy`，约 2–3 分钟生效；
+- **CI 门禁**：GitHub Actions 在推送 `main` 与所有 PR 上独立运行同一套
+  「检查 + 构建守卫链」，作为合并前质量门禁；
+- **预览隔离**：非 `main` 分支构建自动注入 `X-Robots-Tag: noindex`，不会被搜索引擎收录。
 
-| 文件 | 职责 | 所属工具 / 位置约束 |
-| --- | --- | --- |
-| `package.json` | 依赖声明与脚本命令 | pnpm，必须在根目录 |
-| `pnpm-lock.yaml` | 依赖锁文件，冻结安装（必须提交） | pnpm，必须在根目录 |
-| `tsconfig.json` | TypeScript strict 配置与 `@/*` 路径别名 | TypeScript / `astro check`，按根目录查找 |
-| `astro.config.mjs` | Astro 站点配置：`site`、统一端口 4321、Vue 与 Tailwind 集成 | Astro CLI 自动发现，仅认根目录 |
-| `components.json` | shadcn-vue 初始化配置（样式与别名） | shadcn-vue CLI，只认根目录 |
-| `.gitignore` | Git 忽略规则（构建产物、依赖、环境变量等） | Git，仓库根目录生效 |
-| `.editorconfig` | 编辑器基础格式约定（UTF-8、LF、2 空格缩进） | EditorConfig，从文件向上查找 |
-| `.vscode/extensions.json` | 推荐安装的 VS Code 扩展 | VS Code |
-| `CLAUDE.md` | AI 协作工作流约定 | Claude Code，每次会话自动读取 |
-| `.pages.yml` | Pages CMS 三类内容（文章/笔记/项目）与媒体源编辑配置，字段对齐 `src/content.config.ts` | Pages CMS，强制仓库根目录 |
-| `wrangler.jsonc` | Workers Static Assets 部署配置：静态资源目录 `dist/`、404 回退（`not_found_handling`）、兼容日期 | Wrangler / Workers Builds，按根目录约定查找 |
-| `public/_headers` | 安全响应头（CSP、nosniff、Referrer/Permissions Policy）与 `/_astro/*` 一年 immutable 缓存；其余资产走平台默认短缓存 + ETag 再验证 | Cloudflare Workers Static Assets，`public/` 内容构建时原样拷贝进 `dist/` |
-| `giscus.json` | Giscus 评论域名 allowlist（仅生产域名与本地开发可加载评论，其余来源拒绝加载） | giscus，从仓库默认分支根目录读取 |
-| `.github/workflows/ci.yml` | CI 质量门禁：推送 `main` 与 PR 上运行检查 + 完整构建守卫链（不负责部署） | GitHub Actions，路径固定 |
+写作发文、发布验证、回滚、季度恢复演练、依赖更新与守卫链排查的完整操作说明见
+[运维手册](docs/OPERATIONS.md)。
 
-## 阶段进度
+## 文档
 
-- [x] Phase 0：项目基线与设计准备
-- [x] Phase 1：工程骨架与设计令牌
-- [x] Phase 2：内容系统
-- [x] Phase 3：首页与核心阅读体验
-- [x] Phase 4：内容发现与搜索
-- [x] Phase 5：SEO、分享与可访问性（Lighthouse 与 200% 缩放等运行时验收待 `pnpm preview` 实测）
-- [x] Phase 6：CMS 与外部集成
-- [x] Phase 7：部署、质量门禁与上线
-- [ ] Phase 8：上线观察与后续迭代
+完整文档地图见 [`docs/README.md`](docs/README.md)，核心入口：
 
-## Git 约定
+| 文档 | 内容 |
+| --- | --- |
+| [开发指南](docs/COVE-DEVELOPMENT-GUIDE.md) | 开发基线：产品定义、架构、视觉系统、内容模型、分阶段方案 |
+| [决策记录](docs/decision-log.md) | IMPL-001 起逐条记录每次实施的改动、理由与验证结果 |
+| [运维手册](docs/OPERATIONS.md) | 发文、发布验证、回滚、恢复演练、依赖更新 |
+| [CMS 写作指南](docs/PAGES-CMS-GUIDE.md) | Pages CMS 授权、编辑与发布流程 |
 
-`main` 为生产分支，日常开发使用功能分支 + Pull Request。详见开发指南 17.2 节。
+## 许可
+
+本项目为个人内容站点，未设开源许可证：代码与文章内容保留所有权利，暂不接受外部
+Pull Request。引用与合作需求请通过 [关于页](https://cove.xin/about/) 所列联系方式
+与作者沟通。
