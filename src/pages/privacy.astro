@@ -1,0 +1,90 @@
+---
+/**
+ * 隐私说明页（评审报告 4.2 / 4.7）：准确披露本站实际接触的第三方
+ * 服务与数据行为——Cloudflare Web Analytics、Giscus 评论（GitHub
+ * Discussions）、主题偏好本地存储与联系方式。不使用「无追踪」这类
+ * 笼统表述，改为「不做广告画像、不做跨站跟踪」。
+ *
+ * 服务清单与 src/data/integrations.ts 保持一致；页脚入口见
+ * siteConfig.footerNav。评审报告 P0 验收项。
+ */
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import { siteConfig } from '@/data/site';
+import { formatDate } from '@/lib/content';
+
+const email = siteConfig.social.find((item) => item.icon === 'email')?.href.replace(/^mailto:/, '');
+
+/** 本页最后更新日期（YYYY-MM-DD，内容变更时手动维护） */
+const LAST_UPDATED = '2026-09-24';
+---
+
+<ContentLayout
+  title="隐私说明"
+  intro="这个站点收集什么、不收集什么，一次说清楚。"
+  description="Cove 的隐私说明：Cloudflare Web Analytics 匿名统计、Giscus/GitHub 评论、本地存储与联系方式。"
+  path="/privacy/"
+>
+  <div class="privacy prose">
+    <p>
+      本页说明 <strong>{siteConfig.url}</strong>（下称「本站」）在访问、评论与联系
+      过程中会接触哪些数据。本站不做广告画像，不做跨站跟踪，也没有需要点击同意的
+      Cookie 弹窗——因为本站不使用广告或画像类 Cookie。
+    </p>
+
+    <h2>访问统计：Cloudflare Web Analytics</h2>
+    <p>
+      本站使用 Cloudflare Web Analytics 了解匿名访问量与真实用户性能（如页面加载
+      速度）。它<strong>不设置广告 Cookie、不采集个人画像、不做跨站跟踪</strong>，
+      也不会将数据用于广告。统计由 Cloudflare 处理，数据处理受
+      <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare 隐私政策</a>约束。
+    </p>
+
+    <h2>评论：Giscus（GitHub Discussions）</h2>
+    <p>
+      文章与留言板的评论区由 <a href="https://giscus.app/">Giscus</a> 提供，评论数据
+      存放在本站 GitHub 仓库的 Discussions 中。发表评论需要登录 GitHub 账号：
+      你的昵称与头像会随评论公开显示，评论内容本身也是公开的。登录、评论与账号
+      数据由 GitHub 处理，受
+      <a href="https://docs.github.com/en/site-policy/github-privacy-statement">GitHub 隐私声明</a>
+      约束。不评论、不登录，同样可以完整阅读全部内容。
+    </p>
+
+    <h2>本地存储</h2>
+    <p>
+      本站仅在浏览器 <code>localStorage</code> 中保存你的主题偏好（浅色 / 深色），
+      该信息不离开你的设备。除此之外没有其他本地存储。
+    </p>
+
+    <h2>不会做的事</h2>
+    <ul>
+      <li>不投放广告，不做用户画像，不做跨站跟踪；</li>
+      <li>不嵌入广告或社交媒体的追踪脚本；</li>
+      <li>不向第三方出售或共享任何可识别个人身份的数据。</li>
+    </ul>
+
+    <h2>联系</h2>
+    <p>
+      关于本页的任何疑问，欢迎邮件联系
+      {email ? <a href={`mailto:${email}`}>{email}</a> : '站长'}。本页内容如有更新，
+      会随站点一同发布，并在下方注明最后更新日期。
+    </p>
+    <p class="privacy-updated">最后更新：{formatDate(LAST_UPDATED)}</p>
+  </div>
+</ContentLayout>
+
+<style>
+  .privacy {
+    /* 正文列与居中页头同宽对齐（IMPL-053，与 about/now 页同处理） */
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+
+  .privacy :global(li) {
+    line-height: 1.8;
+  }
+
+  .privacy-updated {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+</style>

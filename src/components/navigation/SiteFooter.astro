@@ -1,16 +1,37 @@
 ---
 /**
  * 全局页脚：站点信息、主导航、分类与发现入口、版权。
- * 顶部波浪饰线呼应 Logo 与品牌加载页；分类/标签/归档/RSS 在页脚
- * 提供入口（指南 7.1；标签暂无索引页，待后续阶段补充）。
+ * 顶部波浪饰线呼应 Logo 与品牌加载页；分类/标签/系列/归档/RSS/隐私
+ * 在页脚提供入口（指南 7.1；标签总览页见 /tags/，IMPL-056）。
  */
 import Logo from '@/components/base/Logo.astro';
+import ClockIcon from '@/components/base/icons/ClockIcon.astro';
+import ArchiveIcon from '@/components/base/icons/ArchiveIcon.astro';
+import LayersIcon from '@/components/base/icons/LayersIcon.astro';
+import TagIcon from '@/components/base/icons/TagIcon.astro';
+import RssIcon from '@/components/base/icons/RssIcon.astro';
+import ShieldIcon from '@/components/base/icons/ShieldIcon.astro';
 import { siteConfig } from '@/data/site';
 import { CATEGORIES } from '@/data/taxonomy';
 import { categoryUrl } from '@/lib/urls';
+import { getCategoryStats } from '@/lib/content';
 
 const year = new Date().getFullYear();
-const categories = Object.entries(CATEGORIES);
+/* IMPL-056（评审报告 4.5，link-check 实测）：分类页只为有已发布内容的
+   分类构建；页脚只链接这类分类，避免指向不存在的 /categories/<key>/。
+   展示顺序仍按 taxonomy 的 order。 */
+const publishedKeys = new Set((await getCategoryStats()).map(({ key }) => key));
+const categories = Object.entries(CATEGORIES).filter(([key]) => publishedKeys.has(key));
+
+/* 发现与订阅入口图标（IMPL-063）：按 href 映射，未命中不渲染图标 */
+const DISCOVERY_ICONS = {
+  '/now/': ClockIcon,
+  '/archive/': ArchiveIcon,
+  '/series/': LayersIcon,
+  '/tags/': TagIcon,
+  '/rss.xml': RssIcon,
+  '/privacy/': ShieldIcon,
+} as const;
 ---
 
 <footer class="site-footer">
@@ -64,11 +85,21 @@ const categories = Object.entries(CATEGORIES);
         <h2 class="footer-heading">发现与订阅</h2>
         <ul>
           {
-            siteConfig.footerNav.map((item) => (
-              <li>
-                <a href={item.href}>{item.label}</a>
-              </li>
-            ))
+            siteConfig.footerNav.map((item) => {
+              const Icon = DISCOVERY_ICONS[item.href as keyof typeof DISCOVERY_ICONS];
+              return (
+                <li>
+                  <a href={item.href}>
+                    {Icon && (
+                      <span class="footer-icon" aria-hidden="true">
+                        <Icon size={15} />
+                      </span>
+                    )}
+                    {item.label}
+                  </a>
+                </li>
+              );
+            })
           }
         </ul>
       </div>
@@ -157,16 +188,26 @@ const categories = Object.entries(CATEGORIES);
   }
 
   .footer-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     color: var(--text-muted);
     font-size: 14px;
     text-decoration: none;
-    transition: color 150ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   .footer-nav a:hover {
     color: var(--cove-blue-strong);
     text-decoration-line: underline;
     text-underline-offset: 0.3em;
+  }
+
+  /* 入口图标（IMPL-063）：淡蓝装饰，随链接文字色悬停联动 */
+  .footer-icon {
+    display: inline-flex;
+    color: var(--cove-blue);
+    opacity: 0.85;
   }
 
   .footer-bottom {

@@ -108,6 +108,7 @@ function chunkByMonth(posts: Post[]): MonthChunk[] {
   .timeline {
     position: relative;
     max-width: 46rem;
+    margin-inline: auto;
   }
 
   /* 竖轨：两端 36px 渐隐，避免硬边截断 */
@@ -214,7 +215,7 @@ function chunkByMonth(posts: Post[]): MonthChunk[] {
     margin-inline: -0.75rem;
     border-radius: var(--radius-control);
     text-decoration-line: none;
-    transition: background-color 150ms ease;
+    transition: background-color var(--motion-fast) ease;
   }
 
   /* 条目节点：默认与竖轨同色，悬停点亮为品牌色（指南 8.6：仅颜色变化） */
@@ -228,7 +229,7 @@ function chunkByMonth(posts: Post[]): MonthChunk[] {
     border-radius: 50%;
     background-color: var(--border);
     transform: translateY(-50%);
-    transition: background-color 150ms ease;
+    transition: background-color var(--motion-fast) ease;
   }
 
   .tl-item time {
@@ -236,13 +237,13 @@ function chunkByMonth(posts: Post[]): MonthChunk[] {
     font-family: var(--font-mono);
     font-size: 0.8125rem;
     white-space: nowrap;
-    transition: color 150ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   .tl-title {
     color: var(--text);
     line-height: 1.6;
-    transition: color 120ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   .tl-category {

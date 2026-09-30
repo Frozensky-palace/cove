@@ -8,7 +8,7 @@ tags:
   - TypeScript
   - 内容管理
 draft: false
-featured: true
+featured: false
 lang: zh-CN
 ---
 

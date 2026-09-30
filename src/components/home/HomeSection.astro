@@ -2,25 +2,39 @@
 /**
  * 首页区块容器（指南 9.2）：区块标题 + 可选「查看全部」入口 + 内容槽。
  * 标题固定 h2（首页 h1 在 hero），保证标题层级连续。
+ * IMPL-063：可选标题图标（icon 传 IconBase 体系组件），主题蓝着色、
+ * 装饰性 aria-hidden 由图标组件自带——提升区块可扫读性。
  */
+// Astro 7 不再从 'astro' 顶层导出组件类型；runtime/server 为其自身
+// content 类型模板所用的官方路径（package.json exports "./runtime/*"）
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
+
 interface Props {
   title: string;
+  /** 标题左侧装饰图标组件（可选，如 CompassIcon/StarIcon） */
+  icon?: AstroComponentFactory;
   /** 「查看全部」目标路径；缺省时不渲染入口 */
   moreHref?: string;
   moreLabel?: string;
+  /** 链接的无障碍名称（评审报告 4.4：多个「查看全部」需可区分），
+      缺省回退 moreLabel */
+  moreAriaLabel?: string;
   /** 无障碍区块标签，缺省用 title */
   label?: string;
 }
 
-const { title, moreHref, moreLabel = '查看全部', label } = Astro.props;
+const { title, icon: Icon, moreHref, moreLabel = '查看全部', moreAriaLabel, label } = Astro.props;
 ---
 
 <section class="home-section" aria-label={label ?? title}>
   <div class="section-head">
-    <h2 class="section-title">{title}</h2>
+    <h2 class="section-title">
+      {Icon && <span class="section-icon"><Icon /></span>}
+      {title}
+    </h2>
     {
       moreHref && (
-        <a class="section-more" href={moreHref}>
+        <a class="section-more" href={moreHref} aria-label={moreAriaLabel ?? moreLabel}>
           {moreLabel}
           <span aria-hidden="true">→</span>
         </a>
@@ -47,10 +61,19 @@ const { title, moreHref, moreLabel = '查看全部', label } = Astro.props;
   }
 
   .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     margin: 0;
     font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: 0.01em;
+  }
+
+  /* 标题图标（IMPL-063）：同 about-topics 先例——主题蓝着色、随标题行对齐 */
+  .section-icon {
+    display: inline-flex;
+    color: var(--cove-blue-strong);
   }
 
   .section-more {
@@ -61,7 +84,7 @@ const { title, moreHref, moreLabel = '查看全部', label } = Astro.props;
     font-size: 0.875rem;
     text-decoration-line: none;
     white-space: nowrap;
-    transition: color 150ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   .section-more:hover {
@@ -72,7 +95,7 @@ const { title, moreHref, moreLabel = '查看全部', label } = Astro.props;
 
   /* 箭头随悬停轻推 2px（指南 8.6 位移上限） */
   .section-more span {
-    transition: transform 150ms ease;
+    transition: transform var(--motion-fast) ease;
   }
 
   .section-more:hover span {

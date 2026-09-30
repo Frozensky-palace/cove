@@ -44,3 +44,8 @@ export function noteUrl(id: string): string {
 export function projectUrl(id: string): string {
   return `/projects/${id}/`;
 }
+
+/** 值守者档案页 URL（IMPL-052）：key 即 authors collection 的文件名。 */
+export function characterUrl(key: string): string {
+  return `/character/${key}/`;
+}

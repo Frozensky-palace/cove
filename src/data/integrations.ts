@@ -6,7 +6,7 @@
  *
  * 留空 = 对应功能整体不渲染、不加载任何第三方脚本，
  * 正文与导航不受影响（指南 3.5 渐进增强、19 Phase 6 验收）。
- * 填写步骤见 docs/PHASE6-MANUAL-CHECKLIST.md。
+ * 填写步骤见 docs/phases/PHASE6-MANUAL-CHECKLIST.md。
  */
 
 /** Giscus 评论（基于 GitHub Discussions，指南 ADR-008） */

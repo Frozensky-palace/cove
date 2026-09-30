@@ -6,7 +6,7 @@ category: web-dev
 tags:
   - Astro
   - 系列测试
-draft: false
+draft: true
 lang: zh-CN
 series: Astro 从零到一
 ---

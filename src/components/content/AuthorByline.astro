@@ -1,0 +1,162 @@
+---
+/**
+ * 值守者署名（IMPL-052）：详情页显示作者头像、名字、身份与一句话简介。
+ * 名字链接到 /character/<key>/ 档案页；头像为装饰（alt 空），信息由文字承载。
+ * 名字标注 data-pagefind-meta="author"：搜索值守者名可命中其内容（用户需求）。
+ * IMPL-053 重做：单一紧凑设计（40px 头像 + 名字/身份同行 + 简介在下），
+ * 统一置于三类详情页（文章/笔记/项目）正文上方；三轮修正：立绘为全身 3:4
+ * 构图，object-fit: cover 默认居中裁出躯干，object-position: top 对齐人物面部。
+ * ⑧/054 头像取景：transform 放大取景 + 头部锚点（AVATAR_FRAMING 的
+ * zoom/anchor 两旋钮，机制说明见 frontmatter 注释）；圆形裁切放在外层
+ * frame（overflow: hidden）而非图片自身——border-radius 会随 transform
+ * 一起放大，圆就失效了。
+ */
+import { Image } from 'astro:assets';
+import { getAuthor } from '@/lib/content';
+import { characterUrl } from '@/lib/urls';
+
+interface Props {
+  authorKey: string;
+}
+
+const { authorKey } = Astro.props;
+const author = await getAuthor(authorKey);
+
+/**
+ * 头像取景旋钮（IMPL-054，用户可调，每位值守者两项）：
+ * - zoom：放大倍数，越大离人物越近；
+ * - anchor：人物头部在立绘高度上的大致位置（0 = 图顶，1 = 图底）。
+ * ⑧ 旧版把取景窗锚死在图片顶边（object-position: top + origin 50% 0），
+ * 放大只会让窗口向头顶上方的场景收缩（用户实测「4.0 无变化」的根因）。
+ * 改为以头部为缩放锚点后，zoom 才是真正的「远近」旋钮。
+ * 054 补充：许朝夕立绘原图（903×1742，明显高瘦于另两张的 1024×1536）
+ * 已裁切为 2:3 统一构图；叠网格实测头部位置：温约 8%～17%（中心 12%），
+ * 许约 9%～19%（中心 14%），两图同档取景。
+ * ⑤ anchor 完全失效的第二根因：下方 Image 同时声明 width 与 height 时，
+ * Astro 图片服务会按 cover 居中把源图裁成正方形再输出——头部所在的
+ * 上 1/6 在构建期就被裁掉，CSS 只能在「无头」素材上挪窗口，怎么调都
+ * 看不到头。改为只声明 width 保比例输出（200×2:3），anchor/zoom 才
+ * 作用到完整立绘（顺带解释上一轮「zoom 4.0 无变化」：素材里本无头）。
+ */
+const AVATAR_FRAMING: Record<string, { zoom: number; anchor: number }> = {
+  'wen-wanan': { zoom: 1.2, anchor: 0 },
+  'xu-zhaoxi': { zoom: 1.2, anchor: 0.03 },
+  'shen-yuzhou': { zoom: 1, anchor: 0 },
+};
+
+/** transform-origin 纵向位置：cover 顶对齐后，头部像素位于盒高的
+    anchor × 立绘高宽比 处（比例由图片元数据实算，不假设构图比例） */
+const framing = AVATAR_FRAMING[author?.data.key ?? ''];
+const avatarZoom = framing?.zoom ?? 1;
+const avatarOriginY =
+  author && framing
+    ? ((framing.anchor * author.data.avatar.height * 100) / author.data.avatar.width).toFixed(1)
+    : '0';
+---
+
+{
+  author && (
+    <aside class="author-byline">
+      <span
+        class="byline-avatar-frame"
+        style={`--avatar-zoom: ${avatarZoom}; --avatar-origin-y: ${avatarOriginY}%`}
+      >
+        {/* 渲染尺寸给足余量（200px）：头像经 --avatar-zoom 放大取景后，
+            40px 圆在 2 倍屏 × 取景倍数下需要更大幅源图，72px 会发虚。
+            只声明 width 保比例输出；若同时给 height 会被 Astro 按 cover
+            居中裁成方形，头部像素在构建期即丢失（见 frontmatter ⑤） */}
+        <Image
+          class="byline-avatar"
+          src={author.data.avatar}
+          alt=""
+          width={200}
+          loading="lazy"
+        />
+      </span>
+      <div class="byline-text">
+        <p class="byline-name">
+          <a href={characterUrl(author.data.key)} data-pagefind-meta="author">
+            {author.data.name}
+          </a>
+          <span class="byline-role">{author.data.role}</span>
+        </p>
+        <p class="byline-tagline">{author.data.tagline}</p>
+      </div>
+    </aside>
+  )
+}
+
+<style>
+  .author-byline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background-color: var(--surface);
+  }
+
+  /* 圆形取景框（IMPL-053 ⑧）：裁切由 frame 完成（overflow + radius 恒定
+     40px），内部图片 transform 放大取景，frame 不随缩放变形 */
+  .byline-avatar-frame {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .byline-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* object-position 顶对齐；缩放锚点由 --avatar-origin-y 注入（按
+       anchor × 立绘高宽比换算，IMPL-054），zoom 再大也围绕头部取景 */
+    object-position: top;
+    transform: scale(var(--avatar-zoom, 1));
+    transform-origin: 50% var(--avatar-origin-y, 0%);
+  }
+
+  .byline-text {
+    min-width: 0;
+    /* 头像 40px 的两行文字（名字行 + 简介行）与头像视觉居中 */
+    padding-block: 0.125rem;
+  }
+
+  .byline-name {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.125rem 0.5rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .byline-name a {
+    font-weight: 600;
+    color: var(--text);
+    text-decoration-line: none;
+    transition: color var(--motion-fast) var(--ease-standard);
+  }
+
+  .byline-name a:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+    text-decoration-thickness: 1px;
+  }
+
+  .byline-role {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .byline-tagline {
+    margin: 0.125rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.65;
+  }
+</style>

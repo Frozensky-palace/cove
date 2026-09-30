@@ -1,5 +1,8 @@
 # Phase 7 手动操作与验证清单
 
+> **已归档**：Phase 7（部署、质量门禁与上线）已完成并关闭，本文保留作历史记录，
+> 不再维护。其后的变更见 [`decision-log.md`](../decision-log.md)（IMPL-049 之后的条目）。
+
 Phase 7（部署、质量门禁与上线）的自动化与线上排查已完成（IMPL-048 收尾，含 www
 绑定与重定向实测）。以下各项**只能在真实浏览器/真机上由你操作验证**，全部通过后
 Phase 7 即可关闭。前置：本文档所在提交已合并到 `main` 并完成线上构建（giscus.json
@@ -50,7 +53,7 @@ Phase 7 即可关闭。前置：本文档所在提交已合并到 `main` 并完�
 
 - [ ] ① 推送 `main` 后 Cloudflare 控制台出现构建记录，2–3 分钟内线上生效；
 - [ ] ② Cloudflare Web Analytics 控制面板开始收到真实访问数据（beacon 上报）；
-- [ ] ③ 按 [`OPERATIONS.md`](OPERATIONS.md) 第 2.1 节在测试分支或本地演练一次 `git revert` 流程（不必真回滚线上）。
+- [ ] ③ 按 [`OPERATIONS.md`](../OPERATIONS.md) 第 2.1 节在测试分支或本地演练一次 `git revert` 流程（不必真回滚线上）。
 
 ---
 

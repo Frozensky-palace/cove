@@ -6,6 +6,7 @@
 import { render } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import TagList from '@/components/content/TagList.astro';
+import AuthorByline from '@/components/content/AuthorByline.astro';
 import {
   formatDate,
   getPublishedNotes,
@@ -32,7 +33,16 @@ const description =
 const previewOnly = showPreviewContent && isPreviewOnly(note);
 ---
 
-<BaseLayout title={title} description={description} path={noteUrl(note.id)} noindex={previewOnly}>
+<BaseLayout
+  title={title}
+  description={description}
+  path={noteUrl(note.id)}
+  noindex={previewOnly}
+  imagePath={`/og/notes/${note.id}.png`}
+  imageWidth={1200}
+  imageHeight={630}
+  imageAlt={title}
+>
   {
     previewOnly && (
       <div class="preview-banner" role="note">
@@ -57,6 +67,7 @@ const previewOnly = showPreviewContent && isPreviewOnly(note);
             )
           }
         </p>
+        <AuthorByline authorKey={note.data.author} />
       </header>
       <div class="prose">
         <Content />
@@ -74,7 +85,12 @@ const previewOnly = showPreviewContent && isPreviewOnly(note);
 
 <style>
   .preview-banner {
+    /* 与居中的正文列同宽（IMPL-053） */
+    max-width: 42rem;
+    margin-inline: auto;
+    margin-bottom: 1.5rem;
     padding: 0.625rem 1.5rem;
+    border-radius: var(--radius-control);
     background-color: var(--shell-pink-soft);
     color: var(--text);
     font-size: 0.875rem;
@@ -87,6 +103,7 @@ const previewOnly = showPreviewContent && isPreviewOnly(note);
 
   .note-article {
     max-width: 42rem;
+    margin-inline: auto;
   }
 
   .note-header {

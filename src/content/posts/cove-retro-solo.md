@@ -5,7 +5,7 @@ publishedAt: '2026-09-13'
 category: engineering
 tags:
   - 系列测试
-draft: false
+draft: true
 lang: zh-CN
 series: Cove 改造手记
 ---

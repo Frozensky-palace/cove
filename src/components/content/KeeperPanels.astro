@@ -1,0 +1,225 @@
+---
+/**
+ * 值守者百叶窗（IMPL-052，用户点名需求）：about 页的三联竖版立绘展示。
+ * 桌面端 hover / 键盘聚焦时面板展开（flex-grow 过渡），露出更多立绘与简介；
+ * 触屏与窄屏退化为纵向堆叠（整面即链接，点按前往档案页）。
+ * 展开动效超出指南 8.6 悬停白名单（≤2px / 120–220ms），属用户点名的
+ * 展示型动效，沿用 IMPL-044 先例记录于 decision-log。
+ * IMPL-067：整体节奏按用户要求「尽量慢速」放缓——展开 850→1600ms、
+ * 收拢 180→600ms、立绘缩放同幅放缓、简介浮现 320+200ms→560+480ms。
+ * 立绘为装饰（alt 空）：面板文字（名字/身份）已承载全部信息。
+ */
+import { Image } from 'astro:assets';
+import type { Author } from '@/lib/content';
+import { characterUrl } from '@/lib/urls';
+
+interface Props {
+  authors: Author[];
+}
+
+const { authors } = Astro.props;
+---
+
+<div class="keeper-panels">
+  {
+    authors.map((author) => (
+      <a
+        class="keeper-panel"
+        href={characterUrl(author.data.key)}
+        style={`--keeper-accent: ${author.data.colors[0]?.value ?? 'var(--cove-blue)'}`}
+      >
+        <Image
+          class="keeper-photo"
+          src={author.data.avatar}
+          alt=""
+          widths={[360, 540, 720]}
+          sizes="(min-width: 720px) 33vw, 100vw"
+          loading="lazy"
+        />
+        <span class="keeper-scrim" aria-hidden="true" />
+        <span class="keeper-caption">
+          <span class="keeper-symbol">{author.data.symbol}</span>
+          <span class="keeper-name">{author.data.name}</span>
+          <span class="keeper-role">{author.data.role}</span>
+          <span class="keeper-tagline">{author.data.tagline}</span>
+        </span>
+      </a>
+    ))
+  }
+</div>
+
+<style>
+  .keeper-panels {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1.5rem 0 0.5rem;
+  }
+
+  .keeper-panel {
+    position: relative;
+    flex: 1 1 0%;
+    min-width: 0;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--radius-overlay);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background-color: var(--surface-muted);
+    text-decoration-line: none;
+    /* 基础态承担「收拢」（IMPL-067 放缓）：600ms standard 徐徐归位
+       （原 180ms 利落收拢按用户要求放缓）；展开的目标态过渡见下方悬停块
+       （1600ms easeOutBack）。仅过渡 flex-grow，立绘 object-fit: cover
+       随宽度重裁，不缩放不变形 */
+    transition: flex-grow 600ms var(--ease-standard);
+  }
+
+  /* 百叶窗展开（IMPL-053 重做）：桌面整条定高，悬停只改变宽度分配——
+     原 per-panel aspect-ratio 会让展开面板变高、其余两块被压窄拉长，
+     立绘裁切成细条；定高后其余面板仅匀称变窄，构图稳定 */
+  @media (hover: hover) and (min-width: 720px) {
+    .keeper-panels {
+      height: clamp(320px, 36vw, 440px);
+    }
+
+    .keeper-panel {
+      aspect-ratio: auto;
+      height: 100%;
+    }
+
+    /* 展开（IMPL-067 放缓到「尽量慢速」）：1600ms + easeOutBack 过冲
+       （y1=1.56，末段越过目标约 12% 再回落）——慢速展开下过冲回落
+       像海面涌动收平，成为可欣赏的收尾细节；展开行程 flex-grow 2.1
+       （悬停面板约拿走 52% 宽度）；与 600ms 收拢仍保持
+       「展开慢、收拢快」的方向性对比（约 2.7:1） */
+    .keeper-panel:hover,
+    .keeper-panel:focus-visible {
+      flex-grow: 2.1;
+      transition: flex-grow 1600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+  }
+
+  .keeper-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    /* 立绘微缩放（IMPL-067 同幅放缓）：展开时 1.09 倍轻推，取景锚点在
+       人物头部（object-position: top 同源），收拢徐徐复位；与宽度展开同节奏 */
+    transform-origin: 50% 15%;
+    transform: scale(1);
+    transition: transform 600ms var(--ease-standard);
+  }
+
+  @media (hover: hover) and (min-width: 720px) {
+    .keeper-panel:hover .keeper-photo,
+    .keeper-panel:focus-visible .keeper-photo {
+      transform: scale(1.09);
+      transition: transform 1600ms var(--ease-out);
+    }
+  }
+
+  /* 三块面板的说明文字行对齐（IMPL-053 ⑦/⑧）：
+     ⑦ 定高说明区方案会在系统最小字号/缩放下把简介裁半（⑧ 用户反馈），
+     ⑧ 改为简介「浮」在名字块上方——绝对定位不占布局，向上生长、永不
+     截断；符号/名字/身份行留在文档流且内容恒定（身份行 nowrap），三块
+     面板的名字行天然等高对齐，不再依赖任何定高假设 */
+  @media (hover: hover) and (min-width: 720px) {
+    .keeper-tagline {
+      position: absolute;
+      inset-inline: 0;
+      bottom: calc(100% + 0.25rem);
+      margin-top: 0;
+      padding-inline: 1rem;
+    }
+
+    /* 「灯塔值守人 · 站长」在收窄面板也不断行，名字块高度恒定 */
+    .keeper-role {
+      white-space: nowrap;
+    }
+  }
+
+  /* 底部渐变遮罩：以值守者代表色着色，保证文字可读；
+     起始点 45%→36%（IMPL-053 ⑧）：简介浮层位于名字块上方，遮罩需提前
+     覆盖简介所在的 25%–45% 高度区间 */
+  .keeper-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 36%,
+      color-mix(in srgb, var(--keeper-accent) 55%, #0b141a) 100%
+    );
+  }
+
+  .keeper-caption {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1.25rem 1rem;
+    color: #fff;
+  }
+
+  .keeper-symbol {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    opacity: 0.85;
+  }
+
+  .keeper-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .keeper-role {
+    font-size: 0.8125rem;
+    opacity: 0.92;
+  }
+
+  /* 简介仅在展开态露出（触屏/窄屏常显，见下方媒体查询）；
+     opacity 不移出无障碍树，屏幕阅读器始终可读。
+     出场延迟 480ms——等面板展开近半再浮现（IMPL-067 随整体放缓，
+     延迟约为展开时长的 30%，与原 200/850 同比例）；
+     收场不延迟，鼠标移出即让位（320ms 徐落） */
+  .keeper-tagline {
+    margin-top: 0.375rem;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    opacity: 0;
+    transform: translateY(4px);
+    transition:
+      opacity 320ms var(--ease-standard),
+      transform 320ms var(--ease-standard);
+  }
+
+  @media (hover: hover) and (min-width: 720px) {
+    .keeper-panel:hover .keeper-tagline,
+    .keeper-panel:focus-visible .keeper-tagline {
+      opacity: 0.95;
+      transform: translateY(0);
+      transition:
+        opacity 560ms var(--ease-out) 480ms,
+        transform 560ms var(--ease-out) 480ms;
+    }
+  }
+
+  /* 窄屏 / 触屏：纵向堆叠为横幅，简介常显 */
+  @media (max-width: 719px), (hover: none) {
+    .keeper-panels {
+      flex-direction: column;
+    }
+
+    .keeper-panel {
+      aspect-ratio: 4 / 3;
+    }
+
+    .keeper-tagline {
+      opacity: 0.95;
+      transform: none;
+    }
+  }
+</style>

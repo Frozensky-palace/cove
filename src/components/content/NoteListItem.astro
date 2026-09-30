@@ -5,6 +5,7 @@
  */
 import TagList from '@/components/content/TagList.astro';
 import { noteUrl } from '@/lib/urls';
+import { authorName } from '@/data/authors';
 import { formatDate, type Note } from '@/lib/content';
 
 interface Props {
@@ -21,9 +22,12 @@ const displayTitle = note.data.title ?? `${formatDate(note.data.publishedAt)} �
     <h3 class="note-title">
       <a href={noteUrl(note.id)}>{displayTitle}</a>
     </h3>
-    <time class="note-date" datetime={note.data.publishedAt}>
-      {formatDate(note.data.publishedAt)}
-    </time>
+    <span class="note-aside">
+      <span class="note-author">{authorName(note.data.author)}</span>
+      <time class="note-date" datetime={note.data.publishedAt}>
+        {formatDate(note.data.publishedAt)}
+      </time>
+    </span>
   </div>
   {
     note.data.title && (
@@ -43,15 +47,17 @@ const displayTitle = note.data.title ?? `${formatDate(note.data.publishedAt)} �
     padding-inline: 0.625rem;
     margin-inline: -0.625rem;
     border-radius: var(--radius-control);
-    transition: background-color 150ms ease;
+    transition: background-color var(--motion-fast) ease;
   }
 
   .note-item + .note-item {
     border-top: 1px dashed var(--border);
   }
 
-  /* 悬停：品牌色淡底（指南 8.6：仅颜色变化，无位移） */
-  .note-item:hover {
+  /* 悬停：品牌色淡底（指南 8.6：仅颜色变化，无位移）。
+     键盘路径同款整行反馈（评审 V04），说明同 ArticleListItem */
+  .note-item:hover,
+  .note-item:has(:focus-visible) {
     background-color: color-mix(in srgb, var(--cove-blue) 6%, transparent);
   }
 
@@ -78,6 +84,19 @@ const displayTitle = note.data.title ?? `${formatDate(note.data.publishedAt)} �
     color: var(--cove-blue-strong);
     text-decoration-line: underline;
     text-underline-offset: 0.3em;
+  }
+
+  .note-aside {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  /* 值守者名（IMPL-052）：纯文字，不带头像（用户决策） */
+  .note-author {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    white-space: nowrap;
   }
 
   .note-date {

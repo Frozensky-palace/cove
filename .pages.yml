@@ -52,6 +52,15 @@ media:
     rename: safe
     extensions: [jpg, jpeg, png, webp, avif, gif, svg]
 
+  # 值守者立绘（IMPL-052）：authors collection 的 avatar 引用此源；
+  # src/content/authors/*.md 的 ../../ = src/ → src/assets/characters。
+  - name: characters-media
+    label: 值守者立绘
+    input: src/assets/characters
+    output: ../../assets/characters
+    rename: safe
+    extensions: [jpg, jpeg, png, webp, avif, gif, svg]
+
 content:
   # ── 分类（文章分类的字典，可在 CMS 直接增删改） ──────────
   # 每个分类一个小文件，文件名 = 分类 key = URL slug（/categories/<key>/）。
@@ -93,6 +102,59 @@ content:
         label: 排序
         type: number
         description: 可选。导航与分类页中的排序，越小越靠前；留空排最后
+
+  # ── 值守者（三类内容的作者字典，IMPL-052） ────────────────
+  # schema：src/content.config.ts → authors；name/role/order 同时被
+  # src/data/authors.ts 同步派生（文章 z.enum 与卡片署名）。
+  # 每位值守者一个小文件，文件名 = key = /character/<key>/ 的 slug。
+  # 约束与 categories 相同：key 发布后冻结；正文（设定文）在下方编辑器维护。
+  - name: authors
+    label: 值守者
+    type: collection
+    path: src/content/authors
+    format: yaml-frontmatter
+    filename:
+      template: "{primary}.md"
+      field: false
+    view:
+      primary: key
+      fields: [name, role, key, order]
+      sort: [order, key]
+      default:
+        sort: order
+        order: asc
+    fields:
+      - name: key
+        label: 标识
+        type: string
+        required: true
+        description: >-
+          URL slug：小写字母、数字、连字符（如 wen-wanan）。同时是文件名、
+          内容 author 字段的存储值与档案页 URL 的一部分；发布后改名会改变
+          相关 URL，需同步迁移内容。
+      - { name: name, label: 显示名称, type: string, required: true }
+      - { name: role, label: 身份, type: string, required: true, description: 一句话身份（如「灯塔值守人 · 站长」） }
+      - name: tagline
+        label: 一句话简介
+        type: text
+        required: true
+        description: 120 字以内，用于详情页署名与档案页开场
+      - name: avatar
+        label: 立绘
+        type: image
+        required: true
+        media: characters-media
+      - { name: symbol, label: 象征物, type: string, required: true, description: 如「灯塔」「贝壳」「未完成的小船」 }
+      - name: colors
+        label: 代表色
+        type: object
+        list: true
+        description: 最多 3 组（名称 + 十六进制色值）
+        fields:
+          - { name: name, label: 色名, type: string, required: true }
+          - { name: value, label: 色值, type: string, required: true, description: 十六进制，如 #3f789f }
+      - { name: order, label: 排序, type: number, description: 越小越靠前，留空排最后 }
+      - { name: body, label: 设定文, type: rich-text, description: 档案页正文（外在印象、性格、矛盾、职责、文字风格） }
 
   # ── 文章 ────────────────────────────────────────────────
   # schema：src/content.config.ts → posts（.strict() + 日期顺序 refine）
@@ -146,6 +208,16 @@ content:
           search: "key,label"
           value: "{primary}"
           label: "{fields.label}"
+      # 值守者署名（IMPL-052）：存储值为 authors 的 key，
+      # 留空时 Astro schema 取默认值 wen-wanan（站长）。
+      - name: author
+        label: 值守者
+        type: reference
+        options:
+          collection: authors
+          search: "key,name"
+          value: "{primary}"
+          label: "{fields.name}"
       - name: tags
         label: 标签
         type: string
@@ -208,6 +280,15 @@ content:
         options:
           format: yyyy-MM-dd
         description: 不得早于发布日期
+      # 值守者署名（IMPL-052）：小记默认由许朝夕（沿岸记录员）发布
+      - name: author
+        label: 值守者
+        type: reference
+        options:
+          collection: authors
+          search: "key,name"
+          value: "{primary}"
+          label: "{fields.name}"
       - { name: tags, label: 标签, type: string, list: true, description: 最多 5 个 }
       - { name: draft, label: 草稿, type: boolean, default: true }
       - name: lang
@@ -253,6 +334,15 @@ content:
             - { name: active, label: 进行中 }
             - { name: completed, label: 已完成 }
             - { name: archived, label: 已归档 }
+      # 值守者署名（IMPL-052）：项目默认由沈予舟（船坞管理员）记录
+      - name: author
+        label: 值守者
+        type: reference
+        options:
+          collection: authors
+          search: "key,name"
+          value: "{primary}"
+          label: "{fields.name}"
       - name: startedAt
         label: 开始日期
         type: date
@@ -295,3 +385,32 @@ content:
         list: true
         description: 填写文章 ID（文件名去掉 .md），如 hello-cove；构建期校验其存在
       - { name: body, label: 详情, type: rich-text }
+
+  # ── 站点大事记（about 溯源时间线，IMPL-054） ────────────────
+  # schema：src/content.config.ts → milestones。每个节点一个小文件，
+  # 文件名建议日期前缀（如 2026-09-20-keepers-arrive.md）；页面按
+  # date 升序展示（由远及近），集合为空时 about 整节隐藏。
+  - name: milestones
+    label: 站点大事记
+    type: collection
+    path: src/content/milestones
+    format: yaml-frontmatter
+    filename:
+      template: "{primary}.md"
+      field: true
+    view:
+      primary: title
+      fields: [title, date, description]
+      sort: [date, title]
+      default:
+        sort: date
+        order: asc
+    fields:
+      - { name: title, label: 标题, type: string, required: true }
+      - name: date
+        label: 日期
+        type: date
+        required: true
+        options:
+          format: yyyy-MM-dd
+      - { name: description, label: 一句话说明, type: text, description: 200 字以内，可省略 }

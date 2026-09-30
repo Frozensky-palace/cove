@@ -45,7 +45,7 @@
   color: var(--cove-blue);
   text-decoration: none;
   opacity: 0;
-  transition: opacity 120ms ease;
+  transition: opacity var(--motion-fast) ease;
 }
 
 .prose :is(h2, h3, h4):hover > .heading-anchor,
@@ -175,7 +175,7 @@
   color: var(--text-muted);
   font-size: 0.75rem;
   cursor: pointer;
-  transition: color 120ms ease, border-color 120ms ease;
+  transition: color var(--motion-fast) ease, border-color var(--motion-fast) ease;
 }
 
 .prose .code-copy:hover {

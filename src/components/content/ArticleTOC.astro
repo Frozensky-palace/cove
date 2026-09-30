@@ -1,8 +1,9 @@
 ---
 /**
  * 文章目录（指南 9.4 / 10）：
- * - 桌面（≥1200px）：右侧粘性栏，IntersectionObserver 高亮当前章节；
- * - 移动端：正文前的 <details> 折叠（指南 8.7）。
+ * - 桌面（≥1280px）：右侧粘性栏（文章布局三栏网格的右列，IMPL-053 三轮），
+ *   IntersectionObserver 高亮当前章节；栏内排版收紧（小一号字 + 密行距）；
+ * - 窄屏（1280px 以下）：正文前的 <details> 折叠（指南 8.7）。
  * heading 结构来自 astro:content render() 的 headings（深度 2–4）。
  */
 interface Heading {
@@ -84,9 +85,9 @@ const hasToc = toc.length >= 3;
   }
 
   .toc-title {
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.625rem;
     color: var(--text-muted);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -108,7 +109,7 @@ const hasToc = toc.length >= 3;
     font-size: 0.875rem;
     line-height: 1.5;
     text-decoration-line: none;
-    transition: color 120ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   a:hover {
@@ -121,14 +122,14 @@ const hasToc = toc.length >= 3;
   }
 
   .toc-depth-3 {
-    padding-inline-start: 1rem;
+    padding-inline-start: 0.75rem;
   }
 
   .toc-depth-4 {
-    padding-inline-start: 2rem;
+    padding-inline-start: 1.5rem;
   }
 
-  @media (min-width: 1200px) {
+  @media (min-width: 1280px) {
     .toc-mobile {
       display: none;
     }
@@ -140,7 +141,19 @@ const hasToc = toc.length >= 3;
       max-height: calc(100vh - 120px);
       overflow-y: auto;
       border-inline-start: 1px solid var(--border);
-      padding-inline-start: 1.5rem;
+      /* 右侧 1fr 列（约 13.5rem）内尽量让给文字（IMPL-053 三轮） */
+      padding-inline-start: 1rem;
+    }
+
+    /* 桌面栏更紧凑和谐：小一号字 + 更密行距，视觉密度接近正文侧栏惯例
+       （IMPL-053 三轮）；窄屏折叠目录维持 0.875rem 的触屏可读字号 */
+    .toc-aside ul {
+      gap: 0.125rem;
+    }
+
+    .toc-aside a {
+      font-size: 0.8125rem;
+      padding-block: 0.1875rem;
     }
   }
 </style>

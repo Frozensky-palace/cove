@@ -76,6 +76,9 @@ const categoryStats = await getCategoryStats();
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem 1.125rem;
+    /* 与居中的页头/列表同列（IMPL-053）：全宽横条夹在两个居中列之间会显错乱 */
+    max-width: 46rem;
+    margin-inline: auto;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border);
@@ -85,7 +88,7 @@ const categoryStats = await getCategoryStats();
     color: var(--text-muted);
     font-size: 0.875rem;
     text-decoration-line: none;
-    transition: color 150ms ease;
+    transition: color var(--motion-fast) ease;
   }
 
   .filter-nav a:hover {
@@ -100,5 +103,6 @@ const categoryStats = await getCategoryStats();
 
   .post-list {
     max-width: 46rem;
+    margin-inline: auto;
   }
 </style>

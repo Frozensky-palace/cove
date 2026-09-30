@@ -1,9 +1,12 @@
 ---
 /**
- * 文章元信息行：分类、日期、可选更新时间、阅读时长。
+ * 文章元信息行：分类、日期、值守者名、可选更新时间、阅读时长。
  * 阅读时长为构建期派生数据（指南 11.1）。
+ * 值守者名（IMPL-052）：列表卡片显示纯文字名（用户决策：不带头像）；
+ * 详情页传 showAuthor={false}，由 AuthorByline 组件承担署名。
  */
 import { categoryLabel } from '@/data/taxonomy';
+import { authorName } from '@/data/authors';
 import { categoryUrl } from '@/lib/urls';
 import { formatDate, readingMinutes, type Post } from '@/lib/content';
 
@@ -11,11 +14,13 @@ interface Props {
   post: Post;
   /** 显示更新时间 */
   showUpdated?: boolean;
+  /** 显示值守者名（详情页关闭，改用 AuthorByline） */
+  showAuthor?: boolean;
   /** 输出 Pagefind 元数据（仅详情页开启；列表页不进索引） */
   pagefind?: boolean;
 }
 
-const { post, showUpdated = true, pagefind = false } = Astro.props;
+const { post, showUpdated = true, showAuthor = true, pagefind = false } = Astro.props;
 const minutes = readingMinutes(post.body ?? '');
 ---
 
@@ -33,6 +38,14 @@ const minutes = readingMinutes(post.body ?? '');
   >
     {formatDate(post.data.publishedAt)}
   </time>
+  {
+    showAuthor && (
+      <>
+        <span aria-hidden="true">·</span>
+        <span>{authorName(post.data.author)}</span>
+      </>
+    )
+  }
   {
     showUpdated && post.data.updatedAt && (
       <>

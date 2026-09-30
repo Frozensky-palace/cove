@@ -12,7 +12,17 @@ import SearchPanel from '@/components/islands/SearchPanel.vue';
   description="搜索 Cove 的文章、笔记与项目。"
   path="/search/"
   heading="搜索"
-  intro="输入关键词，在全站文章、笔记与项目中查找。快捷键 Ctrl/Command + K 可从任意页面唤起页头搜索。"
+  intro="输入关键词，查找全站的文章、笔记与项目。"
 >
-  <SearchPanel client:load />
+  <div class="search-column">
+    <SearchPanel client:load />
+  </div>
 </ContentLayout>
+
+<style>
+  /* 搜索面板与居中的页头同列（IMPL-053） */
+  .search-column {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+</style>

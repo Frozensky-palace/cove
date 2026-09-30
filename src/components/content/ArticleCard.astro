@@ -29,12 +29,15 @@ const hasCover = Boolean(post.data.cover);
         tabindex="-1"
         aria-hidden="true"
       >
+        {/* IMPL-056（评审报告 4.9）：仅首屏主精选 eager + 高优先级，
+            其余封面懒加载，避免与 Hero 插画争抢带宽 */}
         <Image
           src={post.data.cover}
           alt={post.data.coverAlt ?? ''}
           widths={emphasis ? [640, 960, 1280] : [400, 640]}
           sizes={emphasis ? '(min-width: 640px) 620px, 100vw' : '320px'}
-          loading="eager"
+          loading={emphasis ? 'eager' : 'lazy'}
+          decoding="async"
           {...(emphasis ? { fetchpriority: 'high' as const } : {})}
         />
       </a>
@@ -60,12 +63,15 @@ const hasCover = Boolean(post.data.cover);
     border-radius: var(--radius-overlay);
     background-color: var(--surface);
     transition:
-      transform 180ms ease,
-      border-color 180ms ease;
+      transform var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard);
   }
 
-  /* 悬停：2px 上浮 + 品牌色描边（指南 8.6 悬停反馈白名单：位移 ≤2px、颜色） */
-  .article-card:hover {
+  /* 悬停：2px 上浮 + 品牌色描边（指南 8.6 悬停反馈白名单：位移 ≤2px、颜色）。
+     键盘路径同款整卡反馈（评审 V04）：:has(:focus-visible) 只认键盘焦点，
+     鼠标点击链接产生的焦点不悬挂整卡反馈；链接自身的全局焦点环保留 */
+  .article-card:hover,
+  .article-card:has(:focus-visible) {
     transform: translateY(-2px);
     border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
   }

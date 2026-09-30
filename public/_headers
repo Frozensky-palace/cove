@@ -24,3 +24,14 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# 长期缓存只给文件名带内容哈希的构建产物（评审报告 4.12，IMPL-058）。
+# 其余资产（HTML/RSS/OG 分享图/pagefind）沿用平台默认
+# Cache-Control: public, max-age=0, must-revalidate + ETag（按需再验证），
+# 恰为评审建议的「短缓存 + 允许重新验证」。
+# 注意：_headers 多规则同名头会以逗号拼接，Cache-Control 只能出现在
+# 下面的具体规则，不得加到上方 /* 规则。
+# /pagefind/* 的入口文件（pagefind.js、pagefind-entry.json 等）不带哈希，
+# 不设 immutable——部署后旧入口会引用已删除的哈希分片。
+/_astro/*
+  Cache-Control: public, max-age=31556952, immutable
