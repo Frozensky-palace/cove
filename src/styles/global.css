@@ -258,9 +258,9 @@ html.splash-on .app-splash {
   display: grid;
 }
 
-/* 入场编排（IMPL-066）：标志 → 字标 → 波浪/标语 错峰入场，最长项 420ms
-   ——退场不早于最小展示时长 1600ms（见 AppSplash 退场脚本），编排必然
-   完整呈现；backwards 填充保证 delay 期间停留在起始帧，无内容闪现 */
+/* 入场编排（IMPL-066/068）：标志 → 字标/环境层 → 标语 错峰入场，
+   最长项 420ms——退场不早于最小展示时长 1600ms（见 AppSplash 退场脚本），
+   编排必然完整呈现；backwards 填充保证 delay 期间停留在起始帧，无内容闪现 */
 html.splash-on .app-splash-mark {
   animation: splash-mark-in var(--motion-emphasis) var(--ease-out) backwards;
 }
@@ -269,8 +269,9 @@ html.splash-on .app-splash-name {
   animation: splash-rise-in var(--motion-emphasis) var(--ease-out) 60ms backwards;
 }
 
-html.splash-on .app-splash-wave {
-  animation: splash-fade-in var(--motion-overlay) ease 120ms backwards;
+/* 环境层整体淡入（IMPL-068；海面浮升段随海面带删除一并移除，IMPL-070） */
+html.splash-on .splash-ambient {
+  animation: splash-fade-in 480ms ease 80ms backwards;
 }
 
 html.splash-on .app-splash-tagline {
@@ -322,12 +323,25 @@ html.splash-on .app-splash-tagline {
     opacity var(--motion-overlay) var(--ease-standard);
 }
 
-/* 分组间距（IMPL-066）：标志-字标为品牌一组（近距），波浪-标语为
-   海面一组（标语是波浪的说明，近距成组），组间留白更大 */
+/* 品牌组（IMPL-068/070）：波浪元素退出加载页（068 移除小组波、070
+   删除海面带）后组内只剩标志-字标-标语；z-index:0 建立独立层叠
+   上下文，让 ::before 光晕（z-index:-1）压在环境层之上、品牌内容之下 */
 .app-splash-inner {
+  position: relative;
+  z-index: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* 品牌组背后的淡光晕：让标志从环境里「浮」出来（IMPL-068）；横向更宽的椭圆 */
+.app-splash-inner::before {
+  content: '';
+  position: absolute;
+  inset: -56px -72px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--splash-halo) 0%, transparent 70%);
 }
 
 .app-splash-mark {
@@ -359,65 +373,63 @@ html.splash-on .app-splash-tagline {
   color: transparent;
 }
 
-/* 双波漂移（IMPL-066）：呼应页脚双波语言——蓝主波 + 粉辅波，
-   透明度对齐页脚（0.5 / 0.45）；两层以不同周期水平漂移形成缓视差，
-   周期比 ≈ 2:3。波浪是加载期间唯一的活动指示（M01：非进度条）。
-   两条波均以 60 单位为周期铺满 360 宽 viewBox，translateX(-50%)
-   恰好移动 3 个整周期，接缝无跳变 */
-.app-splash-wave {
-  position: relative;
-  width: 168px;
-  height: 28px;
-  margin-top: 1.375rem;
+/* 环境层（IMPL-068「海湾晨雾」；海面带经 IMPL-070 删除）：极光光晕 +
+   颗粒噪点。光晕用径向渐变自带衰减模拟模糊——不用 filter:blur（移动端
+   GPU 开销大且需额外合成层）；两团光晕不对称布局（左上蓝 / 右下粉），
+   超慢速呼吸漂移（16s/22s，alternate 往返），是环境背景而非注意力焦点，
+   也是加载期间唯一的持续动效（M01） */
+.splash-ambient {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
 }
 
-.wave-track {
+.splash-glow {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 200%;
-  height: 100%;
+  border-radius: 50%;
 }
 
-.wave-track path {
-  fill: none;
-  stroke-linecap: round;
+.splash-glow-blue {
+  top: -22%;
+  left: -14%;
+  width: 68vmin;
+  height: 68vmin;
+  background: radial-gradient(circle, var(--splash-glow-blue) 0%, transparent 68%);
+  animation: splash-glow-drift 16s var(--ease-standard) infinite alternate;
 }
 
-.wave-track-a {
-  color: var(--cove-blue);
-  animation: splash-drift 2.8s linear infinite;
+.splash-glow-pink {
+  right: -12%;
+  bottom: -18%;
+  width: 58vmin;
+  height: 58vmin;
+  background: radial-gradient(circle, var(--splash-glow-pink) 0%, transparent 68%);
+  animation: splash-glow-drift 22s var(--ease-standard) infinite alternate-reverse;
 }
 
-.wave-track-a path {
-  stroke: currentColor;
-  stroke-width: 2;
-  opacity: 0.5;
-}
-
-.wave-track-b {
-  color: var(--shell-pink);
-  animation: splash-drift 4.2s linear infinite;
-}
-
-.wave-track-b path {
-  stroke: currentColor;
-  stroke-width: 1.5;
-  opacity: 0.45;
-}
-
-@keyframes splash-drift {
+@keyframes splash-glow-drift {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
   to {
-    transform: translateX(-50%);
+    transform: translate3d(4%, 5%, 0) scale(1.06);
   }
+}
+
+/* 颗粒噪点（IMPL-068）：内联 SVG feTurbulence data-URI（约 300 字节），
+   消除大面积渐变的色带感并增加纸感——主流开屏质感的关键细节；
+   透明度走令牌深浅独立校准，叠在最上层统一全部环境层 */
+.splash-noise {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  opacity: var(--splash-noise-opacity);
 }
 
 .app-splash-tagline {
-  margin: 0.75rem 0 0;
+  /* IMPL-068：波浪元素移出品牌组后，此间距由近距成组改为组下留白 */
+  margin: 1.25rem 0 0;
   font-size: 0.875rem;
   letter-spacing: 0.08em;
   color: var(--text-muted);

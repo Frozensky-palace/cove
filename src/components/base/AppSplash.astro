@@ -23,10 +23,27 @@
    口径）；单条滚动蓝波升级为蓝粉双波视差漂移（呼应页脚双波语言）；
    入场改为 标志→字标→波浪/标语 错峰编排（最长项 420ms；退场不早于
    最小展示时长 1600ms，总时长 ~1.85s 封顶）
+ * - IMPL-068「海湾晨雾」背景改版：纯色底升级为环境层——极光光晕
+ *   （蓝/粉两团，径向渐变自带衰减模拟模糊，不用 filter:blur）+
+ *   颗粒噪点（内联 SVG feTurbulence，消除渐变色带）；品牌组背后加
+ *   淡光晕让标志从环境里「浮」出来。环境层全部绝对定位于
+ *   .app-splash 内，不参与 grid 居中，随遮罩节点一并移除
+ * - IMPL-070：068 方案中的底部全幅双波海面带经用户指认为其要求删除
+ *   的「背景波浪」，已移除——环境层收敛为光晕 + 噪点 + 品牌组光晕，
+ *   光晕呼吸漂移成为加载期间唯一持续动效；品牌波浪语言保留在标志
+ *   内描线与页脚两处，不受影响
  */
 ---
 
 <div class="app-splash" aria-hidden="true">
+  <!-- 环境层（IMPL-068；海面带经 IMPL-070 删除）：光晕/噪点均为绝对
+       定位，.app-splash-inner 仍是唯一流内子元素（grid
+       place-items:center 只作用于它） -->
+  <div class="splash-ambient">
+    <div class="splash-glow splash-glow-blue"></div>
+    <div class="splash-glow splash-glow-pink"></div>
+    <div class="splash-noise"></div>
+  </div>
   <div class="app-splash-inner">
     <svg class="app-splash-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <defs>
@@ -51,18 +68,6 @@
       ></path>
     </svg>
     <p class="app-splash-name">Cove</p>
-    <div class="app-splash-wave">
-      <svg class="wave-track wave-track-a" viewBox="0 0 360 24" preserveAspectRatio="none" aria-hidden="true">
-        <path
-          d="M0 12 Q15 2 30 12 T60 12 T90 12 T120 12 T150 12 T180 12 T210 12 T240 12 T270 12 T300 12 T330 12 T360 12"
-        ></path>
-      </svg>
-      <svg class="wave-track wave-track-b" viewBox="0 0 360 24" preserveAspectRatio="none" aria-hidden="true">
-        <path
-          d="M0 16 Q15 9 30 16 T60 16 T90 16 T120 16 T150 16 T180 16 T210 16 T240 16 T270 16 T300 16 T330 16 T360 16"
-        ></path>
-      </svg>
-    </div>
     <p class="app-splash-tagline">小海湾里的文字、项目与技术分享</p>
   </div>
 </div>

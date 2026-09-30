@@ -55,6 +55,13 @@
   --motion-fast: 150ms;
   --motion-overlay: 200ms;
   --motion-emphasis: 360ms;
+
+  /* 加载页环境光（IMPL-068「海湾晨雾」）：极光光晕与品牌组光晕，alpha
+     独立校准——只作环境层，不承担任何文字对比度；深色见 .dark 覆盖 */
+  --splash-glow-blue: rgb(103 153 189 / 0.16);
+  --splash-glow-pink: rgb(222 160 175 / 0.14);
+  --splash-halo: rgb(103 153 189 / 0.1);
+  --splash-noise-opacity: 0.05;
 }
 
 .dark {
@@ -77,4 +84,11 @@
   --focus: #9ed7f4;
 
   --shadow-overlay: 0 8px 24px rgb(0 0 0 / 0.35);
+
+  /* 加载页环境光（IMPL-068）：深色底上光晕要更透——同浅色 alpha 会因
+     底色暗而显得发闷；噪点略提补偿深底上的纹理可见度 */
+  --splash-glow-blue: rgb(130 180 210 / 0.1);
+  --splash-glow-pink: rgb(217 167 180 / 0.08);
+  --splash-halo: rgb(130 180 210 / 0.07);
+  --splash-noise-opacity: 0.06;
 }
