@@ -57,6 +57,11 @@ const posts = defineCollection({
       .refine((entry) => !entry.updatedAt || entry.updatedAt >= entry.publishedAt, {
         message: 'updatedAt 不得早于 publishedAt',
         path: ['updatedAt'],
+      })
+      .refine((entry) => !entry.featured || Boolean(entry.cover), {
+        message:
+          'featured 文章必须提供 cover——首页精选区是全站唯一封面展示位，无封面进入精选会造成主卡弱于副卡的层级倒挂（IMPL-069）',
+        path: ['cover'],
       }),
 });
 
