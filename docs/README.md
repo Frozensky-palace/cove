@@ -45,6 +45,7 @@
 | [content-checklist.md](phases/content-checklist.md) | Phase 0 交付物：真实内容与品牌资产收集清单；2026-09-24 复核确认全部落地，保留作字段速查 |
 | [PHASE6-MANUAL-CHECKLIST.md](phases/PHASE6-MANUAL-CHECKLIST.md) | Phase 6（CMS 与外部集成）手动验收；阶段已关闭 |
 | [PHASE7-MANUAL-CHECKLIST.md](phases/PHASE7-MANUAL-CHECKLIST.md) | Phase 7（部署、质量门禁与上线）手动验收；阶段已关闭 |
+| [PHASE8.1-MANUAL-CHECKLIST.md](phases/PHASE8.1-MANUAL-CHECKLIST.md) | Phase 8.1（页面优化，IMPL-056–072）浏览器复验清单；**验收中**，全部勾收后阶段关闭 |
 
 **`archive/` —— 原始存档**
 
