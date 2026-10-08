@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">《潮汐之间》扉页视觉方向稿</title>
+  <desc id="desc">雾白纸面上，一艘小船、右侧灯塔和前景双浪构成可探索海湾；小船、灯塔和海浪分别对应时间、光与水三个章节。</desc>
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f8fbfc"/>
+      <stop offset="1" stop-color="#edf4f7"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fdfcfa"/>
+      <stop offset=".58" stop-color="#eaf2f4"/>
+      <stop offset="1" stop-color="#dce9ee"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#dce9ec"/>
+      <stop offset="1" stop-color="#a6c3cf"/>
+    </linearGradient>
+    <linearGradient id="tower" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#527e9b"/>
+      <stop offset=".48" stop-color="#d8e6e9"/>
+      <stop offset="1" stop-color="#456b86"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="1" y1="0" x2="0" y2="1">
+      <stop stop-color="#e5acb9" stop-opacity=".48"/>
+      <stop offset="1" stop-color="#e5acb9" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="sun">
+      <stop stop-color="#fff8f2" stop-opacity=".96"/>
+      <stop offset="1" stop-color="#fff8f2" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="2" stitchTiles="stitch" result="n"/>
+      <feColorMatrix in="n" type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope=".065"/></feComponentTransfer>
+    </filter>
+    <clipPath id="sceneClip"><rect x="80" y="194" width="1280" height="598" rx="24"/></clipPath>
+  </defs>
+
+  <rect width="1440" height="900" fill="url(#page)"/>
+  <path d="M76 106H1364" stroke="#cbdde4" stroke-width="1"/>
+  <text x="80" y="77" font-family="system-ui, 'Microsoft YaHei', sans-serif" font-size="15" letter-spacing="3" fill="#5e707d">COVE  /  INTERACTIVE EXPERIENCE</text>
+  <text x="80" y="155" font-family="system-ui, 'Microsoft YaHei', sans-serif" font-size="52" font-weight="600" letter-spacing="8" fill="#243746">潮汐之间</text>
+  <text x="388" y="151" font-family="system-ui, 'Microsoft YaHei', sans-serif" font-size="17" fill="#5e707d">让时间、光与水，写出一处可以靠岸的地方。</text>
+
+  <rect x="80" y="194" width="1280" height="598" rx="24" fill="url(#sky)" stroke="#d3e1e6" stroke-width="1.5"/>
+  <g clip-path="url(#sceneClip)">
+    <ellipse cx="980" cy="335" rx="280" ry="175" fill="url(#sun)"/>
+    <path d="M1035 324 370 256 370 510 1035 388Z" fill="url(#beam)"/>
+    <path d="M1026 348 478 310" stroke="#dc9eb0" stroke-opacity=".3" stroke-width="2"/>
+    <path d="M1040 370 573 455" stroke="#dc9eb0" stroke-opacity=".2" stroke-width="2"/>
+
+    <path d="M80 508C245 490 380 511 501 485S772 474 908 490 1190 474 1360 503V792H80Z" fill="url(#sea)"/>
+    <path d="M80 495C254 471 388 520 529 486S786 471 911 487 1198 473 1360 496" fill="none" stroke="#b5ced8" stroke-width="2"/>
+    <path d="M80 575C209 545 286 584 389 572S608 526 748 557 944 595 1062 562 1258 535 1360 569" fill="none" stroke="#7eacc3" stroke-opacity=".65" stroke-width="3"/>
+    <path d="M80 633C217 613 298 650 414 623S676 604 780 637 1003 652 1125 619 1303 604 1360 628" fill="none" stroke="#d89cad" stroke-opacity=".55" stroke-width="3"/>
+    <path d="M80 698C252 676 337 717 486 695S708 665 848 697 1117 718 1360 684" fill="none" stroke="#618fae" stroke-opacity=".45" stroke-width="2"/>
+    <path d="M80 743C308 716 431 765 601 731S901 715 1061 746 1260 739 1360 725" fill="none" stroke="#f8fbfc" stroke-opacity=".7" stroke-width="2"/>
+
+    <path d="M926 497C970 458 1026 450 1095 458S1212 470 1360 453V792H1108C1073 719 1067 609 926 497Z" fill="#ccdce1"/>
+    <path d="M926 497C970 458 1026 450 1095 458S1212 470 1360 453" fill="none" stroke="#698daa" stroke-width="5" stroke-linecap="round"/>
+    <path d="M1063 467 1078 307H1134L1153 466Z" fill="url(#tower)" stroke="#466c86" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M1085 330H1126L1139 461H1073Z" fill="#e6eff0" fill-opacity=".4"/>
+    <path d="M1066 305H1145" stroke="#466c86" stroke-width="11" stroke-linecap="round"/>
+    <rect x="1082" y="274" width="47" height="26" rx="3" fill="#527e9b"/>
+    <rect x="1091" y="279" width="29" height="16" rx="2" fill="#fff7f2"/>
+    <path d="M1064 269 1107 233 1147 269Z" fill="#dca8b6" stroke="#63809a" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="1106" cy="287" r="26" fill="#f6dbe0" opacity=".36" filter="url(#soft)"/>
+
+    <path d="M282 478C315 464 372 460 424 471L450 491C405 511 336 514 301 498Z" fill="#fffaf6" stroke="#50768d" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M300 493C339 501 406 502 443 489" fill="none" stroke="#d7a0af" stroke-width="3"/>
+    <path d="M356 466 363 402 401 462Z" fill="#f7fbfa" stroke="#50768d" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M360 435 330 462" stroke="#50768d" stroke-width="3"/>
+    <path d="M376 509C397 514 422 511 438 504" fill="none" stroke="#f6fbfb" stroke-width="2" opacity=".8"/>
+
+    <g font-family="system-ui, 'Microsoft YaHei', sans-serif">
+      <circle cx="353" cy="438" r="75" fill="#f8fbfc" fill-opacity=".13" stroke="#f8fbfc" stroke-opacity=".55" stroke-width="1.5"/>
+      <path d="M286 407A75 75 0 0 1 391 370" fill="none" stroke="#f8fbfc" stroke-width="2" opacity=".7"/>
+      <circle cx="1110" cy="287" r="78" fill="none" stroke="#f8fbfc" stroke-opacity=".7" stroke-width="1.5"/>
+      <path d="M1067 223A78 78 0 0 1 1158 228" fill="none" stroke="#f8fbfc" stroke-width="2" opacity=".75"/>
+      <circle cx="738" cy="619" r="78" fill="none" stroke="#f8fbfc" stroke-opacity=".62" stroke-width="1.5"/>
+      <path d="M681 565A78 78 0 0 1 799 570" fill="none" stroke="#f8fbfc" stroke-width="2" opacity=".8"/>
+      <rect x="248" y="337" width="211" height="40" rx="20" fill="#f8fbfc" fill-opacity=".91"/>
+      <text x="267" y="364" font-size="17" fill="#315b79">01  小船 · 借潮出航</text>
+      <rect x="620" y="707" width="211" height="40" rx="20" fill="#f8fbfc" fill-opacity=".91"/>
+      <text x="639" y="734" font-size="17" fill="#315b79">03  海浪 · 潮痕</text>
+    </g>
+    <rect x="80" y="194" width="1280" height="598" rx="24" filter="url(#grain)" opacity=".38"/>
+  </g>
+  <!-- 02 徽章置于裁剪组外：跨画框上缘的入口牌，不被场景裁切 -->
+  <rect x="997" y="175" width="226" height="40" rx="20" fill="#f8fbfc" fill-opacity=".95" stroke="#d3e1e6" stroke-width="1"/>
+  <text x="1016" y="202" font-family="system-ui, 'Microsoft YaHei', sans-serif" font-size="17" fill="#315b79">02  灯塔 · 照见来信</text>
+  <text x="80" y="843" font-family="system-ui, 'Microsoft YaHei', sans-serif" font-size="16" fill="#5e707d">一片海湾 · 三种操作 · 一个共同结尾</text>
+  <text x="1360" y="843" text-anchor="end" font-family="system-ui, 'Microsoft YaHei', sans-serif" font-size="13" letter-spacing="2" fill="#78909c">ART DIRECTION / 01</text>
+</svg>
