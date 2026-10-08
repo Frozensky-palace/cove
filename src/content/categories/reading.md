@@ -1,5 +1,5 @@
 ---
 key: reading
-label: 阅读与思考
-order: 4
+label: 拾贝集 · 阅读思考
+order: 2
 ---

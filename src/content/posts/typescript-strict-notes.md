@@ -2,7 +2,7 @@
 title: TypeScript strict 模式下的三个习惯
 description: 满足 noImplicitAny 只是开始：类型收窄、不可变优先、把边界做薄，是我在 strict 模式下沉淀的三个日常习惯。
 publishedAt: '2026-08-20'
-category: engineering
+category: tech
 tags:
   - TypeScript
   - 工程实践

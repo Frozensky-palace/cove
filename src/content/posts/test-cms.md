@@ -3,7 +3,7 @@ title: test-cms
 description: 这是一个cms的测试文件
 publishedAt: 2026-09-20
 updatedAt: 2026-09-20
-category: tools
+category: tech
 tags: [测试, CMS]
 draft: true
 featured: false

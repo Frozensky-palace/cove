@@ -30,12 +30,22 @@ function loadCategories(): CategoryInfo[] {
     throw new Error('src/content/categories 中没有分类文件，至少需要一个分类');
   }
 
+  /* key 即 URL slug（/categories/<key>/），CMS 新增分类时由编辑者手填，
+     构建期按约定拦截畸形 key（大写/中文/空格等），防止坏 URL 静默上线 */
+  const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
   const categories = entries.map(([filePath, raw]) => {
     const key = filePath.split('/').pop()!.replace(/\.md$/, '');
     const { data } = matter(raw);
 
     const label = typeof data.label === 'string' ? data.label.trim() : '';
     if (!label) throw new Error(`分类 ${filePath} 缺少 label 字段（string）`);
+    if (!SLUG_RE.test(key)) {
+      throw new Error(
+        `分类 ${filePath} 的 key（${key}）不符合 slug 约定（小写字母、数字、连字符）` +
+          '——CMS 新增分类时「标识」请按此规则填写',
+      );
+    }
     if (typeof data.key === 'string' && data.key.trim() !== key) {
       throw new Error(`分类 ${filePath} 的 key（${data.key}）与文件名（${key}）不一致`);
     }

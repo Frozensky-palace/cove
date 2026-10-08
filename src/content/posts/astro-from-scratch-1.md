@@ -2,7 +2,7 @@
 title: 'Astro 从零到一（一）：为什么选静态优先'
 description: '系列开篇：从架构取舍讲起，为什么个人站点适合静态优先，以及 Astro 的岛屿模型解决了什么问题。'
 publishedAt: '2026-09-14'
-category: web-dev
+category: tech
 tags:
   - Astro
   - 系列测试

@@ -2,7 +2,7 @@
 title: 给静态站点接评论：Giscus 的边界组件化
 description: 评论是静态站点最难外包的部分：为什么选 Giscus、懒加载与失败占位怎么写、主题如何同步，以及用 giscus.json 把评论锁定到自己的域名。
 publishedAt: '2026-09-23'
-category: tools
+category: tech
 tags:
   - Giscus
   - 评论系统

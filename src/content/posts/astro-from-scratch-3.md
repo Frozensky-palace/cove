@@ -2,7 +2,7 @@
 title: 'Astro 从零到一（三）：布局、主题与部署'
 description: '系列完结篇：双栏阅读布局的网格实现、主题切换的防闪烁方案，以及静态产物的部署清单。'
 publishedAt: '2026-09-16'
-category: web-dev
+category: tech
 tags:
   - Astro
   - CSS

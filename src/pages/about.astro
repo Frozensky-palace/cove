@@ -79,7 +79,7 @@ const contactValue = (href: string) =>
     <p>我关注的方向会随时间慢慢生长，目前主要包括：</p>
     <ul class="about-topics">
       <li>
-        <a href={categoryUrl('engineering')}>
+        <a href={categoryUrl('writing')}>
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -95,11 +95,47 @@ const contactValue = (href: string) =>
             <path d="M12 3.2v1.4" />
             <path d="m6.8 4.6 1.9 1.5" />
             <path d="m17.2 4.6-1.9 1.5" />
-          </svg>前端工程与类型系统</a
-        >：把复杂问题拆成可维护的结构；
+          </svg>写作与创作</a
+        >：把故事、散文与想法写成文稿，把光递出去；
       </li>
       <li>
-        <a href={categoryUrl('web-dev')}>
+        <a href={categoryUrl('reading')}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 6c-1.8-1.6-4.2-2.2-8-2.1v14.2c3.8-.1 6.2.5 8 2.1 1.8-1.6 4.2-2.2 8-2.1V3.9C16.2 3.8 13.8 4.4 12 6Z"
+            />
+            <path d="M12 6v14" />
+          </svg>阅读与思考</a
+        >：读别人的书，在滩上拾贝；
+      </li>
+      <li>
+        <a href={categoryUrl('tech')}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="m15.5 8.5-2.2 5.3-5.3 2.2 2.2-5.3Z" />
+          </svg>技术理解与介绍</a
+        >：把用到的技术想透，再讲明白；
+      </li>
+      <!-- 造船日志（engineering）暂无已发布文章，分类页未构建（IMPL-056
+           口径，同页脚过滤）；先以纯文字展示，有公开文章后换回分类链接 -->
+      <li>
+        <span class="topic-plain">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -113,26 +149,8 @@ const contactValue = (href: string) =>
             <path d="M12 15.5V4" />
             <path d="M12 4.5c3.2 1.8 5.2 4.4 6 8H12" />
             <path d="M3.5 21c1.4-.9 2.9-.9 4.3 0 1.4.9 2.9.9 4.2 0 1.4-.9 2.9-.9 4.3 0 1.4.9 2.9.9 4.2 0" />
-          </svg>静态站点与内容工程</a
-        >：以 Git 为源、构建即发布的工作流；
-      </li>
-      <li>
-        <a href={categoryUrl('reading')}>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12 20.5C7.6 17 5 13.6 5 10.2a7 7 0 0 1 14 0c0 3.4-2.6 6.8-7 10.3Z" />
-            <path d="M12 20V3.5" />
-            <path d="M12 20 6.6 6.4" />
-            <path d="m12 20 5.4-13.6" />
-          </svg>技术写作与知识整理</a
-        >：让笔记真正被自己再次读到。
+          </svg>工程复盘</span
+        >：造过的船，都值得回望。
       </li>
     </ul>
 
@@ -366,13 +384,15 @@ const contactValue = (href: string) =>
 
   /* 长期主题线性小图标（IMPL-054）：装饰（aria-hidden），约 1em 随文字
      缩放、主题蓝着色；单处使用，内联于本页不建独立图标组件 */
-  .about .about-topics a {
+  .about .about-topics a,
+  .about .about-topics .topic-plain {
     display: inline-flex;
     align-items: center;
     gap: 0.4375rem;
   }
 
-  .about .about-topics a svg {
+  .about .about-topics a svg,
+  .about .about-topics .topic-plain svg {
     width: 1.05em;
     height: 1.05em;
     flex-shrink: 0;

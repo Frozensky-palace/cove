@@ -8,7 +8,7 @@ tags:
   - 排版
   - Markdown
 draft: true
-featured: true
+featured: false
 lang: zh-CN
 cover: ./rich-text-test/cover.svg
 coverAlt: 由多个圆角矩形与波浪线组成的低饱和排版实验插画
