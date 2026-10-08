@@ -71,9 +71,13 @@ const hasContent =
           <Button href="/about/" variant="secondary">了解 Cove</Button>
         </div>
       </div>
-      <!-- 品牌标志图（插画卡片逐列描摹抠底，IMPL-037）：纯装饰，仅 ≥768px 显示。
+      <!-- 品牌标志图（插画卡片逐列描摹抠底，IMPL-037）：仅 ≥768px 显示。
+           Phase 8.2（设计见 docs/COVE-SHORT-STORY-DESIGN.md 第 5 节）：整张
+           品牌卡成为指向短篇集 /story/ 的链接（IMPL-083 书架化：泛指入口
+           落书架页），名称由 aria-label 承担，图片保持空 alt 纯装饰；
+           移除原 aria-hidden 父级，避免连链接一起隐藏。
            卡片外区域（含贴边软投影）已在 WebP 内烘焙为透明；投影用 drop-shadow 按形状投射 -->
-      <div class="hero-brand" aria-hidden="true">
+      <a class="hero-brand" href="/story/" aria-label="翻开海湾短篇">
         <img
           src="/home-brand.webp"
           alt=""
@@ -82,7 +86,7 @@ const hasContent =
           loading="eager"
           decoding="async"
         />
-      </div>
+      </a>
     </div>
   </section>
 
