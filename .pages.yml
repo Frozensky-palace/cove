@@ -66,6 +66,9 @@ content:
   # 每个分类一个小文件，文件名 = 分类 key = URL slug（/categories/<key>/）。
   # 构建期 src/data/taxonomy.ts 从该目录派生分类体系（keys、label、排序），
   # 文章的 category 字段经 reference 引用这里，存储值为 key。
+  # 新增分类：直接在本 collection 新建条目（文件名由标识派生），无需改代码
+  # 或部署配置——构建自动纳入；标识须为小写字母、数字、连字符（如 tech），
+  # 不合规的 key 会被构建期的 slug 校验拦下（IMPL-088）。
   # 约束（发布后视为冻结）：key 是已发布文章 URL 的一部分，改名等于换 URL；
   # 删除仍被文章引用的分类会导致构建失败（z.enum 校验报错，防坏链）。
   - name: categories
@@ -91,13 +94,13 @@ content:
         type: string
         required: true
         description: >-
-          URL slug：小写字母、数字、连字符（如 web-dev）。同时是文件名与
+          URL slug：小写字母、数字、连字符（如 tech）。同时是文件名与
           文章分类的存储值；发布后改名会改变所有相关文章的 URL，需同步迁移内容。
       - name: label
         label: 显示名称
         type: string
         required: true
-        description: 站点上展示的名称（如「Web 开发」）
+        description: 站点上展示的名称（如「罗盘与海图 · 技术理解」）
       - name: order
         label: 排序
         type: number

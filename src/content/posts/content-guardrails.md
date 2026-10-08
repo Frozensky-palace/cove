@@ -2,7 +2,7 @@
 title: 内容质量门禁：从 Schema 到 CI 的四道关
 description: 个人博客也需要 CI 门禁：Cove 用四道关卡保证"坏内容不可能被发布"——schema 校验、源码守卫、产物断言与全站内链检查，以及它们各自抓住过的真实事故。
 publishedAt: '2026-09-24'
-category: engineering
+category: tech
 tags:
   - 内容管理
   - 工程实践
@@ -40,9 +40,9 @@ author: z.enum(authorKeys).default('wen-wanan'),
 
 ## 第二道：源码守卫——语义层面的闸门
 
-Schema 管不了"合法但不应发布"的内容，比如叫 `test-xxx.md` 的演示文章。`scripts/content-guard.mjs` 在构建前扫描全部内容文件：**文件名、title、description、tags 命中测试标记（test / 测试 / 验收）的内容，除非是草稿或计划发布，否则构建失败**。
+Schema 管不了"合法但不应发布"的内容，比如叫 `test-xxx.md` 的演示文章。`scripts/content-guard.mjs` 在构建前扫描全部内容文件：**文件名、title、description、tags 命中测试标记（test / 测试 / 验收）的内容，除非是草稿，否则构建失败**。
 
-两个豁免口刻意与生产内容过滤保持同口径：`draft: true` 的和 `publishedAt` 在未来的都放行——因为它们本来就不会出现在生产产物里，守卫不做重复判断。单一事实源，两道关卡互为镜像。
+唯一豁免口是 `draft: true`。计划发布（`publishedAt` 在未来）不豁免：未来日期确实能把它挡在生产产物之外，但挡不了一辈子——日期一到，测试内容就自动"转正"。守卫宁可在构建期就拦下，也不赌没人忘记改日期。
 
 ## 第三道：产物断言——不信任上游
 

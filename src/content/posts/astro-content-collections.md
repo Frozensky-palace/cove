@@ -2,7 +2,7 @@
 title: 用 Astro Content Collections 管理个人内容
 description: 从 schema 定义到集中查询：Cove 如何用类型安全的内容层管理文章、笔记与项目，并在构建期过滤草稿与计划发布。
 publishedAt: '2026-09-10'
-category: web-dev
+category: tech
 tags:
   - Astro
   - TypeScript

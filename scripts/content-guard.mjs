@@ -2,11 +2,9 @@
  * 生产内容守卫：测试/验收内容不得进入生产构建（评审报告 4.1 建议 5）。
  *
  * 规则：内容文件（src/content/**）的文件名、title、description 或
- * tags 命中测试标记（test / 测试 / 验收）时，除非满足以下任一豁免，
- * 否则构建失败：
- *   1. draft: true（与生产内容过滤一致）；
- *   2. publishedAt 晚于当前时间（计划发布，与生产日期过滤一致，
- *      豁免 scheduled-launch-note 这类专门验收日期过滤的样本）。
+ * tags 命中测试标记（test / 测试 / 验收）时，除非 draft: true，
+ * 否则构建失败。计划发布（publishedAt 在未来）不豁免——测试样本
+ * 若只靠未来日期挡在生产外，到期会自动混入生产（IMPL-085）。
  *
  * 用法：`pnpm guard:content`，或构建链内自动执行（package.json
  * build 脚本已接入，在 astro build 之前失败即止）。
@@ -40,7 +38,6 @@ function stringifyTags(tags) {
 
 const violations = [];
 const files = listMarkdown(contentDir);
-const now = Date.now();
 
 for (const file of files) {
   let data;
@@ -51,11 +48,8 @@ for (const file of files) {
     continue;
   }
 
-  // 豁免 1：草稿（生产内容过滤会排除）
+  // 唯一豁免：草稿（生产内容过滤会排除）
   if (data.draft === true) continue;
-  // 豁免 2：计划发布（生产日期过滤会排除）
-  const publishedAt = data.publishedAt ? new Date(data.publishedAt) : null;
-  if (publishedAt && !Number.isNaN(publishedAt.valueOf()) && publishedAt.valueOf() > now) continue;
 
   const rel = relative(root, file);
   const haystacks = [

@@ -2,7 +2,7 @@
 title: 从零到 cove.xin：我是怎么用 Astro 搭起这个站点的
 description: 选型、工程结构与部署链的完整复盘：为什么内容型站点值得静态优先，Cove 的目录组织、取数约定与质量门禁是如何长出来的，以及哪些决定我到现在仍然满意。
 publishedAt: '2026-09-22'
-category: web-dev
+category: engineering
 tags:
   - Astro
   - 静态站点

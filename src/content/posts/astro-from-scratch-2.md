@@ -2,7 +2,7 @@
 title: 'Astro 从零到一（二）：用内容集合管理文章'
 description: '系列第二篇：Content Collections 的类型安全数据模型、日期约定与查询层设计，把内容当作代码一样对待。'
 publishedAt: '2026-09-15'
-category: web-dev
+category: tech
 tags:
   - Astro
   - 内容管理

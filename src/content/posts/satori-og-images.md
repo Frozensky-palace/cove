@@ -2,7 +2,7 @@
 title: 用 satori 在构建期生成中文分享图
 description: 每篇内容一张品牌分享卡：satori + resvg 的构建期管线、中文渲染的字体陷阱，以及为什么放弃"直接把封面图当 og:image"。
 publishedAt: '2026-09-24'
-category: tools
+category: tech
 tags:
   - satori
   - OG 图片

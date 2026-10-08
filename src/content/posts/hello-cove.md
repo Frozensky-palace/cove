@@ -2,7 +2,7 @@
 title: 你好，Cove：为什么我又开始写博客
 description: 关于这个安静的小海湾：我想在这里沉淀什么、不做什么，以及它如何被搭建起来。
 publishedAt: '2026-09-01'
-category: life
+category: writing
 tags:
   - 随笔
   - 写作

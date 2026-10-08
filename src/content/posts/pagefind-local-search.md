@@ -2,7 +2,7 @@
 title: 静态站点也能有好搜索：Cove 的 Pagefind 实践
 description: 不写一行后端代码给静态博客装上全文搜索：Pagefind 的索引策略、正文圈定与元数据标注，以及中文站点需要知道的一个限制。
 publishedAt: '2026-09-23'
-category: tools
+category: tech
 tags:
   - Pagefind
   - 搜索
