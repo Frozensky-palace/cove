@@ -1,0 +1,163 @@
+---
+/**
+ * /story/ 海湾短篇集首页（IMPL-083）。
+ * 书架页：每篇短篇一张卡，手工维护、按序排列；各短篇为独立手工页面
+ * /story/<slug>/，目前第一篇为《靠岸之前》（before-landing）。
+ * 不引入 content collection——每篇短篇都是手工导演的独立页面，第二篇
+ * 出现时再决定是否提取公共骨架；加新故事 = 新建目录 + 此处加一张卡。
+ *
+ * 泛指入口（首页品牌卡等）落本页，特指入口（值守者档案等）落具体短篇。
+ * noindex 已随复验移除（IMPL-084）；非 main 分支构建仍由 noindex-preview
+ * 注入 X-Robots-Tag 响应头兜底。
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { Picture } from 'astro:assets';
+import coverArt from '@/assets/story/cover.png';
+---
+
+<BaseLayout
+  title="海湾短篇"
+  description="Cove 海湾的插画短篇。第一篇《靠岸之前》：一艘船的夜航，三位值守者的一夜。"
+  path="/story/"
+  ogType="website"
+>
+  <div class="cove-container shelf">
+    <p class="shelf-kicker">Cove · 海湾短篇</p>
+    <h1 class="shelf-title">海湾短篇</h1>
+    <p class="shelf-intro">海湾里的人与船，偶尔走进一些小故事。挑一篇，慢慢读。</p>
+
+    <a class="story-card" href="/story/before-landing/">
+      <span class="story-card-media">
+        <Picture
+          src={coverArt}
+          formats={['avif']}
+          fallbackFormat="webp"
+          widths={[480, 800, 1200]}
+          sizes="(max-width: 639px) 100vw, 380px"
+          alt=""
+        />
+      </span>
+      <span class="story-card-body">
+        <span class="story-card-title">靠岸之前</span>
+        <span class="story-card-desc">沈予舟送船出坞，许朝夕记下暗礁，温晚安为它照亮水道——一艘船的夜航。</span>
+        <span class="story-card-meta">插画短篇 · 约两分钟</span>
+      </span>
+    </a>
+  </div>
+</BaseLayout>
+
+<style>
+  .shelf {
+    max-width: 46rem;
+    padding-block: 3.5rem 4.5rem;
+  }
+
+  .shelf-kicker {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+  }
+
+  .shelf-title {
+    margin: 0.75rem 0 0;
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.3;
+  }
+
+  .shelf-intro {
+    margin: 1rem 0 0;
+    color: var(--text-muted);
+    line-height: 1.9;
+  }
+
+  /* 短篇卡：整卡一个链接，图片装饰空 alt，名称由卡内文字承担 */
+  .story-card {
+    display: grid;
+    gap: 1.125rem;
+    margin-top: 2.5rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color var(--motion-fast) ease;
+  }
+
+  .story-card:hover {
+    border-color: color-mix(in srgb, var(--cove-blue-strong) 45%, transparent);
+  }
+
+  .story-card-media {
+    display: block;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface-muted);
+  }
+
+  .story-card-media :global(picture),
+  .story-card-media :global(img) {
+    display: block;
+    width: 100%;
+  }
+
+  .story-card-media :global(img) {
+    height: auto;
+    transition: scale var(--motion-fast) var(--ease-standard);
+  }
+
+  .story-card:hover .story-card-media :global(img) {
+    scale: 1.02;
+  }
+
+  .story-card-body {
+    display: block;
+    padding: 0.25rem 0.5rem 0.5rem;
+  }
+
+  .story-card-title {
+    display: block;
+    color: var(--text);
+    font-size: 1.25rem;
+    font-weight: 650;
+    letter-spacing: 0.03em;
+    transition: color var(--motion-fast) ease;
+  }
+
+  .story-card:hover .story-card-title {
+    color: var(--cove-blue-strong);
+  }
+
+  .story-card-desc {
+    display: block;
+    margin-top: 0.625rem;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.85;
+  }
+
+  .story-card-meta {
+    display: block;
+    margin-top: 0.75rem;
+    color: var(--text-muted);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+  }
+
+  @media (min-width: 640px) {
+    .story-card {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.125rem;
+    }
+
+    .story-card-body {
+      padding: 0.5rem 0.75rem 0.5rem 0;
+    }
+  }
+</style>

@@ -1,0 +1,590 @@
+---
+/**
+ * /story/before-landing/ 《靠岸之前》海湾插画短篇（Phase 8.2）。
+ * 设计依据：docs/COVE-SHORT-STORY-DESIGN.md（v2 三值守者版）；
+ * 剧本 A 稿见其第 8 节。三个视角为站点的三位值守者：沈予舟（船坞）、
+ * 许朝夕（沿岸记录）、温晚安（灯塔）——档案见 src/content/authors/。
+ * IMPL-083 短篇集化：/story/ 为短篇集首页（书架），本页是书架上的
+ * 第一篇，各短篇为独立手工页面 /story/<slug>/。
+ *
+ * 结构：自然纵向滚动单页——封面 + 三幕 + 尾页（设计第 2 节）。
+ * 旁白为可选择、可朗读的 HTML；滚动即阅读方式，无幕间翻页控件
+ * （IMPL-079），页面不自动播放、不劫持滚轮。
+ *
+ * 渐进增强（设计第 5 节）：无 JS 时旁白与叠合画面按顺序完整呈现；
+ * 两处主动作（本子那一页／灯室扫光，IMPL-079 收敛）只增强镜头，不承载
+ * 独有信息——速写、光束停点与日志补记小字在无 JS 与 reduced-motion 下同样可得。
+ *
+ * 六幅正式场景画以站内三位角色立绘和同一封面锚图生成；Astro 构建期输出
+ * AVIF/WebP 响应式尺寸。手机完整显示横幅，避免裁掉角色和灯塔。
+ *
+ * noindex 已随复验移除（IMPL-084）；非 main 分支构建仍由 noindex-preview
+ * 注入 X-Robots-Tag 响应头兜底（指南 13.1）。
+ *
+ * 动效两层（设计第 5 节在生图版下的收敛）：①入场编排 .sn×is-in（JS IO
+ * 触发一次，侧面渐入·平行移入——画面与旁白自所在一侧水平滑入 48–64px）；
+ * ②主动作反馈（本子翻页/灯光回响）。矢量版的②环境循环随场景画改为静态生图而移除。
+ * reduced-motion 全局规则冻结动效；无 JS 时入场不生效，两张本子画面顺序展示。
+ * 六幅生图装配后的本版改动（侧面渐入/锚点接管/文案打磨）与短篇集化
+ * 结构已收束（IMPL-084 移除 noindex）。
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Button from '@/components/base/Button.astro';
+import { Picture } from 'astro:assets';
+import coverArt from '@/assets/story/cover.png';
+import departureArt from '@/assets/story/act1-departure.png';
+import wavesArt from '@/assets/story/act2-waves.png';
+import notebookArt from '@/assets/story/act2-notebook.png';
+import beamArt from '@/assets/story/act3-beam.png';
+import morningArt from '@/assets/story/end-morning.png';
+---
+
+<BaseLayout
+  title="靠岸之前"
+  description="沈予舟送船出坞，许朝夕记下暗礁，温晚安为它照亮水道。Cove 海湾插画短篇，约两分钟。"
+  path="/story/before-landing/"
+  ogType="website"
+>
+  <article class="story" data-story>
+    <div class="cove-container">
+      <!-- 0 封面 -->
+      <section class="story-cover" id="story-top" tabindex="-1">
+        <p class="story-kicker sn" style="--sn: 0; --sn-x: -32px">Cove · 海湾短篇</p>
+        <h1 class="story-title sn" style="--sn: 0; --sn-x: -32px">靠岸之前</h1>
+        <p class="story-cover-intro sn" style="--sn: 1; --sn-x: -32px">一个海湾，三位值守者，一艘船的夜航。约一两分钟。</p>
+
+        <figure class="story-scene story-scene--cover sn" style="--sn: 2; --sn-x: 32px">
+          <Picture src={coverArt} formats={['avif']} fallbackFormat="webp" widths={[480, 800, 1200, 1600]} sizes="(max-width: 767px) 100vw, 90vw" alt="黄昏的海湾：小船驶过左岸船坞，右岸灯塔守着水道。" />
+        </figure>
+
+        <div class="story-cover-action sn" style="--sn: 4; --sn-x: -32px">
+          <Button href="#act-boat" variant="primary" size="lg">翻开故事</Button>
+        </div>
+      </section>
+
+      <!-- 1 第一幕 · 予舟（镜头 1：出坞） -->
+      <section class="story-act" id="act-boat" tabindex="-1">
+        <figure class="story-scene sn" style="--sn: 2; --sn-x: -64px">
+          <Picture src={departureArt} formats={['avif']} fallbackFormat="webp" widths={[480, 800, 1200, 1600]} sizes="(max-width: 767px) 100vw, (max-width: 899px) 90vw, 55vw" alt="沈予舟在船坞里望着刚出航的小船，桌上是画了一半的图。" />
+        </figure>
+
+        <div class="story-text sn" style="--sn: 3; --sn-x: 48px">
+          <p class="story-kicker">第一幕 · <a href="/character/shen-yuzhou/">沈予舟</a></p>
+          <h2 class="story-heading">出坞</h2>
+          <p class="story-para">
+            试航的第三夜，湾外起了风。予舟看着船离开坞门，朝灯塔驶去；桌上那张新船图，龙骨线还只画了一半。
+          </p>
+          <p class="story-para story-para--aside">试航日志：「船突然向右偏，像在避一道浪。原因未明。」</p>
+        </div>
+      </section>
+
+      <!-- 2 第二幕 · 露出的礁（镜头 2：浪推船 + 镜头 3：低视角暗礁叠合） -->
+      <section class="story-act story-act--flip" id="act-waves" tabindex="-1">
+        <figure class="story-scene story-stack sn" style="--sn: 2; --sn-x: 64px" data-story-stack>
+          <div class="story-stack-frame">
+            <Picture src={wavesArt} formats={['avif']} fallbackFormat="webp" widths={[480, 800, 1200, 1600]} sizes="(max-width: 767px) 100vw, (max-width: 899px) 90vw, 55vw" alt="许朝夕在退潮的岸边看见浪把小船托离水下暗礁。" />
+            <Picture src={notebookArt} formats={['avif']} fallbackFormat="webp" widths={[480, 800, 1200, 1600]} sizes="(max-width: 767px) 100vw, (max-width: 899px) 90vw, 55vw" alt="朝夕的野外记录本摊开，海湾速写中圈出了暗礁与安全水道。" class="story-overlay" />
+          </div>
+          <figcaption class="story-caption story-nojs-only">朝夕的本子：同一片海湾的铅笔速写，礁脊画了圈。</figcaption>
+        </figure>
+
+        <div class="story-text sn" style="--sn: 3; --sn-x: -48px">
+          <p class="story-kicker">第二幕 · <a href="/character/xu-zhaoxi/">许朝夕</a></p>
+          <h2 class="story-heading">本子那一页</h2>
+          <p class="story-para">浪把船往湾外送。朝夕走到岸边，认出了那片浅滩。上一次退潮，她在本子上圈过一个地方。</p>
+          <div class="story-actions">
+            <button type="button" class="story-control" data-story-stack-btn aria-expanded="false" aria-controls="story-reveal">
+              <span class="label-a">翻开本子那一页</span>
+              <span class="label-b">合上本子</span>
+            </button>
+          </div>
+          <p class="story-para story-reveal" id="story-reveal" data-story-reveal>圈里是刚露出水面的礁脊。那道浪托起船，把它从礁石上方带了过去。</p>
+        </div>
+      </section>
+
+      <!-- 3 第三幕 · 雾后的门（镜头 4+5：塔上远景，光束扫过后停在安全入口） -->
+      <section class="story-act story-act--night" id="act-light" tabindex="-1">
+        <figure class="story-scene story-scene--light sn" style="--sn: 2; --sn-x: -64px" data-story-light>
+          <Picture src={beamArt} formats={['avif']} fallbackFormat="webp" widths={[480, 800, 1200, 1600]} sizes="(max-width: 767px) 100vw, (max-width: 899px) 90vw, 55vw" alt="深夜，温晚安守着灯塔，灯光越过海面指向安全的水道。" />
+          <span class="story-light-glow" aria-hidden="true"></span>
+        </figure>
+
+        <div class="story-text sn" style="--sn: 3; --sn-x: 48px">
+          <p class="story-kicker">第三幕 · <a href="/character/wen-wanan/">温晚安</a></p>
+          <h2 class="story-heading">雾后的门</h2>
+          <p class="story-para">
+            朝夕的那页速写送到了灯室。晚安看见画圈的浅滩，把灯光压低，照向湾口外侧那道弯弯的水路。
+          </p>
+          <p class="story-para">
+            灯塔不催促任何船，它只是亮着。晚安守着那束光，直到小船绕过暗礁。
+          </p>
+          <div class="story-actions">
+            <button type="button" class="story-control" data-story-lamp-btn>让灯光再掠过海面</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 尾页（镜头 6：清晨靠岸） -->
+      <section class="story-end" id="story-end" tabindex="-1">
+        <p class="story-kicker sn" style="--sn: 0; --sn-x: -32px">尾声</p>
+        <h2 class="story-heading sn" style="--sn: 0; --sn-x: -32px">清晨</h2>
+
+        <figure class="story-scene story-scene--end sn" style="--sn: 1; --sn-x: 32px">
+          <Picture src={morningArt} formats={['avif']} fallbackFormat="webp" widths={[480, 800, 1200, 1600]} sizes="(max-width: 767px) 100vw, 90vw" alt="清晨，予舟在栈桥系好归来的船，朝夕在岸边记下新的潮时。" />
+        </figure>
+
+        <p class="story-para story-para--closing sn" style="--sn: 2; --sn-x: -32px">
+          清晨，船靠上栈桥。予舟先接住缆绳，没有急着回去画下一张图；朝夕记下新的潮时。灯塔的窗暗了，晚安终于睡了。
+        </p>
+
+        <div class="story-end-actions sn" style="--sn: 3; --sn-x: -32px">
+          <Button href="/posts/hello-cove/" variant="primary">读一读这个海湾</Button>
+          <a class="story-again" href="#story-top">再读一次</a>
+        </div>
+      </section>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .story {
+    --sc-pink: #dea0af;
+    padding-block: 1rem 3rem;
+    /* 入场平移的瞬态越界不产生横向滚动条 */
+    overflow-x: clip;
+  }
+
+  :global(.dark) .story {
+    --sc-pink: #d9a7b4;
+  }
+
+  /* ============ 排版骨架 ============ */
+  .story-kicker {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+  }
+
+  .story-kicker a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.25em;
+  }
+
+  .story-kicker a:hover,
+  .story-kicker a:focus-visible {
+    color: var(--cove-blue-strong);
+    text-decoration-color: currentColor;
+  }
+
+  .story-title {
+    margin: 0.75rem 0 0;
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.25;
+  }
+
+  .story-heading {
+    margin: 0.5rem 0 0;
+    font-size: clamp(1.375rem, 2.5vw, 1.75rem);
+    font-weight: 650;
+    letter-spacing: 0.03em;
+  }
+
+  .story-para {
+    margin: 1.125rem 0 0;
+    color: var(--text);
+    font-size: 16.5px;
+    line-height: 2;
+  }
+
+  .story-cover {
+    padding-block: 4rem 1rem;
+    text-align: center;
+  }
+
+  .story-cover-intro {
+    margin: 1rem 0 0;
+    color: var(--text-muted);
+    font-size: 16px;
+    letter-spacing: 0.04em;
+  }
+
+  .story-cover-action {
+    margin-top: 2.25rem;
+  }
+
+  /* 幕：桌面一侧大画面、一侧旁白；第二幕镜像换边形成节奏 */
+  .story-act {
+    display: grid;
+    gap: 2.25rem;
+    padding-block: 4.5rem;
+  }
+
+  .story-text {
+    align-self: center;
+    max-width: 26rem;
+  }
+
+  @media (min-width: 900px) {
+    .story-act {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+      align-items: center;
+      gap: 4rem;
+    }
+
+    /* 第二幕镜像换边：只调 order 会把场景自动放置进 4fr 窄列，画面小一半——
+       列序须一并对调，场景仍落宽列 */
+    .story-act--flip {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+    }
+
+    .story-act--flip .story-scene {
+      order: 2;
+    }
+  }
+
+  .story-end {
+    padding-block: 4.5rem 2rem;
+    text-align: center;
+  }
+
+  @media (max-width: 767px) {
+    .story-act {
+      gap: 1.75rem;
+      padding-block: 3rem;
+    }
+
+    .story-end {
+      padding-block: 3.5rem 1.5rem;
+    }
+  }
+
+  .story-end .story-heading {
+    margin-top: 0.5rem;
+  }
+
+  .story-para--closing {
+    max-width: 38rem;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .story-end-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.875rem;
+    margin-top: 2.25rem;
+  }
+
+  /* 「再读一次」降为文字链接（IMPL-079）：回顶部是次要动作，不与主 CTA 争层级 */
+  .story-again {
+    align-self: center;
+    color: var(--text-muted);
+    font-size: 14.5px;
+    text-decoration: none;
+    transition: color var(--motion-fast) ease;
+  }
+
+  .story-again:hover {
+    color: var(--cove-blue-strong);
+    text-decoration-line: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  /* 正式画面保留原始横幅比例；移动端完整显示人物和灯塔。 */
+  .story-scene {
+    position: relative;
+    margin: 2.5rem 0 0;
+  }
+
+  .story-cover .story-scene,
+  .story-end .story-scene {
+    margin-top: 2.75rem;
+  }
+
+  .story-scene :global(picture),
+  .story-scene :global(img) {
+    display: block;
+    width: 100%;
+  }
+
+  .story-scene :global(img) {
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface);
+  }
+
+  .story-scene--light :global(img) {
+    background: #152539;
+  }
+
+  /* ① 入场编排（侧面渐入·平行移入）：画面与旁白同为水平滑入，
+     从各自所在一侧进画（左栏负向、右栏正向，封面/尾声文字自左、画面自右），
+     渐显与平移一次完成；--sn-x 定起点位移，--sn 仍为错峰序号。
+     位移给到 48–64px，保证「移入」可被明确感知而不只是浮现 */
+  html:not(.no-js) .story section .sn {
+    opacity: 0;
+    transform: translateX(var(--sn-x, 24px));
+    transition:
+      opacity 700ms ease,
+      transform 840ms var(--ease-out);
+    transition-delay: calc(var(--sn, 0) * 110ms);
+  }
+
+  html:not(.no-js) .story section.is-in .sn {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* 窄屏留足方向感，但限制横移幅度，避免文字从视口外滑进。 */
+  @media (max-width: 767px) {
+    html:not(.no-js) .story section .sn {
+      transform: translateX(clamp(-24px, var(--sn-x, 24px), 24px));
+    }
+
+    html:not(.no-js) .story section.is-in .sn {
+      transform: translateX(0);
+    }
+  }
+
+  /* 船的日志补记：静态小字，不设交互（IMPL-079） */
+  .story-para--aside {
+    margin-top: 0.875rem;
+    padding-left: 0.875em;
+    border-left: 2px solid var(--sc-pink);
+    color: var(--text-muted);
+  }
+
+  /* 无脚本时两张画依次展示；脚本可用时以翻页叠合。 */
+  .story-stack-frame {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .story-caption {
+    margin-top: 0.75rem;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  html:not(.no-js) .story-nojs-only,
+  html.no-js .story-actions {
+    display: none;
+  }
+
+  .story-reveal {
+    padding-left: 0.875em;
+    border-left: 2px solid var(--sc-pink);
+  }
+
+  html:not(.no-js) .story-reveal {
+    display: none;
+  }
+
+  html:not(.no-js) .story-act--flip.is-revealed .story-reveal {
+    display: block;
+  }
+
+  html:not(.no-js) .story-stack-frame {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: 18px;
+  }
+
+  html:not(.no-js) .story-stack-frame :global(img.story-overlay) {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: perspective(1200px) rotateY(-12deg) translateX(26px);
+    transform-origin: left center;
+    transition: opacity var(--motion-emphasis) ease, transform var(--motion-emphasis) var(--ease-out);
+    pointer-events: none;
+  }
+
+  html:not(.no-js) .story-stack.is-stacked .story-stack-frame :global(img.story-overlay) {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0deg) translateX(0);
+  }
+
+  /* 灯光已经绘在画里；交互只让光路轻轻回响一次（灯室在画面右上，
+     回响自灯位起，随透明度沿光路微微向左漂移，与画中光束同向）。 */
+  .story-light-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    background: radial-gradient(ellipse at 90% 18%, rgb(255 226 169 / 0.55), transparent 30%),
+      linear-gradient(155deg, transparent 34%, rgb(255 222 158 / 0.16) 49%, transparent 69%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .story-scene--light.is-swept .story-light-glow {
+    animation: story-light-echo 1.8s ease-out both;
+  }
+
+  @keyframes story-light-echo {
+    0% { opacity: 0; transform: translateX(2%); }
+    35% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(-3%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html:not(.no-js) .story section .sn {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .story-scene--light.is-swept .story-light-glow {
+      animation: none;
+    }
+
+    .story-act--night .story-actions {
+      display: none;
+    }
+  }
+
+  /* ============ 动作行 ============ */
+  .story-actions {
+    margin-top: 1.375rem;
+  }
+
+  .story-control {
+    min-height: 44px;
+    padding: 0.5rem 1.125rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 15px;
+    cursor: pointer;
+    transition:
+      border-color var(--motion-fast) ease,
+      color var(--motion-fast) ease;
+  }
+
+  .story-control:hover {
+    border-color: color-mix(in srgb, var(--cove-blue-strong) 50%, transparent);
+    color: var(--cove-blue-strong);
+  }
+
+  /* 双标签切换与说明文字的展开状态保持一致。 */
+  .story-control .label-b {
+    display: none;
+  }
+
+  .story-control[aria-expanded='true'] .label-a {
+    display: none;
+  }
+
+  .story-control[aria-expanded='true'] .label-b {
+    display: inline;
+  }
+</style>
+
+<script>
+  /**
+   * 两处主动作的渐进增强（设计第 2 节「读者动作」，IMPL-079 收敛后）：
+   * 翻开/合上本子、重看灯光回响。ClientRouter 环境（IMPL-017）：初始化
+   * 挂在 astro:page-load 上，首次加载与每次换页后都触发；监听器挂页面根元素，
+   * 随旧 DOM 一起移除，不跨页残留。无 JS 时增强态不生效：暗礁画面按顺序呈现、
+   * 夜景灯光与日志补记均为静态内容，阅读序完整。
+   */
+  function initStory(): void {
+    const root = document.querySelector<HTMLElement & {
+      storyAbort?: AbortController;
+      storyObserver?: IntersectionObserver;
+    }>('[data-story]');
+    if (!root) return;
+    root.storyAbort?.abort();
+    root.storyObserver?.disconnect();
+    const abort = new AbortController();
+    root.storyAbort = abort;
+    root.dataset.storyReady = 'true';
+
+    /* 入场编排：幕区进入视口后给 .is-in，各图层按 --sn 错峰浮现一次；
+       不支持 IO 时直接完整呈现（等价无入场） */
+    const scenes = root.querySelectorAll<HTMLElement>('section');
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries, obs) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            entry.target.classList.add('is-in');
+            obs.unobserve(entry.target);
+          }
+        },
+        { threshold: 0.15, rootMargin: '0px 0px -8% 0px' },
+      );
+      root.storyObserver = io;
+      scenes.forEach((scene) => io.observe(scene));
+    } else {
+      scenes.forEach((scene) => scene.classList.add('is-in'));
+    }
+
+    /* 页内锚点（翻开故事／再读一次）：ClientRouter 对仅 hash 变化的导航
+       最终落到 location.href 赋值，目标 hash 与当前一致时浏览器整体无操作
+       （重复点击无响应）。这里接管为显式滚动：每次点击都滚向目标并移交
+       焦点（各 section 均有 tabindex="-1"）；无 JS 时回退浏览器默认跳转 */
+    root.querySelector<HTMLImageElement>('.story-overlay')?.setAttribute('aria-hidden', 'true');
+    root.addEventListener('click', (event) => {
+      if (!(event.target instanceof Element)) return;
+
+      const anchor = event.target.closest<HTMLAnchorElement>('a[href^="#"]');
+      if (anchor) {
+        const hash = anchor.getAttribute('href') ?? '';
+        const target = hash.length > 1 ? document.getElementById(hash.slice(1)) : null;
+        if (!target) return;
+        event.preventDefault();
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+        history.replaceState(history.state, '', hash);
+        target.focus({ preventScroll: true });
+        return;
+      }
+
+      const stackBtn = event.target.closest<HTMLButtonElement>('[data-story-stack-btn]');
+      if (stackBtn) {
+        const stack = root.querySelector<HTMLElement>('[data-story-stack]');
+        if (!stack) return;
+        const on = stack.classList.toggle('is-stacked');
+        stack.closest('.story-act')?.classList.toggle('is-revealed', on);
+        stackBtn.setAttribute('aria-expanded', String(on));
+        stack.querySelector<HTMLImageElement>('.story-overlay')?.setAttribute('aria-hidden', String(!on));
+        root.querySelector<HTMLElement>('[data-story-reveal]')?.setAttribute('aria-hidden', String(!on));
+        return;
+      }
+
+      if (event.target.closest('[data-story-lamp-btn]')) {
+        const lightScene = root.querySelector<HTMLElement>('[data-story-light]');
+        if (!lightScene) return;
+        lightScene.classList.remove('is-swept');
+        void lightScene.offsetWidth;
+        lightScene.classList.add('is-swept');
+      }
+    }, { signal: abort.signal });
+
+    root.addEventListener('animationend', (event) => {
+      if (event.target instanceof Element && event.target.matches('.story-light-glow')) {
+        root.querySelector<HTMLElement>('[data-story-light]')?.classList.remove('is-swept');
+      }
+    }, { signal: abort.signal });
+  }
+
+  document.addEventListener('astro:page-load', initStory);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initStory, { once: true });
+  } else {
+    initStory();
+  }
+</script>

@@ -15,6 +15,7 @@
 | 第一次接触本项目 | 仓库 [README](../README.md) → [开发指南](COVE-DEVELOPMENT-GUIDE.md)（第 1–7 节建立全局认识） |
 | 日常运营（发文 / 回滚 / 依赖更新） | [运维手册](OPERATIONS.md) → [CMS 写作指南](PAGES-CMS-GUIDE.md) |
 | 了解某个实现「为什么这样做」 | [决策记录](decision-log.md)（按 IMPL 编号检索） |
+| 了解海湾彩蛋新方案 | [《靠岸之前》插画短篇方案](COVE-SHORT-STORY-DESIGN.md)（v2 三值守者版；六幅生图已装配、动效收敛为两层，待浏览器验收） |
 | 了解架构推导过程 | [立项提案](archive/personal-blog-project-proposal-v2.html)（历史存档） |
 
 ## 文件清单
@@ -27,6 +28,10 @@
 | [decision-log.md](decision-log.md) | 实施决策记录 | IMPL-001 起逐条记录每次实施的改动、理由与验证结果；新增依赖须在此说明（指南 21.2） |
 | [OPERATIONS.md](OPERATIONS.md) | 运维手册 | 写作与发文、发布验证、回滚、季度恢复演练、依赖更新、质量守卫链排查 |
 | [PAGES-CMS-GUIDE.md](PAGES-CMS-GUIDE.md) | CMS 写作指南 | Pages CMS 的授权、编辑、发布流程与上线前验证清单 |
+| [COVE-TIDES-EXPERIENCE-DESIGN.md](COVE-TIDES-EXPERIENCE-DESIGN.md) | 旧交互作品探索稿 | 《潮汐之间》三章游戏方案；已由《靠岸之前》短篇方案替代 |
+| [COVE-TIDES-ART-DIRECTION.svg](COVE-TIDES-ART-DIRECTION.svg) / [PNG 预览](COVE-TIDES-ART-DIRECTION.png) | 旧扉页视觉探索 | 展示游戏方案曾考虑的构图；非当前方案素材 |
+| [COVE-SHORT-STORY-DESIGN.md](COVE-SHORT-STORY-DESIGN.md) | 彩蛋短篇新方案 | 《靠岸之前》的三视角故事、分镜、美术来源、制作与验收（第 8 节剧本 A 稿 v2）；替代游戏方向，装配首版见 IMPL-074/075，生图管线见 IMPL-078，布局修复与两层动效（侧面渐入）、锚点接管见 IMPL-080/081 |
+| [COVE-STORY-ART-STUDY.png](COVE-STORY-ART-STUDY.png) / [第二版](COVE-STORY-ART-STUDY-v2.png) | 风格样张 | 以现有品牌插画为参考生成的夜景与明亮版气氛测试；非最终素材 |
 
 ### 历史记录（不再更新）
 

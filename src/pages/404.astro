@@ -4,7 +4,8 @@
  * 提供首页、文章、搜索三个明确出口（指南 9.8）。
  * 彩蛋（IMPL-052，用户需求）：深夜（22:00–6:00）访问，或路径哈希命中
  * 1/8 概率时，标题切换为「站长外出散步了」。is:inline 无依赖渐进增强，
- * 无 JS 或未命中时保持默认文案。
+ * 无 JS 或未命中时保持默认文案。IMPL-083：深夜档顺势追加一句指向
+ * 海湾短篇《靠岸之前》——彩蛋指认彩蛋，未命中时不出现在页面上。
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Button from '@/components/base/Button.astro';
@@ -44,6 +45,14 @@ import Button from '@/components/base/Button.astro';
             '灯塔暂时没人值守——晚风、潮汐和这片 404 都归站长管。TA 沿着海岸线散步去了，天亮前会回来。先从下面的路标回湾吧。';
         }
         document.title = document.title.replace('迷航了', '站长外出散步了');
+        var story = document.createElement('p');
+        story.className = 'lost-story';
+        story.textContent = '趁灯塔没人值守，湾里那则夜航短篇正适合翻开——';
+        var link = document.createElement('a');
+        link.href = '/story/before-landing/';
+        link.textContent = '《靠岸之前》';
+        story.appendChild(link);
+        if (desc && desc.parentNode) desc.parentNode.insertBefore(story, desc.nextSibling);
       }
     })();
   </script>
@@ -79,6 +88,20 @@ import Button from '@/components/base/Button.astro';
     color: var(--text-muted);
     font-size: 16px;
     line-height: 1.9;
+  }
+
+  /* 深夜档短篇指引（IMPL-083）：比正文小一号的旁注，链接站点强调色 */
+  .lost-story {
+    max-width: 34rem;
+    margin: 0.875rem 0 0;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.9;
+  }
+
+  .lost-story a {
+    color: var(--cove-blue-strong);
+    text-underline-offset: 0.25em;
   }
 
   .lost-actions {
